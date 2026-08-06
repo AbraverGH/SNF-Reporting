@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AR Collections Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg: #F4F6F2;
+    --surface: #FFFFFF;
+    --surface-2: #EDF1EA;
+    --ink: #14231D;
+    --ink-soft: #5B6B62;
+    --ink-faint: #93A199;
+    --line: #DEE5DA;
+    --sidebar: #0E1F18;
+    --sidebar-2: #16302380;
+    --sidebar-line: #24402F;
+    --sidebar-ink: #EAF3EC;
+    --sidebar-ink-soft: #9BB5A5;
+    --emerald: #0F6B4C;
+    --emerald-bright: #17A673;
+    --emerald-pale: #DCF0E5;
+    --amber: #D99B2B;
+    --clay: #C1503B;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 2px rgba(14,31,24,0.06), 0 8px 24px -12px rgba(14,31,24,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    font-size:14px;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Space Grotesk',system-ui,sans-serif;}
+  .mono{font-family:'IBM Plex Mono',ui-monospace,monospace;}
+  button{font-family:inherit;cursor:pointer;}
+  ::selection{background:var(--emerald-pale);}
+
+  #app{display:flex;min-height:100vh;}
+
+  /* ===== SIDEBAR ===== */
+  .sidebar{
+    width:296px;flex:none;
+    background:var(--sidebar);
+    color:var(--sidebar-ink);
+    padding:22px 20px 24px;
+    display:flex;flex-direction:column;
+    gap:22px;
+    position:sticky;top:0;height:100vh;overflow-y:auto;
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{
+    width:34px;height:34px;border-radius:9px;
+    background:linear-gradient(140deg,var(--emerald-bright),var(--emerald) 70%);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Grotesk';font-weight:700;font-size:15px;color:#fff;
+    flex:none;
+  }
+  .brand-text .t1{font-family:'Space Grotesk';font-weight:600;font-size:15px;line-height:1.2;}
+  .brand-text .t2{font-size:11px;color:var(--sidebar-ink-soft);letter-spacing:.03em;}
+
+  .side-section{border-top:1px solid var(--sidebar-line);padding-top:16px;}
+  .side-label{
+    font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;
+    color:var(--sidebar-ink-soft);margin-bottom:10px;font-weight:600;
+  }
+  .side-label .count{color:var(--emerald-bright);}
+
+  .search-box{position:relative;margin-bottom:8px;}
+  .search-box input{
+    width:100%;background:#0A1A14;border:1px solid var(--sidebar-line);
+    color:var(--sidebar-ink);border-radius:var(--radius-sm);
+    padding:8px 10px 8px 30px;font-size:12.5px;font-family:inherit;
+  }
+  .search-box input::placeholder{color:var(--sidebar-ink-soft);}
+  .search-box input:focus{outline:none;border-color:var(--emerald-bright);}
+  .search-box svg{position:absolute;left:9px;top:9px;width:14px;height:14px;opacity:.55;}
+
+  .side-btn-row{display:flex;gap:6px;margin-bottom:10px;}
+  .side-btn-row button{
+    flex:1;background:transparent;border:1px solid var(--sidebar-line);
+    color:var(--sidebar-ink-soft);font-size:11px;padding:5px 0;border-radius:var(--radius-sm);
+    transition:.15s;
+  }
+  .side-btn-row button:hover{border-color:var(--emerald-bright);color:var(--sidebar-ink);}
+
+  .facility-list{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:1px;padding-right:2px;}
+  .facility-row{
+    display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--radius-sm);
+    cursor:pointer;font-size:12.5px;transition:.12s;
+  }
+  .facility-row:hover{background:var(--sidebar-2);}
+  .facility-row input{accent-color:var(--emerald-bright);flex:none;}
+  .facility-row .fname{flex:1;color:var(--sidebar-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .facility-row .fcode{color:var(--sidebar-ink-soft);font-family:'IBM Plex Mono';font-size:10.5px;flex:none;}
+
+  .payer-grid{display:flex;flex-direction:column;gap:2px;}
+  .payer-option{
+    display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--radius-sm);
+    cursor:pointer;font-size:12.5px;color:var(--sidebar-ink-soft);transition:.12s;
+  }
+  .payer-option:hover{background:var(--sidebar-2);}
+  .payer-option.active{background:var(--emerald);color:#fff;}
+  .payer-option input{display:none;}
+
+  .sidebar-footer{margin-top:auto;font-size:10.5px;color:var(--sidebar-ink-soft);line-height:1.5;border-top:1px solid var(--sidebar-line);padding-top:14px;}
+
+  /* ===== MAIN ===== */
+  main{flex:1;min-width:0;display:flex;flex-direction:column;}
+
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    padding:18px 30px;background:var(--surface);border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:20;
+  }
+  .topbar h1{font-size:19px;font-weight:600;margin:0;letter-spacing:-.01em;}
+  .topbar .sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .file-status{
+    display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-soft);
+  }
+  .file-chip{
+    display:flex;align-items:center;gap:8px;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:20px;padding:6px 14px 6px 10px;
+  }
+  .file-chip .dot{width:7px;height:7px;border-radius:50%;background:var(--emerald-bright);flex:none;}
+  .file-chip b{color:var(--ink);font-weight:600;}
+  .btn-load{
+    background:var(--ink);color:#fff;border:none;border-radius:20px;
+    padding:8px 16px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px;
+    transition:.15s;
+  }
+  .btn-load:hover{background:var(--emerald);}
+
+  .publish-bar{
+    display:flex;align-items:center;gap:14px;background:var(--emerald-pale);
+    border-bottom:1px solid #BFE0CE;padding:12px 30px;
+  }
+  .publish-text{display:flex;flex-direction:column;gap:1px;flex:1;min-width:200px;}
+  .publish-text b{font-size:13px;color:var(--ink);}
+  .publish-text span{font-size:11.5px;color:var(--ink-soft);}
+  .publish-bar input{
+    border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12.5px;
+    font-family:inherit;width:160px;background:#fff;
+  }
+  .btn-ghost{
+    background:transparent;color:var(--ink-soft);border:1px solid var(--line);
+    border-radius:20px;padding:8px 16px;font-size:12.5px;font-weight:600;
+  }
+  .btn-ghost:hover{color:var(--ink);border-color:var(--ink-soft);}
+
+  .content{padding:24px 30px 60px;flex:1;}
+
+  /* KPI strip */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+  .kpi-card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;box-shadow:var(--shadow);
+  }
+  .kpi-card .lbl{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+  .kpi-card .val{font-family:'Space Grotesk';font-size:26px;font-weight:600;letter-spacing:-.01em;}
+  .kpi-card .delta{font-family:'IBM Plex Mono';font-size:12px;margin-top:6px;display:inline-flex;align-items:center;gap:4px;}
+  .delta.up{color:var(--emerald);}
+  .delta.down{color:var(--clay);}
+  .delta.flat{color:var(--ink-faint);}
+
+  /* Tabs */
+  .tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--line);}
+  .tab-btn{
+    background:none;border:none;padding:10px 4px;margin-right:22px;font-size:13.5px;
+    color:var(--ink-soft);font-weight:500;position:relative;top:1px;
+  }
+  .tab-btn.active{color:var(--ink);font-weight:600;}
+  .tab-btn.active::after{
+    content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--emerald);border-radius:2px;
+  }
+
+  .panel{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:22px;
+  }
+  .panel-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+  .panel-head h2{font-size:15px;font-weight:600;margin:0;}
+  .panel-head .note{font-size:12px;color:var(--ink-soft);}
+
+  /* Triangle table */
+  .triangle-wrap{overflow:auto;max-height:64vh;border:1px solid var(--line);border-radius:var(--radius-sm);}
+  table.triangle{border-collapse:separate;border-spacing:0;font-family:'IBM Plex Mono';font-size:12px;width:100%;}
+  table.triangle th, table.triangle td{padding:8px 12px;text-align:right;white-space:nowrap;}
+  table.triangle thead th{
+    position:sticky;top:0;background:var(--surface-2);color:var(--ink-soft);
+    font-weight:600;border-bottom:1px solid var(--line);z-index:2;font-size:11px;
+  }
+  table.triangle thead th:first-child{left:0;z-index:3;text-align:left;background:var(--surface-2);}
+  table.triangle tbody th{
+    position:sticky;left:0;background:var(--surface);text-align:left;color:var(--ink);
+    font-weight:600;border-right:1px solid var(--line);z-index:1;font-family:'Inter';font-size:12.5px;
+  }
+  table.triangle tbody tr:nth-child(even) td, table.triangle tbody tr:nth-child(even) th{background-color:rgba(0,0,0,0.012);}
+  table.triangle td.cell{color:#fff;font-weight:600;border-radius:4px;}
+  table.triangle td.empty{color:var(--ink-faint);background:transparent!important;font-weight:400;}
+  table.triangle td.cur{box-shadow:inset 0 0 0 2px var(--ink);}
+
+  .legend{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-soft);margin-top:12px;flex-wrap:wrap;}
+  .legend .bar{width:140px;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--clay),var(--amber) 45%,var(--emerald-bright) 75%,var(--emerald));}
+
+  .picker-block{margin-bottom:16px;}
+  .picker-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-weight:600;margin-bottom:8px;}
+  table.triangle tbody tr.blended-row th, table.triangle tbody tr.blended-row td{border-bottom:2px solid var(--ink);}
+  table.triangle tbody tr.blended-row th{font-weight:700;}
+  .fc-code{color:var(--ink-faint);font-size:10.5px;font-family:'IBM Plex Mono';font-weight:400;margin-left:5px;}
+
+  /* Trend chart */
+  .cohort-picker{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+  .cohort-chip{
+    border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);
+    font-size:11.5px;padding:5px 11px;border-radius:20px;font-family:'IBM Plex Mono';
+    transition:.12s;
+  }
+  .cohort-chip.on{background:var(--emerald);border-color:var(--emerald);color:#fff;}
+
+  /* Summary table */
+  table.summary{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.summary th{
+    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);
+    border-bottom:1px solid var(--line);padding:8px 12px;cursor:pointer;user-select:none;white-space:nowrap;
+  }
+  table.summary th.num{text-align:right;}
+  table.summary th:hover{color:var(--ink);}
+  table.summary td{padding:9px 12px;border-bottom:1px solid var(--surface-2);white-space:nowrap;}
+  table.summary td.num{font-family:'IBM Plex Mono';text-align:right;}
+  table.summary tr:hover td{background:var(--surface-2);}
+  table.summary tr.total-row td, table.summary tr.total-row th{border-top:2px solid var(--ink);font-weight:700;}
+
+  /* Empty state / dropzone */
+  #dropzone{
+    position:fixed;inset:0;background:var(--bg);z-index:100;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;
+    text-align:center;padding:20px;
+  }
+  #dropzone.hidden{display:none;}
+  .dz-box{
+    width:min(560px,92vw);border:2px dashed var(--line);border-radius:16px;
+    background:var(--surface);padding:52px 34px;box-shadow:var(--shadow);
+    transition:.15s;
+  }
+  .dz-box.drag{border-color:var(--emerald-bright);background:var(--emerald-pale);}
+  .dz-icon{
+    width:56px;height:56px;border-radius:14px;background:var(--emerald-pale);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 18px;color:var(--emerald);
+  }
+  .dz-box h2{font-size:20px;margin:0 0 8px;}
+  .dz-box p{font-size:13px;color:var(--ink-soft);margin:0 0 20px;line-height:1.6;}
+  .dz-browse{
+    background:var(--ink);color:#fff;border:none;padding:10px 20px;border-radius:20px;
+    font-size:13px;font-weight:600;
+  }
+  .dz-browse:hover{background:var(--emerald);}
+  .dz-hint{font-size:11px;color:var(--ink-faint);margin-top:16px;}
+  .toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:#fff;padding:11px 20px;border-radius:10px;font-size:12.5px;
+    box-shadow:var(--shadow);z-index:200;opacity:0;pointer-events:none;transition:.25s;
+    font-family:'IBM Plex Mono';
+  }
+  .toast.show{opacity:1;transform:translate(-50%,-6px);}
+
+  #mainContent{display:none;}
+  #mainContent.ready{display:block;}
+
+  svg.chart text{font-family:'IBM Plex Mono';fill:var(--ink-soft);}
+  .empty-note{padding:40px;text-align:center;color:var(--ink-faint);font-size:13px;}
+
+  @media(max-width:900px){
+    .sidebar{position:fixed;left:-320px;transition:.2s;z-index:50;}
+    .kpis{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+
+<div id="dropzone">
+  <div class="dz-box" id="dzBox">
+    <div class="dz-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
+    </div>
+    <h2>AR Collections Explorer</h2>
+    <p>Drag &amp; drop your <b>AR Collections</b> workbook here — the same “LFS – AR Collections – Data.xlsx” format, with Sheet1 rows by facility, metric and as‑of date. Drop an updated file any time to refresh with new months.</p>
+    <button class="dz-browse" id="dzBrowse">Choose file…</button>
+    <div class="dz-hint">Parsing happens locally in your browser first — nothing is sent anywhere until you choose to publish it.</div>
+    <div class="dz-hint" id="dzLiveHint" style="display:none;color:var(--emerald);font-weight:600;">This link is connected to shared storage — no data has been published yet. Drop a file below to publish it for everyone.</div>
+  </div>
+</div>
+<input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
+
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">AR</div>
+      <div class="brand-text">
+        <div class="t1">Collections Explorer</div>
+        <div class="t2">% collected · month over month</div>
+      </div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-label">Facilities <span class="count" id="facCount"></span></div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="facSearch" placeholder="Search facility, code, company…">
+      </div>
+      <div class="side-btn-row">
+        <button id="facAll">Select all</button>
+        <button id="facNone">Clear</button>
+      </div>
+      <div class="facility-list" id="facilityList"></div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-label">Payer</div>
+      <div class="payer-grid" id="payerList"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      Aggregating multiple facilities — or the combined Medicaid payer — computes a revenue‑weighted % collected, so the blended rate stays mathematically consistent.
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <h1>AR Collections Explorer</h1>
+        <div class="sub" id="topSub">No file loaded yet</div>
+      </div>
+      <div class="file-status">
+        <div class="file-chip" id="fileChip" style="display:none;">
+          <span class="dot"></span>
+          <span><b id="fileName"></b> · <span id="fileMeta"></span></span>
+        </div>
+        <button class="btn-load" id="loadNewBtn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
+          Load file
+        </button>
+      </div>
+    </div>
+
+    <div id="publishBar" class="publish-bar" style="display:none;">
+      <div class="publish-text">
+        <b>Publish this file for everyone with this link?</b>
+        <span>Only you can see it until you publish it — this replaces the shared data for the whole team.</span>
+      </div>
+      <input type="password" id="adminKeyInput" placeholder="Admin key" autocomplete="off">
+      <button class="btn-load" id="publishBtn" style="background:var(--emerald);">Publish</button>
+      <button class="btn-ghost" id="dismissPublish">Not now</button>
+    </div>
+
+    <div class="content" id="mainContent">
+      <div class="kpis" id="kpiStrip"></div>
+
+      <div class="panel" style="margin-bottom:22px;">
+        <div class="picker-block">
+          <div class="picker-label">Months of service <span style="color:var(--ink-faint);font-weight:400;text-transform:none;">(pick one or more)</span></div>
+          <div class="cohort-picker" id="globalMonthsPicker"></div>
+        </div>
+        <div class="picker-block" style="margin-bottom:0;">
+          <div class="picker-label">As‑of date <span style="color:var(--ink-faint);font-weight:400;text-transform:none;">(pick one)</span></div>
+          <div class="cohort-picker" id="globalAsOfPicker"></div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="triangle">Collections By Month</button>
+        <button class="tab-btn" data-tab="trend">Collection Curve</button>
+        <button class="tab-btn" data-tab="combo">Revenue vs Cash vs Aging</button>
+        <button class="tab-btn" data-tab="summary">Facility Summary</button>
+      </div>
+
+      <div id="tab-triangle" class="tabpanel">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>% Collected — facility × month of service</h2>
+              <div class="note" id="triangleNote">Using the months of service and as‑of date picked above. Rows are facilities.</div>
+            </div>
+          </div>
+
+          <div class="triangle-wrap"><table class="triangle" id="triangleTable"></table></div>
+          <div class="legend">
+            <span>0%</span><div class="bar"></div><span>100%</span>
+            <span style="margin-left:18px;">▢ outlined cell = as‑of date equals the service month (first snapshot)</span>
+            <span style="margin-left:18px;">Top row = all selected facilities, blended</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-trend" class="tabpanel" style="display:none;">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Collection curve</h2>
+              <div class="note">% collected by months elapsed since the revenue month, one line per selected service month, using data up through the as‑of date picked above.</div>
+            </div>
+          </div>
+          <div id="trendChartHolder"></div>
+        </div>
+      </div>
+
+      <div id="tab-combo" class="tabpanel" style="display:none;">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Revenue vs. Cash Receipts vs. Aging Balance</h2>
+              <div class="note">Combines your selected facilities into one total, broken out <b>by month of service</b> — use this to see how the portfolio is trending over time. (For a side‑by‑side comparison of individual facilities instead, see the Facility Summary tab.)</div>
+            </div>
+          </div>
+
+          <div class="kpis" id="comboKpis" style="margin-bottom:20px;"></div>
+
+          <div id="comboChartHolder"></div>
+
+          <div style="overflow-x:auto;margin-top:22px;">
+            <table class="summary" id="comboTable"></table>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-summary" class="tabpanel" style="display:none;">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Facility summary</h2>
+              <div class="note" id="summaryNote">Breaks the same dollars out <b>by facility</b> instead — each row is one facility, totaled across all the months of service you've selected, so you can compare facilities side by side. (For a month‑by‑month trend of the combined total instead, see the Revenue vs Cash vs Aging tab.)</div>
+            </div>
+          </div>
+          <div style="overflow-x:auto;"><table class="summary" id="summaryTable"></table></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------------------------------------------------
+     CONFIG
+  --------------------------------------------------------- */
+  var PAYER_COLUMNS = [
+    {key:'allGroups', header:'All  Groups', label:'All Groups'},
+    {key:'medicare', header:'Medicare', label:'Medicare'},
+    {key:'neMedicaid', header:'NE Medicaid', label:'NE Medicaid'},
+    {key:'kyMedicaid', header:'Kentucky Medicaid', label:'Kentucky Medicaid'},
+    {key:'okMedicaid', header:'OK Medicaid', label:'OK Medicaid'},
+    {key:'privatePay', header:'Private Pay', label:'Private Pay'},
+    {key:'hmo', header:'HMO/Private Insurance', label:'HMO / Private Insurance'},
+    {key:'hospice', header:'Hospice', label:'Hospice'},
+    {key:'veterans', header:'Veterans', label:'Veterans'},
+    {key:'mltcMedicaid', header:'MLTC Medicaid', label:'MLTC Medicaid'},
+    {key:'respite', header:'Respite', label:'Respite'},
+    {key:'budget', header:'Budget', label:'Budget (target)'}
+  ];
+  // Options shown in the sidebar payer picker: NE / Kentucky / OK Medicaid are combined
+  // into a single "Medicaid" line here, but the underlying dollar figures for all three
+  // are still summed (and their % Collected values still revenue-weighted) wherever this
+  // combined key is used — nothing from the source columns is dropped.
+  var MEDICAID_COMBO_KEYS = ['neMedicaid','kyMedicaid','okMedicaid'];
+  var PAYER_OPTIONS = [
+    {key:'allGroups', label:'All Groups'},
+    {key:'medicare', label:'Medicare'},
+    {key:'medicaidCombined', label:'Medicaid (NE + KY + OK)'},
+    {key:'privatePay', label:'Private Pay'},
+    {key:'hmo', label:'HMO / Private Insurance'},
+    {key:'hospice', label:'Hospice'},
+    {key:'veterans', label:'Veterans'},
+    {key:'mltcMedicaid', label:'MLTC Medicaid'},
+    {key:'respite', label:'Respite'},
+    {key:'budget', label:'Budget (target)'}
+  ];
+  function payerKeysFor(payerKey){
+    return payerKey==='medicaidCombined' ? MEDICAID_COMBO_KEYS : [payerKey];
+  }
+  var MONTH_IDX = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+  var MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function normHeader(h){
+    return String(h||'').replace(/\s+/g,' ').trim().toLowerCase();
+  }
+
+  /* ---------------------------------------------------------
+     STATE
+  --------------------------------------------------------- */
+  var state = {
+    rows: [],              // flat parsed records
+    facilities: [],        // [{code,facility,company}]
+    selectedFacilities: new Set(),
+    payer: 'allGroups',
+    selectedMonths: new Set(),   // shared "months of service" tile selection (multi), used by every tab
+    selectedAsOf: null,          // shared "as-of date" tile selection (single), used by every tab
+    summarySort: {col:'delta', dir:'desc'},
+    fileName: '', fileRows: 0,
+    liveMode: false   // true once we've confirmed a backend (server.js) is serving this page
+  };
+
+  /* ---------------------------------------------------------
+     PARSING
+  --------------------------------------------------------- */
+  function parseWorkbook(arrayBuffer, fileName){
+    var wb = XLSX.read(arrayBuffer, {type:'array', cellDates:true});
+    var sheetName = wb.SheetNames.indexOf('Sheet1') >= 0 ? 'Sheet1' : wb.SheetNames[0];
+    var ws = wb.Sheets[sheetName];
+    var grid = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
+    if(!grid.length){ throw new Error('The selected sheet appears to be empty.'); }
+
+    var headerRow = grid[0].map(normHeader);
+    function col(name){ return headerRow.indexOf(normHeader(name)); }
+
+    var idx = {
+      company: col('Company'),
+      metric: col('Metric'),
+      monthRaw: col('Month Raw'),
+      asOf: col('As Of'),
+      month: col('Month'),
+      year: col('Year'),
+      code: col('Code'),
+      facility: col('Facility')
+    };
+    var payerIdx = PAYER_COLUMNS.map(function(p){ return col(p.header); });
+
+    if(idx.company < 0 || idx.metric < 0 || idx.facility < 0){
+      throw new Error('This file does not look like the expected AR Collections layout (missing Company / Metric / Facility columns).');
+    }
+
+    var records = [];
+    for(var r=1; r<grid.length; r++){
+      var row = grid[r];
+      if(!row || row[idx.company] == null || row[idx.company] === '') continue;
+      var monthAbbr = row[idx.month];
+      var year = row[idx.year];
+      if(monthAbbr === 'Total' || year === 'Total') continue; // skip rollup rows
+      if(!(monthAbbr in MONTH_IDX)) continue;
+      var asOfVal = row[idx.asOf];
+      var asOfDate = (asOfVal instanceof Date) ? asOfVal : null;
+      if(!asOfDate) continue;
+
+      var values = {};
+      for(var p=0; p<PAYER_COLUMNS.length; p++){
+        var ci = payerIdx[p];
+        var v = ci >= 0 ? row[ci] : null;
+        values[PAYER_COLUMNS[p].key] = (typeof v === 'number') ? v : null;
+      }
+
+      records.push({
+        company: row[idx.company],
+        metric: row[idx.metric],
+        facility: row[idx.facility],
+        code: row[idx.code],
+        monthAbbr: monthAbbr,
+        year: Number(year),
+        cohortKey: Number(year)*12 + MONTH_IDX[monthAbbr],
+        asOfDate: asOfDate,
+        asOfKey: asOfDate.getFullYear()*12 + asOfDate.getMonth(),
+        values: values
+      });
+    }
+
+    if(!records.length){
+      throw new Error('No usable rows were found — check that the sheet has Month/Year/As Of columns populated.');
+    }
+
+    state.rows = records;
+    state.fileName = fileName;
+    state.fileRows = records.length;
+    buildFacilityList();
+    buildIndex();
+  }
+
+  var byFacCohortAsOf = {}; // facility -> cohortKey -> asOfKey -> {metric: values}
+
+  function buildIndex(){
+    byFacCohortAsOf = {};
+    state.rows.forEach(function(rec){
+      var f = byFacCohortAsOf[rec.facility] || (byFacCohortAsOf[rec.facility] = {});
+      var c = f[rec.cohortKey] || (f[rec.cohortKey] = {});
+      var a = c[rec.asOfKey] || (c[rec.asOfKey] = {});
+      a[rec.metric] = rec.values;
+      a.__asOfDate = rec.asOfDate;
+      a.__monthAbbr = rec.monthAbbr;
+      a.__year = rec.year;
+    });
+  }
+
+  function buildFacilityList(){
+    var map = {};
+    state.rows.forEach(function(rec){
+      if(!map[rec.facility]){
+        map[rec.facility] = {facility:rec.facility, code:rec.code, company:rec.company};
+      }
+    });
+    state.facilities = Object.keys(map).sort().map(function(k){return map[k];});
+    state.selectedFacilities = new Set(state.facilities.map(function(f){return f.facility;}));
+  }
+
+  /* ---------------------------------------------------------
+     DERIVED HELPERS
+  --------------------------------------------------------- */
+  function allCohortKeys(){
+    var s = new Set();
+    state.rows.forEach(function(r){ if(state.selectedFacilities.has(r.facility)) s.add(r.cohortKey); });
+    return Array.from(s).sort(function(a,b){return a-b;});
+  }
+  function allAsOfKeys(){
+    var s = new Set();
+    state.rows.forEach(function(r){ if(state.selectedFacilities.has(r.facility)) s.add(r.asOfKey); });
+    return Array.from(s).sort(function(a,b){return a-b;});
+  }
+  function keyLabel(k){
+    var y = Math.floor(k/12), m = k - y*12;
+    return MONTH_ABBR[m] + ' ' + y;
+  }
+
+  // % collected for a single facility/cohort/as-of node, revenue-weighted across
+  // whichever payer column(s) the selected payer maps to (1 for a normal payer,
+  // 3 for the combined Medicaid option).
+  function getPctForNode(node, payerKey){
+    if(!node) return null;
+    var keys = payerKeysFor(payerKey);
+    var num=0, den=0, any=false;
+    keys.forEach(function(k){
+      var pct = node['% Collected'] ? node['% Collected'][k] : null;
+      var rev = node['Revenue'] ? node['Revenue'][k] : null;
+      if(pct == null) return;
+      any = true;
+      if(rev != null && rev > 0){ num += pct*rev; den += rev; }
+      else { num += pct; den += 1; }
+    });
+    return (any && den>0) ? num/den : null;
+  }
+
+  // Total revenue for a node across whichever payer column(s) the selected payer maps to.
+  function getRevForNode(node, payerKey){
+    if(!node || !node['Revenue']) return null;
+    var keys = payerKeysFor(payerKey);
+    var sum=0, any=false;
+    keys.forEach(function(k){
+      var v = node['Revenue'][k];
+      if(v != null){ sum += v; any = true; }
+    });
+    return any ? sum : null;
+  }
+
+  // weighted % collected across selected facilities for a given cohort/asOf/payer
+  function blendedPct(cohortKey, asOfKey, payerKey){
+    var num = 0, den = 0, any = false;
+    state.selectedFacilities.forEach(function(fac){
+      var node = byFacCohortAsOf[fac] && byFacCohortAsOf[fac][cohortKey] && byFacCohortAsOf[fac][cohortKey][asOfKey];
+      if(!node) return;
+      var pct = getPctForNode(node, payerKey);
+      var rev = getRevForNode(node, payerKey);
+      if(pct == null) return;
+      any = true;
+      if(rev != null && rev > 0){
+        num += pct * rev; den += rev;
+      } else {
+        // fall back to simple average weight of 1 if no revenue figure available
+        num += pct; den += 1;
+      }
+    });
+    if(!any || den === 0) return null;
+    return num/den;
+  }
+
+  function colorForPct(v){
+    if(v == null) return null;
+    v = Math.max(0, Math.min(100, v));
+    var stops = [
+      {p:0,  c:[193,80,59]},
+      {p:50, c:[217,155,43]},
+      {p:80, c:[143,201,58]},
+      {p:100,c:[15,107,76]}
+    ];
+    for(var i=0;i<stops.length-1;i++){
+      var a=stops[i], b=stops[i+1];
+      if(v>=a.p && v<=b.p){
+        var t=(v-a.p)/(b.p-a.p);
+        var c=[0,1,2].map(function(k){return Math.round(a.c[k]+(b.c[k]-a.c[k])*t);});
+        return 'rgb('+c.join(',')+')';
+      }
+    }
+    return 'rgb('+stops[stops.length-1].c.join(',')+')';
+  }
+
+  function fmtPct(v){ return v==null ? '—' : v.toFixed(1)+'%'; }
+
+  /* ---------------------------------------------------------
+     RENDER: SIDEBAR
+  --------------------------------------------------------- */
+  function renderPayerList(){
+    var el = document.getElementById('payerList');
+    el.innerHTML = '';
+    PAYER_OPTIONS.forEach(function(p){
+      var d = document.createElement('label');
+      d.className = 'payer-option' + (state.payer===p.key ? ' active' : '');
+      d.innerHTML = '<input type="radio" name="payer" value="'+p.key+'"' + (state.payer===p.key?' checked':'') + '><span>'+p.label+'</span>';
+      d.addEventListener('click', function(){
+        state.payer = p.key;
+        renderPayerList();
+        renderAll();
+      });
+      el.appendChild(d);
+    });
+  }
+
+  function renderFacilityList(filterText){
+    var el = document.getElementById('facilityList');
+    el.innerHTML = '';
+    var ft = (filterText||'').toLowerCase();
+    state.facilities.forEach(function(f){
+      var hay = (f.facility+' '+f.code+' '+f.company).toLowerCase();
+      if(ft && hay.indexOf(ft) === -1) return;
+      var row = document.createElement('label');
+      row.className = 'facility-row';
+      var checked = state.selectedFacilities.has(f.facility);
+      row.innerHTML = '<input type="checkbox"'+(checked?' checked':'')+'><span class="fname">'+f.facility+'</span><span class="fcode">'+(f.code||'')+'</span>';
+      row.querySelector('input').addEventListener('change', function(e){
+        if(e.target.checked) state.selectedFacilities.add(f.facility);
+        else state.selectedFacilities.delete(f.facility);
+        document.getElementById('facCount').textContent = '('+state.selectedFacilities.size+'/'+state.facilities.length+')';
+        renderAll();
+      });
+      el.appendChild(row);
+    });
+    document.getElementById('facCount').textContent = '('+state.selectedFacilities.size+'/'+state.facilities.length+')';
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: KPI STRIP
+  --------------------------------------------------------- */
+  function renderKPIs(){
+    var el = document.getElementById('kpiStrip');
+    var cohorts = allCohortKeys(), asOfs = allAsOfKeys();
+    var cards = [];
+
+    cards.push({lbl:'Facilities selected', val: state.selectedFacilities.size + ' / ' + state.facilities.length});
+
+    if(cohorts.length && asOfs.length){
+      cards.push({lbl:'Revenue months covered', val: keyLabel(cohorts[0]) + ' – ' + keyLabel(cohorts[cohorts.length-1])});
+
+      var latestAsOf = asOfs[asOfs.length-1];
+      var priorAsOf = asOfs.length>1 ? asOfs[asOfs.length-2] : null;
+
+      // Portfolio "current" rate: weighted avg pct-collected across all cohorts that have a value at latest as-of
+      function snapshotRate(asOfKey){
+        var num=0, den=0;
+        cohorts.forEach(function(ck){
+          state.selectedFacilities.forEach(function(fac){
+            var node = byFacCohortAsOf[fac] && byFacCohortAsOf[fac][ck] && byFacCohortAsOf[fac][ck][asOfKey];
+            if(!node) return;
+            var pct = getPctForNode(node, state.payer);
+            var rev = getRevForNode(node, state.payer);
+            if(pct==null) return;
+            if(rev!=null && rev>0){ num+=pct*rev; den+=rev; } else { num+=pct; den+=1; }
+          });
+        });
+        return den>0 ? num/den : null;
+      }
+      var curRate = snapshotRate(latestAsOf);
+      var priorRate = priorAsOf!=null ? snapshotRate(priorAsOf) : null;
+
+      cards.push({lbl:'Latest as‑of date', val: keyLabel(latestAsOf)});
+
+      var deltaTxt = '', deltaClass='flat';
+      if(curRate!=null && priorRate!=null){
+        var d = curRate - priorRate;
+        deltaClass = d>0.05?'up':(d<-0.05?'down':'flat');
+        deltaTxt = (d>=0?'+':'') + d.toFixed(1) + ' pts vs ' + keyLabel(priorAsOf);
+      }
+      cards.push({lbl:'Overall % collected ('+payerLabel(state.payer)+')', val: fmtPct(curRate), delta: deltaTxt, deltaClass: deltaClass});
+    } else {
+      cards.push({lbl:'Revenue months covered', val:'—'});
+      cards.push({lbl:'Latest as‑of date', val:'—'});
+      cards.push({lbl:'Overall % collected', val:'—'});
+    }
+
+    el.innerHTML = cards.map(function(c){
+      return '<div class="kpi-card"><div class="lbl">'+c.lbl+'</div><div class="val mono">'+c.val+'</div>' +
+        (c.delta ? '<div class="delta '+c.deltaClass+'">'+c.delta+'</div>' : '') + '</div>';
+    }).join('');
+  }
+
+  function payerLabel(key){
+    var p = PAYER_OPTIONS.filter(function(x){return x.key===key;})[0];
+    return p ? p.label : key;
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: GLOBAL FILTERS (shared by every tab)
+  --------------------------------------------------------- */
+  function renderGlobalPickers(){
+    var asOfs = allAsOfKeys();
+    if(state.selectedAsOf==null || asOfs.indexOf(state.selectedAsOf)===-1){
+      state.selectedAsOf = asOfs.length ? asOfs[asOfs.length-1] : null;
+    }
+    var asOfEl = document.getElementById('globalAsOfPicker');
+    asOfEl.innerHTML = asOfs.map(function(ak){
+      var on = ak===state.selectedAsOf;
+      return '<button class="cohort-chip'+(on?' on':'')+'" data-ak="'+ak+'">'+keyLabel(ak)+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(asOfEl.querySelectorAll('.cohort-chip'), function(btn){
+      btn.addEventListener('click', function(){
+        var ak = Number(btn.getAttribute('data-ak'));
+        if(ak !== state.selectedAsOf){
+          state.selectedAsOf = ak;
+          renderAll();
+        }
+      });
+    });
+
+    var cohorts = allCohortKeys();
+    if(state.selectedMonths.size === 0 && cohorts.length){
+      cohorts.slice(-6).forEach(function(c){ state.selectedMonths.add(c); });
+    }
+    var moEl = document.getElementById('globalMonthsPicker');
+    moEl.innerHTML = cohorts.map(function(ck){
+      var on = state.selectedMonths.has(ck);
+      return '<button class="cohort-chip'+(on?' on':'')+'" data-ck="'+ck+'">'+keyLabel(ck)+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(moEl.querySelectorAll('.cohort-chip'), function(btn){
+      btn.addEventListener('click', function(){
+        var ck = Number(btn.getAttribute('data-ck'));
+        if(state.selectedMonths.has(ck)) state.selectedMonths.delete(ck);
+        else state.selectedMonths.add(ck);
+        renderAll();
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: TRIANGLE (facility × months of service, for one as-of date)
+  --------------------------------------------------------- */
+  function renderTriangle(){
+    var table = document.getElementById('triangleTable');
+    var asOf = state.selectedAsOf;
+    if(asOf==null){
+      table.innerHTML = '<tr><td class="empty-note">No data for the current facility selection.</td></tr>';
+      return;
+    }
+    var cohorts = allCohortKeys().filter(function(ck){ return state.selectedMonths.has(ck); })
+      .sort(function(a,b){return a-b;});
+    var facs = state.facilities.filter(function(f){ return state.selectedFacilities.has(f.facility); });
+
+    if(!cohorts.length){
+      table.innerHTML = '<tr><td class="empty-note">Pick at least one month of service above.</td></tr>';
+      return;
+    }
+    if(!facs.length){
+      table.innerHTML = '<tr><td class="empty-note">Select at least one facility in the sidebar.</td></tr>';
+      return;
+    }
+
+    var thead = '<thead><tr><th>Facility</th>' + cohorts.map(function(c){return '<th>'+keyLabel(c)+'</th>';}).join('') + '</tr></thead>';
+
+    var blendedRow = '<tr class="blended-row"><th>All selected (blended)</th>' + cohorts.map(function(ck){
+      if(ck > asOf) return '<td class="empty">·</td>';
+      var v = blendedPct(ck, asOf, state.payer);
+      if(v==null) return '<td class="empty">—</td>';
+      var cls = 'cell' + (ck===asOf ? ' cur' : '');
+      return '<td class="'+cls+'" style="background:'+colorForPct(v)+'">'+v.toFixed(1)+'%</td>';
+    }).join('') + '</tr>';
+
+    var rows = facs.map(function(f){
+      var cells = cohorts.map(function(ck){
+        if(ck > asOf) return '<td class="empty">·</td>';
+        var node = byFacCohortAsOf[f.facility] && byFacCohortAsOf[f.facility][ck] && byFacCohortAsOf[f.facility][ck][asOf];
+        var v = getPctForNode(node, state.payer);
+        if(v==null) return '<td class="empty">—</td>';
+        var cls = 'cell' + (ck===asOf ? ' cur' : '');
+        return '<td class="'+cls+'" style="background:'+colorForPct(v)+'">'+v.toFixed(1)+'%</td>';
+      }).join('');
+      return '<tr><th>'+f.facility+'<span class="fc-code">'+(f.code||'')+'</span></th>'+cells+'</tr>';
+    }).join('');
+
+    table.innerHTML = thead + '<tbody>' + blendedRow + rows + '</tbody>';
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: TREND (collection curve)
+  --------------------------------------------------------- */
+  function renderTrend(){
+    var holder = document.getElementById('trendChartHolder');
+    var cohorts = Array.from(state.selectedMonths).sort(function(a,b){return a-b;});
+    var asOfs = allAsOfKeys().filter(function(ak){ return state.selectedAsOf==null || ak<=state.selectedAsOf; });
+    if(!cohorts.length || !asOfs.length){
+      holder.innerHTML = '<div class="empty-note">Pick one or more months of service above to plot their collection curve.</div>';
+      return;
+    }
+
+    // build series: x = months elapsed (0..N), y = pct
+    var palette = ['#0F6B4C','#17A673','#D99B2B','#C1503B','#5B6B62','#2E86AB','#8E5FB0','#B98B4E'];
+    var series = cohorts.map(function(ck, i){
+      var pts = [];
+      asOfs.forEach(function(ak){
+        if(ak < ck) return;
+        var v = blendedPct(ck, ak, state.payer);
+        if(v==null) return;
+        pts.push({x: ak-ck, y:v});
+      });
+      return {label: keyLabel(ck), color: palette[i%palette.length], pts: pts};
+    }).filter(function(s){return s.pts.length;});
+
+    if(!series.length){
+      holder.innerHTML = '<div class="empty-note">No data for the selected months of service, up through the chosen as‑of date.</div>';
+      return;
+    }
+
+    var maxX = 0;
+    series.forEach(function(s){ s.pts.forEach(function(p){ if(p.x>maxX) maxX=p.x; }); });
+    maxX = Math.max(maxX,1);
+
+    var W=Math.max(640, holder.clientWidth||760), H=380, padL=44,padR=20,padT=16,padB=36;
+    var plotW = W-padL-padR, plotH = H-padT-padB;
+    function xPix(x){ return padL + (x/maxX)*plotW; }
+    function yPix(y){ return padT + (1-(y/100))*plotH; }
+
+    var svg = '<svg class="chart" width="100%" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">';
+    // gridlines
+    [0,25,50,75,100].forEach(function(g){
+      svg += '<line x1="'+padL+'" y1="'+yPix(g)+'" x2="'+(W-padR)+'" y2="'+yPix(g)+'" stroke="#DEE5DA" stroke-width="1"/>';
+      svg += '<text x="'+(padL-8)+'" y="'+(yPix(g)+4)+'" font-size="10" text-anchor="end">'+g+'%</text>';
+    });
+    for(var xg=0; xg<=maxX; xg+= Math.max(1,Math.ceil(maxX/10))){
+      svg += '<text x="'+xPix(xg)+'" y="'+(H-padB+16)+'" font-size="10" text-anchor="middle">+'+xg+'mo</text>';
+    }
+    // lines
+    series.forEach(function(s){
+      var d = s.pts.map(function(p,i){ return (i===0?'M':'L')+xPix(p.x).toFixed(1)+','+yPix(p.y).toFixed(1); }).join(' ');
+      svg += '<path d="'+d+'" fill="none" stroke="'+s.color+'" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"/>';
+      s.pts.forEach(function(p){
+        svg += '<circle cx="'+xPix(p.x).toFixed(1)+'" cy="'+yPix(p.y).toFixed(1)+'" r="2.6" fill="'+s.color+'"><title>'+s.label+' · +'+p.x+'mo · '+p.y.toFixed(1)+'%</title></circle>';
+      });
+    });
+    svg += '</svg>';
+
+    var legend = '<div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;">' + series.map(function(s){
+      return '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);"><span style="width:10px;height:10px;border-radius:2px;background:'+s.color+';display:inline-block;"></span>'+s.label+'</div>';
+    }).join('') + '</div>';
+
+    holder.innerHTML = svg + legend;
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: REVENUE vs CASH RECEIPTS vs AGING BALANCE
+  --------------------------------------------------------- */
+  function sumMetric(cohortKey, asOfKey, payerKey, metricName, facList){
+    var sum = 0, any = false;
+    var facs = facList || state.selectedFacilities;
+    var keys = payerKeysFor(payerKey);
+    facs.forEach(function(fac){
+      var node = byFacCohortAsOf[fac] && byFacCohortAsOf[fac][cohortKey] && byFacCohortAsOf[fac][cohortKey][asOfKey];
+      if(!node || !node[metricName]) return;
+      keys.forEach(function(k){
+        var v = node[metricName][k];
+        if(v == null) return;
+        any = true; sum += v;
+      });
+    });
+    return any ? sum : null;
+  }
+
+  function fmtMoney(v){
+    if(v == null) return '—';
+    var sign = v < 0 ? '-' : '';
+    var abs = Math.abs(v);
+    if(abs >= 1e6) return sign+'$'+(abs/1e6).toFixed(2)+'M';
+    if(abs >= 1e3) return sign+'$'+(abs/1e3).toFixed(1)+'K';
+    return sign+'$'+abs.toFixed(0);
+  }
+  function fmtMoneyFull(v){
+    if(v == null) return '—';
+    return (v<0?'-':'')+'$'+Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0});
+  }
+
+  function renderCombo(){
+    var kpiEl = document.getElementById('comboKpis');
+    var holder = document.getElementById('comboChartHolder');
+    var tableEl = document.getElementById('comboTable');
+    var asOf = state.selectedAsOf;
+
+    if(asOf==null || !state.selectedFacilities.size){
+      kpiEl.innerHTML = '';
+      holder.innerHTML = '<div class="empty-note">Select at least one facility, then pick months of service and an as‑of date above.</div>';
+      tableEl.innerHTML = '';
+      return;
+    }
+
+    var cohorts = allCohortKeys().filter(function(ck){ return state.selectedMonths.has(ck) && ck <= asOf; });
+    var data = cohorts.map(function(ck){
+      var rev = sumMetric(ck, asOf, state.payer, 'Revenue');
+      var cashRaw = sumMetric(ck, asOf, state.payer, 'Cash Receipts');
+      var cash = cashRaw==null ? null : -cashRaw;
+      var aging = sumMetric(ck, asOf, state.payer, 'Aging Bals');
+      var pct = blendedPct(ck, asOf, state.payer);
+      return {ck:ck, rev:rev, cash:cash, aging:aging, pct:pct};
+    }).filter(function(d){ return d.rev!=null || d.cash!=null || d.aging!=null; });
+
+    // KPIs: totals across the shown months
+    var totRev=0, totCash=0, totAging=0, hasAny=false;
+    data.forEach(function(d){
+      if(d.rev!=null){ totRev+=d.rev; hasAny=true; }
+      if(d.cash!=null){ totCash+=d.cash; }
+      if(d.aging!=null){ totAging+=d.aging; }
+    });
+    var overallPct = totRev>0 ? (totCash/totRev*100) : null;
+    kpiEl.innerHTML = [
+      {lbl:'Total revenue (as of '+keyLabel(asOf)+')', val: hasAny?fmtMoney(totRev):'—'},
+      {lbl:'Total cash collected', val: hasAny?fmtMoney(totCash):'—'},
+      {lbl:'Total aging balance', val: hasAny?fmtMoney(totAging):'—'},
+      {lbl:'Blended % collected', val: fmtPct(overallPct)}
+    ].map(function(c){
+      return '<div class="kpi-card"><div class="lbl">'+c.lbl+'</div><div class="val mono">'+c.val+'</div></div>';
+    }).join('');
+
+    if(!data.length){
+      holder.innerHTML = '<div class="empty-note">No Revenue, Cash Receipts or Aging Balance figures for the selected months of service.</div>';
+      tableEl.innerHTML = '';
+      return;
+    }
+    data.sort(function(a,b){ return a.ck-b.ck; });
+
+    // Grouped bar chart
+    var W = Math.max(680, holder.clientWidth||760), H=380, padL=64, padR=20, padT=16, padB=64;
+    var plotW = W-padL-padR, plotH = H-padT-padB;
+    var maxV = 0;
+    data.forEach(function(d){ [d.rev,d.cash,d.aging].forEach(function(v){ if(v!=null && Math.abs(v)>maxV) maxV=Math.abs(v); }); });
+    maxV = maxV || 1;
+    function yPix(v){ return padT + plotH - (Math.max(0,v)/maxV)*plotH; }
+
+    var n = data.length;
+    var groupW = plotW/n;
+    var barW = Math.min(22, groupW*0.24);
+    var colors = {rev:'#3B4A42', cash:'#17A673', aging:'#C1503B'};
+
+    var svg = '<svg class="chart" width="100%" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">';
+    [0,0.25,0.5,0.75,1].forEach(function(t){
+      var v = maxV*t, y=yPix(v);
+      svg += '<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="#DEE5DA" stroke-width="1"/>';
+      svg += '<text x="'+(padL-8)+'" y="'+(y+4)+'" font-size="10" text-anchor="end">'+fmtMoney(v)+'</text>';
+    });
+    data.forEach(function(d,i){
+      var gx = padL + i*groupW + groupW/2;
+      var bars = [
+        {v:d.rev, c:colors.rev, dx:-barW*1.1},
+        {v:d.cash, c:colors.cash, dx:0},
+        {v:d.aging, c:colors.aging, dx:barW*1.1}
+      ];
+      bars.forEach(function(b){
+        if(b.v==null) return;
+        var x = gx + b.dx - barW/2;
+        var y = yPix(b.v);
+        var h = (padT+plotH) - y;
+        svg += '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+Math.max(0,h).toFixed(1)+'" fill="'+b.c+'" rx="2"><title>'+keyLabel(d.ck)+' · '+fmtMoneyFull(b.v)+'</title></rect>';
+      });
+      svg += '<text x="'+gx+'" y="'+(padT+plotH+18)+'" font-size="10" text-anchor="end" transform="rotate(-35 '+gx+' '+(padT+plotH+18)+')">'+keyLabel(d.ck)+'</text>';
+    });
+    svg += '</svg>';
+
+    var legend = '<div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:8px;">' +
+      ['rev|Revenue','cash|Cash collected','aging|Aging balance'].map(function(s){
+        var parts = s.split('|');
+        return '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);"><span style="width:10px;height:10px;border-radius:2px;background:'+colors[parts[0]]+';display:inline-block;"></span>'+parts[1]+'</div>';
+      }).join('') + '</div>';
+
+    holder.innerHTML = svg + legend;
+
+    // Table
+    var thead = '<thead><tr><th>Month of service</th><th class="num">Revenue</th><th class="num">Cash collected</th><th class="num">Aging balance</th><th class="num">% collected</th></tr></thead>';
+    var rows = data.map(function(d){
+      return '<tr><td>'+keyLabel(d.ck)+'</td>' +
+        '<td class="num">'+fmtMoneyFull(d.rev)+'</td>' +
+        '<td class="num">'+fmtMoneyFull(d.cash)+'</td>' +
+        '<td class="num">'+fmtMoneyFull(d.aging)+'</td>' +
+        '<td class="num">'+fmtPct(d.pct)+'</td></tr>';
+    }).join('');
+    tableEl.innerHTML = thead + '<tbody>' + rows + '</tbody>';
+  }
+
+
+  /* ---------------------------------------------------------
+     RENDER: SUMMARY TABLE — each facility's totals for the
+     selected months of service, as of the selected snapshot
+  --------------------------------------------------------- */
+  function renderSummary(){
+    var table = document.getElementById('summaryTable');
+    var note = document.getElementById('summaryNote');
+    var asOf = state.selectedAsOf;
+    var cohorts = allCohortKeys().filter(function(ck){ return state.selectedMonths.has(ck) && ck<=asOf; });
+    var intro = 'Each row is one facility, totaled across the selected months of service — compares facilities side by side. ';
+
+    if(asOf==null || !cohorts.length){
+      table.innerHTML = '';
+      note.innerHTML = intro + 'Pick months of service and an as‑of date above to see totals.';
+      return;
+    }
+    note.innerHTML = intro + 'Showing ' + cohorts.map(keyLabel).join(', ') + ' as of ' + keyLabel(asOf) + ' · payer: ' + payerLabel(state.payer);
+
+    var data = [];
+    state.facilities.forEach(function(f){
+      if(!state.selectedFacilities.has(f.facility)) return;
+      var rev=0, cash=0, aging=0, hasAny=false;
+      cohorts.forEach(function(ck){
+        var r = sumMetric(ck, asOf, state.payer, 'Revenue', [f.facility]);
+        var c = sumMetric(ck, asOf, state.payer, 'Cash Receipts', [f.facility]);
+        var a = sumMetric(ck, asOf, state.payer, 'Aging Bals', [f.facility]);
+        if(r!=null){ rev+=r; hasAny=true; }
+        if(c!=null){ cash+=(-c); }
+        if(a!=null){ aging+=a; }
+      });
+      if(!hasAny) return;
+      var pct = rev>0 ? (cash/rev*100) : null;
+      data.push({facility:f.facility, code:f.code, rev:rev, cash:cash, aging:aging, pct:pct});
+    });
+
+    // portfolio total row
+    var totRev=0, totCash=0, totAging=0;
+    data.forEach(function(d){ totRev+=d.rev; totCash+=d.cash; totAging+=d.aging; });
+    var totPct = totRev>0 ? (totCash/totRev*100) : null;
+
+    var sortCol = state.summarySort.col, dir = state.summarySort.dir;
+    data.sort(function(a,b){
+      var va=a[sortCol], vb=b[sortCol];
+      if(va==null && vb==null) return 0;
+      if(va==null) return 1;
+      if(vb==null) return -1;
+      if(typeof va === 'string') return dir==='asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+      return dir==='asc' ? va-vb : vb-va;
+    });
+
+    var cols = [
+      {key:'facility', label:'Facility', num:false},
+      {key:'code', label:'Code', num:true},
+      {key:'rev', label:'Revenue', num:true},
+      {key:'cash', label:'Cash collected', num:true},
+      {key:'aging', label:'Aging balance', num:true},
+      {key:'pct', label:'% Collected', num:true}
+    ];
+    var thead = '<thead><tr>' + cols.map(function(c){
+      var arrow = state.summarySort.col===c.key ? (dir==='asc'?' ▲':' ▼') : '';
+      return '<th data-col="'+c.key+'"'+(c.num?' class="num"':'')+'>'+c.label+arrow+'</th>';
+    }).join('') + '</tr></thead>';
+
+    var rows = data.map(function(d){
+      return '<tr><td>'+d.facility+'</td><td class="num">'+(d.code||'')+'</td>' +
+        '<td class="num">'+fmtMoneyFull(d.rev)+'</td>' +
+        '<td class="num">'+fmtMoneyFull(d.cash)+'</td>' +
+        '<td class="num">'+fmtMoneyFull(d.aging)+'</td>' +
+        '<td class="num">'+fmtPct(d.pct)+'</td></tr>';
+    }).join('');
+
+    var totalRow = '<tr class="total-row"><th>All selected facilities</th><th></th>' +
+      '<td class="num">'+fmtMoneyFull(totRev)+'</td>' +
+      '<td class="num">'+fmtMoneyFull(totCash)+'</td>' +
+      '<td class="num">'+fmtMoneyFull(totAging)+'</td>' +
+      '<td class="num">'+fmtPct(totPct)+'</td></tr>';
+
+    table.innerHTML = thead + '<tbody>' + rows + totalRow + '</tbody>';
+    Array.prototype.forEach.call(table.querySelectorAll('thead th'), function(th){
+      th.addEventListener('click', function(){
+        var col = th.getAttribute('data-col');
+        if(!col) return;
+        if(state.summarySort.col===col) state.summarySort.dir = state.summarySort.dir==='asc'?'desc':'asc';
+        else state.summarySort = {col:col, dir:'desc'};
+        renderSummary();
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------
+     TABS
+  --------------------------------------------------------- */
+  function initTabs(){
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function(btn){
+      btn.addEventListener('click', function(){
+        Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function(b){b.classList.remove('active');});
+        btn.classList.add('active');
+        Array.prototype.forEach.call(document.querySelectorAll('.tabpanel'), function(p){p.style.display='none';});
+        document.getElementById('tab-'+btn.getAttribute('data-tab')).style.display='block';
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------
+     MASTER RENDER
+  --------------------------------------------------------- */
+  function renderAll(){
+    renderKPIs();
+    renderGlobalPickers();
+    renderTriangle();
+    renderTrend();
+    renderCombo();
+    renderSummary();
+  }
+
+  /* ---------------------------------------------------------
+     FILE LOADING
+  --------------------------------------------------------- */
+  function showToast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 3200);
+  }
+
+  var pendingPublishFile = null;
+
+  function handleFile(file){
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        state.selectedMonths = new Set(); // reset so global picker re-defaults
+        state.selectedAsOf = null;
+        parseWorkbook(e.target.result, file.name);
+        document.getElementById('dropzone').classList.add('hidden');
+        document.getElementById('mainContent').classList.add('ready');
+        document.getElementById('fileChip').style.display = 'flex';
+        document.getElementById('fileName').textContent = file.name;
+        var asOfs = allAsOfKeys();
+        document.getElementById('fileMeta').textContent = state.fileRows.toLocaleString() + ' rows · ' + state.facilities.length + ' facilities' + (asOfs.length ? ' · through ' + keyLabel(asOfs[asOfs.length-1]) : '');
+        document.getElementById('topSub').textContent = state.facilities.length + ' facilities loaded from ' + file.name;
+        renderPayerList();
+        renderFacilityList('');
+        renderAll();
+        showToast('Loaded ' + state.fileRows.toLocaleString() + ' rows from ' + file.name);
+        maybeOfferPublish(file);
+      }catch(err){
+        alert('Could not read this file: ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  /* ---------------------------------------------------------
+     LIVE MODE — only active when this page is served by
+     server.js (see /api/dataset). Falls back to local-only
+     drag & drop, exactly as before, if there's no backend.
+  --------------------------------------------------------- */
+  function hydrateServerRecords(raw){
+    return raw.map(function(rec){
+      var asOfDate = new Date(rec.asOfISO);
+      return {
+        company: rec.company, metric: rec.metric, facility: rec.facility, code: rec.code,
+        monthAbbr: rec.monthAbbr, year: rec.year,
+        cohortKey: rec.year*12 + MONTH_IDX[rec.monthAbbr],
+        asOfDate: asOfDate,
+        asOfKey: asOfDate.getFullYear()*12 + asOfDate.getMonth(),
+        values: rec.values
+      };
+    });
+  }
+
+  function applyServerPayload(payload){
+    state.selectedMonths = new Set();
+    state.selectedAsOf = null;
+    state.rows = hydrateServerRecords(payload.records);
+    state.fileName = payload.fileName;
+    state.fileRows = state.rows.length;
+    buildFacilityList();
+    buildIndex();
+    document.getElementById('dropzone').classList.add('hidden');
+    document.getElementById('mainContent').classList.add('ready');
+    document.getElementById('fileChip').style.display = 'flex';
+    document.getElementById('fileName').textContent = payload.fileName + ' (live)';
+    var asOfs = allAsOfKeys();
+    document.getElementById('fileMeta').textContent = state.fileRows.toLocaleString() + ' rows · ' + state.facilities.length + ' facilities' + (asOfs.length ? ' · through ' + keyLabel(asOfs[asOfs.length-1]) : '') + ' · updated ' + new Date(payload.uploadedAt).toLocaleString();
+    document.getElementById('topSub').textContent = state.facilities.length + ' facilities · shared live data';
+    renderPayerList();
+    renderFacilityList('');
+    renderAll();
+  }
+
+  function initLiveMode(){
+    fetch('/api/dataset').then(function(res){
+      if(!res.ok) throw new Error('no api');
+      return res.json();
+    }).then(function(payload){
+      state.liveMode = true;
+      if(payload && payload.records && payload.records.length){
+        applyServerPayload(payload);
+      } else {
+        var hint = document.getElementById('dzLiveHint');
+        if(hint) hint.style.display = 'block';
+      }
+    }).catch(function(){
+      state.liveMode = false; // no backend — behaves exactly like the standalone file
+    });
+  }
+
+  function maybeOfferPublish(file){
+    if(!state.liveMode) return;
+    pendingPublishFile = file;
+    document.getElementById('publishBar').style.display = 'flex';
+  }
+
+  function initPublishBar(){
+    document.getElementById('publishBtn').addEventListener('click', function(){
+      if(!pendingPublishFile) return;
+      var key = document.getElementById('adminKeyInput').value;
+      var fd = new FormData();
+      fd.append('file', pendingPublishFile);
+      var btn = document.getElementById('publishBtn');
+      btn.disabled = true; btn.textContent = 'Publishing…';
+      fetch('/api/upload', { method:'POST', headers:{'x-admin-key':key}, body: fd })
+        .then(function(res){ return res.json().then(function(body){ return {ok:res.ok, body:body}; }); })
+        .then(function(r){
+          btn.disabled = false; btn.textContent = 'Publish';
+          if(r.ok){
+            showToast('Published — everyone with this link now sees this data.');
+            document.getElementById('publishBar').style.display = 'none';
+            document.getElementById('adminKeyInput').value = '';
+            pendingPublishFile = null;
+          } else {
+            alert('Could not publish: ' + (r.body && r.body.error ? r.body.error : 'unknown error'));
+          }
+        })
+        .catch(function(){
+          btn.disabled = false; btn.textContent = 'Publish';
+          alert('Could not reach the server to publish.');
+        });
+    });
+    document.getElementById('dismissPublish').addEventListener('click', function(){
+      document.getElementById('publishBar').style.display = 'none';
+      pendingPublishFile = null;
+    });
+  }
+
+  function initDropzone(){
+    var dz = document.getElementById('dzBox');
+    var input = document.getElementById('fileInput');
+    ['dragenter','dragover'].forEach(function(ev){
+      dz.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); dz.classList.add('drag'); });
+      document.body.addEventListener(ev, function(e){ e.preventDefault(); });
+    });
+    ['dragleave','drop'].forEach(function(ev){
+      dz.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); dz.classList.remove('drag'); });
+    });
+    dz.addEventListener('drop', function(e){
+      var f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if(f) handleFile(f);
+    });
+    document.getElementById('dzBrowse').addEventListener('click', function(){ input.click(); });
+    document.getElementById('loadNewBtn').addEventListener('click', function(){ input.click(); });
+    input.addEventListener('change', function(){ if(input.files[0]) handleFile(input.files[0]); input.value=''; });
+
+    // allow dropping anywhere on the page once loaded, to refresh data
+    document.body.addEventListener('drop', function(e){
+      e.preventDefault();
+      var f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if(f) handleFile(f);
+    });
+  }
+
+  function initSearch(){
+    document.getElementById('facSearch').addEventListener('input', function(e){
+      renderFacilityList(e.target.value);
+    });
+    document.getElementById('facAll').addEventListener('click', function(){
+      state.selectedFacilities = new Set(state.facilities.map(function(f){return f.facility;}));
+      renderFacilityList(document.getElementById('facSearch').value);
+      renderAll();
+    });
+    document.getElementById('facNone').addEventListener('click', function(){
+      state.selectedFacilities = new Set();
+      renderFacilityList(document.getElementById('facSearch').value);
+      renderAll();
+    });
+  }
+
+  initTabs();
+  initDropzone();
+  initSearch();
+  initPublishBar();
+  initLiveMode();
+})();
+</script>
+</body>
+</html>
