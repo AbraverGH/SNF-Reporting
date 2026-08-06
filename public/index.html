@@ -378,6 +378,7 @@
 
       <div class="tabs">
         <button class="tab-btn active" data-tab="triangle">Collections By Month</button>
+        <button class="tab-btn" data-tab="byasof">Collections by As-Of-Date</button>
         <button class="tab-btn" data-tab="trend">Collection Curve</button>
         <button class="tab-btn" data-tab="combo">Revenue vs Cash vs Aging</button>
         <button class="tab-btn" data-tab="summary">Facility Summary</button>
@@ -393,6 +394,33 @@
           </div>
 
           <div class="triangle-wrap"><table class="triangle" id="triangleTable"></table></div>
+          <div class="legend">
+            <span>0%</span><div class="bar"></div><span>100%</span>
+            <span style="margin-left:18px;">▢ outlined cell = as‑of date equals the service month (first snapshot)</span>
+            <span style="margin-left:18px;">Top row = all selected facilities, blended</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-byasof" class="tabpanel" style="display:none;">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>% Collected — facility × as‑of date, for one month of service</h2>
+              <div class="note">Pick a single month of service, then choose one or more as‑of snapshots to see how that month's collections trended over time — side by side, per facility.</div>
+            </div>
+          </div>
+
+          <div class="picker-block">
+            <div class="picker-label">Month of service <span style="color:var(--ink-faint);font-weight:400;text-transform:none;">(pick one)</span></div>
+            <div class="cohort-picker" id="byAsOfMonthPicker"></div>
+          </div>
+          <div class="picker-block">
+            <div class="picker-label">As‑of dates <span style="color:var(--ink-faint);font-weight:400;text-transform:none;">(pick one or more)</span></div>
+            <div class="cohort-picker" id="byAsOfDatesPicker"></div>
+          </div>
+
+          <div class="triangle-wrap"><table class="triangle" id="byAsOfTable"></table></div>
           <div class="legend">
             <span>0%</span><div class="bar"></div><span>100%</span>
             <span style="margin-left:18px;">▢ outlined cell = as‑of date equals the service month (first snapshot)</span>
@@ -507,6 +535,8 @@
     payer: 'allGroups',
     selectedMonths: new Set(),   // shared "months of service" tile selection (multi), used by every tab
     selectedAsOf: null,          // shared "as-of date" tile selection (single), used by every tab
+    byAsOfMonth: null,           // "Collections by As-Of-Date" tab: single month of service selection
+    byAsOfDates: new Set(),      // "Collections by As-Of-Date" tab: multi as-of date selection
     summarySort: {col:'delta', dir:'desc'},
     fileName: '', fileRows: 0,
     liveMode: false   // true once we've confirmed a backend (server.js) is serving this page
@@ -894,6 +924,94 @@
   }
 
   /* ---------------------------------------------------------
+     RENDER: COLLECTIONS BY AS-OF-DATE (facility × as-of date,
+     for a single chosen month of service — the mirror of the
+     Collections By Month tab, with the picker roles swapped)
+  --------------------------------------------------------- */
+  function renderByAsOfPickers(){
+    var cohorts = allCohortKeys();
+    if(state.byAsOfMonth==null || cohorts.indexOf(state.byAsOfMonth)===-1){
+      state.byAsOfMonth = cohorts.length ? cohorts[cohorts.length-1] : null;
+    }
+    var moEl = document.getElementById('byAsOfMonthPicker');
+    moEl.innerHTML = cohorts.map(function(ck){
+      var on = ck===state.byAsOfMonth;
+      return '<button class="cohort-chip'+(on?' on':'')+'" data-ck="'+ck+'">'+keyLabel(ck)+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(moEl.querySelectorAll('.cohort-chip'), function(btn){
+      btn.addEventListener('click', function(){
+        var ck = Number(btn.getAttribute('data-ck'));
+        if(ck !== state.byAsOfMonth){
+          state.byAsOfMonth = ck;
+          renderByAsOfDate();
+        }
+      });
+    });
+
+    var asOfs = allAsOfKeys().filter(function(ak){ return state.byAsOfMonth==null || ak>=state.byAsOfMonth; });
+    if(state.byAsOfDates.size === 0 && asOfs.length){
+      asOfs.forEach(function(a){ state.byAsOfDates.add(a); });
+    }
+    var asOfEl = document.getElementById('byAsOfDatesPicker');
+    asOfEl.innerHTML = asOfs.map(function(ak){
+      var on = state.byAsOfDates.has(ak);
+      return '<button class="cohort-chip'+(on?' on':'')+'" data-ak="'+ak+'">'+keyLabel(ak)+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(asOfEl.querySelectorAll('.cohort-chip'), function(btn){
+      btn.addEventListener('click', function(){
+        var ak = Number(btn.getAttribute('data-ak'));
+        if(state.byAsOfDates.has(ak)) state.byAsOfDates.delete(ak);
+        else state.byAsOfDates.add(ak);
+        renderByAsOfDate();
+      });
+    });
+  }
+
+  function renderByAsOfDate(){
+    renderByAsOfPickers();
+    var table = document.getElementById('byAsOfTable');
+    var month = state.byAsOfMonth;
+    if(month==null){
+      table.innerHTML = '<tr><td class="empty-note">No data for the current facility selection.</td></tr>';
+      return;
+    }
+    var asOfs = allAsOfKeys().filter(function(ak){ return ak>=month && state.byAsOfDates.has(ak); })
+      .sort(function(a,b){return a-b;});
+    var facs = state.facilities.filter(function(f){ return state.selectedFacilities.has(f.facility); });
+
+    if(!asOfs.length){
+      table.innerHTML = '<tr><td class="empty-note">Pick at least one as‑of date above.</td></tr>';
+      return;
+    }
+    if(!facs.length){
+      table.innerHTML = '<tr><td class="empty-note">Select at least one facility in the sidebar.</td></tr>';
+      return;
+    }
+
+    var thead = '<thead><tr><th>Facility</th>' + asOfs.map(function(a){return '<th>'+keyLabel(a)+'</th>';}).join('') + '</tr></thead>';
+
+    var blendedRow = '<tr class="blended-row"><th>All selected (blended)</th>' + asOfs.map(function(ak){
+      var v = blendedPct(month, ak, state.payer);
+      if(v==null) return '<td class="empty">—</td>';
+      var cls = 'cell' + (ak===month ? ' cur' : '');
+      return '<td class="'+cls+'" style="background:'+colorForPct(v)+'">'+v.toFixed(1)+'%</td>';
+    }).join('') + '</tr>';
+
+    var rows = facs.map(function(f){
+      var cells = asOfs.map(function(ak){
+        var node = byFacCohortAsOf[f.facility] && byFacCohortAsOf[f.facility][month] && byFacCohortAsOf[f.facility][month][ak];
+        var v = getPctForNode(node, state.payer);
+        if(v==null) return '<td class="empty">—</td>';
+        var cls = 'cell' + (ak===month ? ' cur' : '');
+        return '<td class="'+cls+'" style="background:'+colorForPct(v)+'">'+v.toFixed(1)+'%</td>';
+      }).join('');
+      return '<tr><th>'+f.facility+'<span class="fc-code">'+(f.code||'')+'</span></th>'+cells+'</tr>';
+    }).join('');
+
+    table.innerHTML = thead + '<tbody>' + blendedRow + rows + '</tbody>';
+  }
+
+  /* ---------------------------------------------------------
      RENDER: TREND (collection curve)
   --------------------------------------------------------- */
   function renderTrend(){
@@ -1205,6 +1323,7 @@
     renderKPIs();
     renderGlobalPickers();
     renderTriangle();
+    renderByAsOfDate();
     renderTrend();
     renderCombo();
     renderSummary();
@@ -1229,6 +1348,8 @@
       try{
         state.selectedMonths = new Set(); // reset so global picker re-defaults
         state.selectedAsOf = null;
+        state.byAsOfMonth = null;         // reset so the As-Of-Date tab's pickers re-default
+        state.byAsOfDates = new Set();
         parseWorkbook(e.target.result, file.name);
         document.getElementById('dropzone').classList.add('hidden');
         document.getElementById('mainContent').classList.add('ready');
@@ -1271,6 +1392,8 @@
   function applyServerPayload(payload){
     state.selectedMonths = new Set();
     state.selectedAsOf = null;
+    state.byAsOfMonth = null;
+    state.byAsOfDates = new Set();
     state.rows = hydrateServerRecords(payload.records);
     state.fileName = payload.fileName;
     state.fileRows = state.rows.length;
