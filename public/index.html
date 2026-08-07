@@ -218,6 +218,33 @@
   table.triangle tbody tr.blended-row th, table.triangle tbody tr.blended-row td{border-bottom:2px solid var(--ink);}
   table.triangle tbody tr.blended-row th{font-weight:700;}
   .fc-code{color:var(--ink-faint);font-size:10.5px;font-family:'IBM Plex Mono';font-weight:400;margin-left:5px;}
+  table.triangle td.total-col, table.triangle th.total-col{font-weight:700;background:var(--surface-2);border-left:2px solid var(--line);color:var(--ink);}
+  table.triangle td.dollar-cell{color:var(--ink);font-weight:600;}
+
+  /* Popout filter buttons (Month of Service / As Of Month) */
+  .popout-filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px;}
+  .popout-group{position:relative;}
+  .popout-trigger{
+    display:flex;align-items:center;gap:10px;background:var(--surface);
+    border:1px solid var(--line);border-radius:12px;padding:11px 16px;
+    box-shadow:var(--shadow);font-family:inherit;min-width:220px;
+  }
+  .popout-trigger:hover{border-color:var(--emerald-bright);}
+  .popout-trigger.open{border-color:var(--emerald);box-shadow:0 0 0 3px var(--emerald-pale);}
+  .popout-trigger-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-weight:600;}
+  .popout-trigger-value{font-family:'IBM Plex Mono';font-size:13px;color:var(--ink);font-weight:600;flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .popout-trigger svg{flex:none;color:var(--ink-faint);transition:.15s;}
+  .popout-trigger.open svg{transform:rotate(180deg);}
+  .popout-panel{
+    position:absolute;top:calc(100% + 8px);left:0;z-index:40;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:0 12px 32px -8px rgba(14,31,24,0.28);padding:16px;
+    min-width:340px;max-width:min(560px,80vw);
+  }
+  .popout-panel-head{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-weight:600;margin-bottom:10px;}
+  .popout-panel-head .hint{color:var(--ink-faint);font-weight:400;text-transform:none;letter-spacing:0;}
+  .popout-panel-actions{display:flex;justify-content:flex-end;margin-top:12px;}
+  .popout-panel-actions .btn-load{padding:7px 18px;font-size:12px;}
 
   /* Trend chart */
   .cohort-picker{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
@@ -366,22 +393,40 @@
     <div class="content" id="mainContent">
       <div class="kpis" id="kpiStrip"></div>
 
-      <div class="panel" style="margin-bottom:22px;">
-        <div class="picker-block">
-          <div class="picker-label">Months of service <span style="color:var(--ink-faint);font-weight:400;text-transform:none;">(pick one or more)</span></div>
-          <div class="cohort-picker" id="globalMonthsPicker"></div>
+      <div class="popout-filters">
+        <div class="popout-group">
+          <button class="popout-trigger" id="monthsTrigger" type="button">
+            <span class="popout-trigger-label">Month of Service</span>
+            <span class="popout-trigger-value" id="monthsTriggerValue">—</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="popout-panel" id="monthsPanel" style="display:none;">
+            <div class="popout-panel-head">Months of service <span class="hint">— pick one or more</span></div>
+            <div class="cohort-picker" id="globalMonthsPicker"></div>
+            <div class="popout-panel-actions"><button class="btn-load" id="monthsDoneBtn" type="button">Done</button></div>
+          </div>
         </div>
-        <div class="picker-block" style="margin-bottom:0;">
-          <div class="picker-label">As‑of date <span style="color:var(--ink-faint);font-weight:400;text-transform:none;">(pick one)</span></div>
-          <div class="cohort-picker" id="globalAsOfPicker"></div>
+        <div class="popout-group">
+          <button class="popout-trigger" id="asOfTrigger" type="button">
+            <span class="popout-trigger-label">As Of Month</span>
+            <span class="popout-trigger-value" id="asOfTriggerValue">—</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="popout-panel" id="asOfPanel" style="display:none;">
+            <div class="popout-panel-head">As‑of date <span class="hint">— pick one</span></div>
+            <div class="cohort-picker" id="globalAsOfPicker"></div>
+            <div class="popout-panel-actions"><button class="btn-load" id="asOfDoneBtn" type="button">Done</button></div>
+          </div>
         </div>
       </div>
 
       <div class="tabs">
         <button class="tab-btn active" data-tab="triangle">Collections By Month</button>
         <button class="tab-btn" data-tab="byasof">Collections by As-Of-Date</button>
+        <button class="tab-btn" data-tab="day306090">30,60,90 Day Comparison</button>
         <button class="tab-btn" data-tab="trend">Collection Curve</button>
         <button class="tab-btn" data-tab="combo">Revenue vs Cash vs Aging</button>
+        <button class="tab-btn" data-tab="aging">Aging</button>
         <button class="tab-btn" data-tab="summary">Facility Summary</button>
       </div>
 
@@ -390,7 +435,7 @@
           <div class="panel-head">
             <div>
               <h2>% Collected — facility × month of service</h2>
-              <div class="note" id="triangleNote">Using the months of service and as‑of date picked above. Rows are facilities.</div>
+              <div class="note" id="triangleNote">For this view: choose <b>multiple service months</b> and <b>one as‑of month</b> above.</div>
             </div>
           </div>
 
@@ -408,17 +453,35 @@
           <div class="panel-head">
             <div>
               <h2>% Collected — facility × as‑of date, for one month of service</h2>
-              <div class="note">Pick a single month of service, then choose one or more as‑of snapshots to see how that month's collections trended over time — side by side, per facility.</div>
+              <div class="note">For this view: choose <b>one service month</b> and <b>multiple as‑of months</b> — the opposite of the tab above — using the pickers below (these are local to this tab).</div>
             </div>
           </div>
 
-          <div class="picker-block">
-            <div class="picker-label">Month of service <span style="color:var(--ink-faint);font-weight:400;text-transform:none;">(pick one)</span></div>
-            <div class="cohort-picker" id="byAsOfMonthPicker"></div>
-          </div>
-          <div class="picker-block">
-            <div class="picker-label">As‑of dates <span style="color:var(--ink-faint);font-weight:400;text-transform:none;">(pick one or more)</span></div>
-            <div class="cohort-picker" id="byAsOfDatesPicker"></div>
+          <div class="popout-filters">
+            <div class="popout-group">
+              <button class="popout-trigger" id="byAsOfMonthTrigger" type="button">
+                <span class="popout-trigger-label">Month of Service</span>
+                <span class="popout-trigger-value" id="byAsOfMonthTriggerValue">—</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="popout-panel" id="byAsOfMonthPanel" style="display:none;">
+                <div class="popout-panel-head">Month of service <span class="hint">— pick one</span></div>
+                <div class="cohort-picker" id="byAsOfMonthPicker"></div>
+                <div class="popout-panel-actions"><button class="btn-load" id="byAsOfMonthDoneBtn" type="button">Done</button></div>
+              </div>
+            </div>
+            <div class="popout-group">
+              <button class="popout-trigger" id="byAsOfDatesTrigger" type="button">
+                <span class="popout-trigger-label">As Of Month</span>
+                <span class="popout-trigger-value" id="byAsOfDatesTriggerValue">—</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="popout-panel" id="byAsOfDatesPanel" style="display:none;">
+                <div class="popout-panel-head">As‑of dates <span class="hint">— pick one or more</span></div>
+                <div class="cohort-picker" id="byAsOfDatesPicker"></div>
+                <div class="popout-panel-actions"><button class="btn-load" id="byAsOfDatesDoneBtn" type="button">Done</button></div>
+              </div>
+            </div>
           </div>
 
           <div class="triangle-wrap"><table class="triangle" id="byAsOfTable"></table></div>
@@ -430,12 +493,29 @@
         </div>
       </div>
 
+      <div id="tab-day306090" class="tabpanel" style="display:none;">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>30 / 60 / 90 day comparison</h2>
+              <div class="note">For this view: choose <b>multiple service months</b> above (each becomes a row). The as‑of month acts as a cutoff — checkpoints beyond it show as "·" since that data doesn't exist yet. Columns show that month's blended % collected 1, 2, and 3 calendar months later — using month‑end snapshots as the closest available proxy for 30/60/90 days.</div>
+            </div>
+          </div>
+
+          <div class="triangle-wrap"><table class="triangle" id="day306090Table"></table></div>
+          <div class="legend">
+            <span>0%</span><div class="bar"></div><span>100%</span>
+            <span style="margin-left:18px;">· = that checkpoint hasn't happened yet as of the selected as‑of date</span>
+          </div>
+        </div>
+      </div>
+
       <div id="tab-trend" class="tabpanel" style="display:none;">
         <div class="panel">
           <div class="panel-head">
             <div>
               <h2>Collection curve</h2>
-              <div class="note">% collected by months elapsed since the revenue month, one line per selected service month, using data up through the as‑of date picked above.</div>
+              <div class="note">For this view: choose <b>multiple service months</b> and <b>one as‑of month</b> above (the as‑of month is used as a cutoff for the data shown). % collected by months elapsed since the revenue month, one line per selected service month.</div>
             </div>
           </div>
           <div id="trendChartHolder"></div>
@@ -447,7 +527,7 @@
           <div class="panel-head">
             <div>
               <h2>Revenue vs. Cash Receipts vs. Aging Balance</h2>
-              <div class="note">Combines your selected facilities into one total, broken out <b>by month of service</b> — use this to see how the portfolio is trending over time. (For a side‑by‑side comparison of individual facilities instead, see the Facility Summary tab.)</div>
+              <div class="note">For this view: choose <b>multiple service months</b> and <b>one as‑of month</b> above. Combines your selected facilities into one total, broken out <b>by month of service</b> — use this to see how the portfolio is trending over time. (For a side‑by‑side comparison of individual facilities instead, see the Facility Summary tab.)</div>
             </div>
           </div>
 
@@ -461,12 +541,29 @@
         </div>
       </div>
 
+      <div id="tab-aging" class="tabpanel" style="display:none;">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Aging — facility × month of service</h2>
+              <div class="note">For this view: choose <b>multiple service months</b> and <b>one as‑of month</b> above (add or remove either any time — the table and Total column update automatically). Each cell is that month's outstanding balance as of the selected snapshot; the <b>Total</b> column sums the months you've selected, for that same snapshot.</div>
+            </div>
+          </div>
+
+          <div class="triangle-wrap"><table class="triangle" id="agingTable"></table></div>
+          <div class="legend">
+            <span style="margin-left:0;">Top row = all selected facilities, summed</span>
+            <span style="margin-left:18px;">· = that month hasn't happened yet as of the selected snapshot</span>
+          </div>
+        </div>
+      </div>
+
       <div id="tab-summary" class="tabpanel" style="display:none;">
         <div class="panel">
           <div class="panel-head">
             <div>
               <h2>Facility summary</h2>
-              <div class="note" id="summaryNote">Breaks the same dollars out <b>by facility</b> instead — each row is one facility, totaled across all the months of service you've selected, so you can compare facilities side by side. (For a month‑by‑month trend of the combined total instead, see the Revenue vs Cash vs Aging tab.)</div>
+              <div class="note" id="summaryNote">For this view: choose <b>multiple service months</b> and <b>one as‑of month</b> above. Breaks the same dollars out <b>by facility</b> instead — each row is one facility, totaled across all the months of service you've selected, so you can compare facilities side by side. (For a month‑by‑month trend of the combined total instead, see the Revenue vs Cash vs Aging tab.)</div>
             </div>
           </div>
           <div style="overflow-x:auto;"><table class="summary" id="summaryTable"></table></div>
@@ -690,6 +787,20 @@
     return any ? sum : null;
   }
 
+  // Generic version of getRevForNode for any additive dollar metric (Aging Bals,
+  // Cash Receipts, etc.) — sums across whichever payer column(s) the selected
+  // payer maps to, for a single facility/cohort/as-of node.
+  function getDollarForNode(node, metricName, payerKey){
+    if(!node || !node[metricName]) return null;
+    var keys = payerKeysFor(payerKey);
+    var sum=0, any=false;
+    keys.forEach(function(k){
+      var v = node[metricName][k];
+      if(v != null){ sum += v; any = true; }
+    });
+    return any ? sum : null;
+  }
+
   // weighted % collected across selected facilities for a given cohort/asOf/payer
   function blendedPct(cohortKey, asOfKey, payerKey){
     var num = 0, den = 0, any = false;
@@ -856,6 +967,7 @@
         }
       });
     });
+    document.getElementById('asOfTriggerValue').textContent = state.selectedAsOf!=null ? keyLabel(state.selectedAsOf) : '—';
 
     var cohorts = allCohortKeys();
     if(state.selectedMonths.size === 0 && cohorts.length){
@@ -874,6 +986,16 @@
         renderAll();
       });
     });
+    document.getElementById('monthsTriggerValue').textContent = describeMonthSelection(state.selectedMonths);
+  }
+
+  // Shared helper: turns a Set of cohort keys into a compact trigger label,
+  // e.g. "Aug 2026", "Jan 2026, Feb 2026", or "6 selected" once it's too long to list.
+  function describeMonthSelection(monthSet){
+    var picked = Array.from(monthSet).sort(function(a,b){return a-b;});
+    if(!picked.length) return 'None selected';
+    if(picked.length <= 2) return picked.map(keyLabel).join(', ');
+    return picked.length + ' selected';
   }
 
   /* ---------------------------------------------------------
@@ -948,6 +1070,7 @@
         }
       });
     });
+    document.getElementById('byAsOfMonthTriggerValue').textContent = state.byAsOfMonth!=null ? keyLabel(state.byAsOfMonth) : '—';
 
     var asOfs = allAsOfKeys().filter(function(ak){ return state.byAsOfMonth==null || ak>=state.byAsOfMonth; });
     if(state.byAsOfDates.size === 0 && asOfs.length){
@@ -966,6 +1089,7 @@
         renderByAsOfDate();
       });
     });
+    document.getElementById('byAsOfDatesTriggerValue').textContent = describeMonthSelection(state.byAsOfDates);
   }
 
   function renderByAsOfDate(){
@@ -1010,6 +1134,116 @@
     }).join('');
 
     table.innerHTML = thead + '<tbody>' + blendedRow + rows + '</tbody>';
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: AGING — facility × month of service, dollar aging
+     balances at the selected as-of snapshot, with a Total
+     column summing whichever months are currently selected.
+     Reuses the shared global filters (no dedicated picker).
+  --------------------------------------------------------- */
+  function renderAging(){
+    var table = document.getElementById('agingTable');
+    var asOf = state.selectedAsOf;
+    var cohorts = allCohortKeys().filter(function(ck){ return state.selectedMonths.has(ck); })
+      .sort(function(a,b){return a-b;});
+    var facs = state.facilities.filter(function(f){ return state.selectedFacilities.has(f.facility); });
+
+    if(asOf==null){
+      table.innerHTML = '<tr><td class="empty-note">No data for the current facility selection.</td></tr>';
+      return;
+    }
+    if(!cohorts.length){
+      table.innerHTML = '<tr><td class="empty-note">Pick one or more months of service above.</td></tr>';
+      return;
+    }
+    if(!facs.length){
+      table.innerHTML = '<tr><td class="empty-note">Select at least one facility in the sidebar.</td></tr>';
+      return;
+    }
+
+    var visibleCohorts = cohorts.filter(function(ck){ return ck <= asOf; });
+
+    var thead = '<thead><tr><th>Facility</th>' +
+      cohorts.map(function(ck){ return '<th>'+keyLabel(ck)+'</th>'; }).join('') +
+      '<th class="total-col">Total</th></tr></thead>';
+
+    // Top row: all selected facilities, summed (dollar figures are additive, so a
+    // straight sum — not the revenue-weighted blend used for % Collected elsewhere).
+    var blendedCells = cohorts.map(function(ck){
+      if(ck > asOf) return '<td class="empty">·</td>';
+      var v = sumMetric(ck, asOf, state.payer, 'Aging Bals');
+      if(v==null) return '<td class="empty">—</td>';
+      return '<td class="dollar-cell">'+fmtMoneyFull(v)+'</td>';
+    }).join('');
+    var blendedTotal = sumMetric ? (function(){
+      var sum=0, any=false;
+      visibleCohorts.forEach(function(ck){
+        var v = sumMetric(ck, asOf, state.payer, 'Aging Bals');
+        if(v!=null){ sum+=v; any=true; }
+      });
+      return any ? sum : null;
+    })() : null;
+    var blendedRow = '<tr class="blended-row"><th>All selected (total)</th>' + blendedCells +
+      '<td class="dollar-cell total-col">'+fmtMoneyFull(blendedTotal)+'</td></tr>';
+
+    var rows = facs.map(function(f){
+      var rowTotal = 0, rowAny = false;
+      var cells = cohorts.map(function(ck){
+        if(ck > asOf) return '<td class="empty">·</td>';
+        var node = byFacCohortAsOf[f.facility] && byFacCohortAsOf[f.facility][ck] && byFacCohortAsOf[f.facility][ck][asOf];
+        var v = getDollarForNode(node, 'Aging Bals', state.payer);
+        if(v!=null){ rowTotal += v; rowAny = true; }
+        if(v==null) return '<td class="empty">—</td>';
+        return '<td class="dollar-cell">'+fmtMoneyFull(v)+'</td>';
+      }).join('');
+      var totalCell = '<td class="dollar-cell total-col">'+(rowAny?fmtMoneyFull(rowTotal):'—')+'</td>';
+      return '<tr><th>'+f.facility+'<span class="fc-code">'+(f.code||'')+'</span></th>'+cells+totalCell+'</tr>';
+    }).join('');
+
+    table.innerHTML = thead + '<tbody>' + blendedRow + rows + '</tbody>';
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: 30 / 60 / 90 DAY COMPARISON — reuses the shared
+     "months of service" filter (rows) with fixed +1/+2/+3
+     month offsets as columns (our closest proxy for 30/60/90
+     days, since the source data is monthly). No dedicated
+     picker needed here — it rides on the global filter bar.
+  --------------------------------------------------------- */
+  function renderDay306090(){
+    var table = document.getElementById('day306090Table');
+    var asOfCeiling = state.selectedAsOf;
+    var cohorts = allCohortKeys().filter(function(ck){ return state.selectedMonths.has(ck); })
+      .sort(function(a,b){return a-b;});
+
+    if(!cohorts.length){
+      table.innerHTML = '<tr><td class="empty-note">Pick one or more months of service in the filter bar above.</td></tr>';
+      return;
+    }
+
+    var offsets = [
+      {label:'30 Days', months:1},
+      {label:'60 Days', months:2},
+      {label:'90 Days', months:3}
+    ];
+
+    var thead = '<thead><tr><th>Month of service</th>' + offsets.map(function(o){
+      return '<th>'+o.label+' <span class="fc-code">(+'+o.months+' mo)</span></th>';
+    }).join('') + '</tr></thead>';
+
+    var rows = cohorts.map(function(ck){
+      var cells = offsets.map(function(o){
+        var ak = ck + o.months;
+        if(asOfCeiling!=null && ak > asOfCeiling) return '<td class="empty">·</td>';
+        var v = blendedPct(ck, ak, state.payer);
+        if(v==null) return '<td class="empty">—</td>';
+        return '<td class="cell" style="background:'+colorForPct(v)+'">'+v.toFixed(1)+'%</td>';
+      }).join('');
+      return '<tr><th>'+keyLabel(ck)+'</th>'+cells+'</tr>';
+    }).join('');
+
+    table.innerHTML = thead + '<tbody>' + rows + '</tbody>';
   }
 
   /* ---------------------------------------------------------
@@ -1223,7 +1457,7 @@
     var note = document.getElementById('summaryNote');
     var asOf = state.selectedAsOf;
     var cohorts = allCohortKeys().filter(function(ck){ return state.selectedMonths.has(ck) && ck<=asOf; });
-    var intro = 'Each row is one facility, totaled across the selected months of service — compares facilities side by side. ';
+    var intro = 'Choose multiple service months and one as‑of month above. Each row is one facility, totaled across the selected months — compares facilities side by side. ';
 
     if(asOf==null || !cohorts.length){
       table.innerHTML = '';
@@ -1318,6 +1552,46 @@
   }
 
   /* ---------------------------------------------------------
+     POPOUT FILTER PANELS — generic open/close wiring, reused
+     for both the global Month of Service / As Of Month buttons
+     and the local pair on the "Collections by As-Of-Date" tab.
+  --------------------------------------------------------- */
+  var openPopouts = [];
+  function registerPopout(triggerId, panelId){
+    var trigger = document.getElementById(triggerId);
+    var panel = document.getElementById(panelId);
+    if(!trigger || !panel) return;
+    function close(){
+      panel.style.display = 'none';
+      trigger.classList.remove('open');
+    }
+    function open(){
+      openPopouts.forEach(function(p){ if(p.close !== close) p.close(); }); // only one open at a time
+      panel.style.display = 'block';
+      trigger.classList.add('open');
+    }
+    trigger.addEventListener('click', function(e){
+      e.stopPropagation();
+      if(panel.style.display === 'block') close(); else open();
+    });
+    panel.addEventListener('click', function(e){ e.stopPropagation(); });
+    var doneBtn = panel.querySelector('.popout-panel-actions .btn-load');
+    if(doneBtn) doneBtn.addEventListener('click', close);
+    openPopouts.push({close: close});
+  }
+
+  function initPopouts(){
+    registerPopout('monthsTrigger', 'monthsPanel');
+    registerPopout('asOfTrigger', 'asOfPanel');
+    registerPopout('byAsOfMonthTrigger', 'byAsOfMonthPanel');
+    registerPopout('byAsOfDatesTrigger', 'byAsOfDatesPanel');
+    // Clicking anywhere else on the page closes whichever popout is open.
+    document.addEventListener('click', function(){
+      openPopouts.forEach(function(p){ p.close(); });
+    });
+  }
+
+  /* ---------------------------------------------------------
      MASTER RENDER
   --------------------------------------------------------- */
   function renderAll(){
@@ -1325,6 +1599,8 @@
     renderGlobalPickers();
     renderTriangle();
     renderByAsOfDate();
+    renderDay306090();
+    renderAging();
     renderTrend();
     renderCombo();
     renderSummary();
@@ -1510,6 +1786,7 @@
   }
 
   initTabs();
+  initPopouts();
   initDropzone();
   initSearch();
   initPublishBar();
