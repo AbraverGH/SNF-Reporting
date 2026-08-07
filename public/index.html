@@ -444,7 +444,7 @@
     </div>
 
     <div class="side-section">
-      <div class="side-label">Payer</div>
+      <div class="side-label">Payer <span style="color:var(--sidebar-ink-soft);font-weight:400;text-transform:none;letter-spacing:0;">— pick one or more</span></div>
       <div class="payer-grid" id="payerList"></div>
     </div>
 
@@ -717,8 +717,22 @@
     {key:'respite', label:'Respite'},
     {key:'budget', label:'Budget (target)'}
   ];
-  function payerKeysFor(payerKey){
-    return payerKey==='medicaidCombined' ? MEDICAID_COMBO_KEYS : [payerKey];
+  // Accepts a single payer UI-key, or a Set/Array of them (for multi-payer
+  // selection), and expands each into its underlying raw column key(s) —
+  // e.g. 'medicaidCombined' expands to all three state Medicaid columns.
+  // Always returns a deduplicated flat array of raw column keys.
+  function payerKeysFor(selection){
+    var out = [];
+    function addKey(k){
+      var subs = (k==='medicaidCombined') ? MEDICAID_COMBO_KEYS : [k];
+      subs.forEach(function(s){ if(out.indexOf(s)===-1) out.push(s); });
+    }
+    if(selection && typeof selection.forEach === 'function'){
+      selection.forEach(addKey);
+    } else if(selection != null){
+      addKey(selection);
+    }
+    return out;
   }
   var MONTH_IDX = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
   var MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -734,7 +748,7 @@
     rows: [],              // flat parsed records
     facilities: [],        // [{code,facility,company}]
     selectedFacilities: new Set(),
-    payer: 'allGroups',
+    selectedPayers: new Set(['allGroups']),   // multi-select payer filter — e.g. Medicare + HMO together
     selectedMonths: new Set(),   // shared "months of service" tile selection (multi), used by every tab
     selectedAsOf: null,          // shared "as-of date" tile selection (single), used by every tab
     byAsOfMonth: null,           // "Collections by As-Of-Date" tab: single month of service selection
@@ -956,10 +970,20 @@
     el.innerHTML = '';
     PAYER_OPTIONS.forEach(function(p){
       var d = document.createElement('label');
-      d.className = 'payer-option' + (state.payer===p.key ? ' active' : '');
-      d.innerHTML = '<input type="radio" name="payer" value="'+p.key+'"' + (state.payer===p.key?' checked':'') + '><span>'+p.label+'</span>';
-      d.addEventListener('click', function(){
-        state.payer = p.key;
+      var checked = state.selectedPayers.has(p.key);
+      d.className = 'payer-option' + (checked ? ' active' : '');
+      d.innerHTML = '<input type="checkbox" value="'+p.key+'"' + (checked?' checked':'') + '><span>'+p.label+'</span>';
+      d.querySelector('input').addEventListener('change', function(e){
+        if(e.target.checked){
+          state.selectedPayers.add(p.key);
+        } else if(state.selectedPayers.size > 1){
+          state.selectedPayers.delete(p.key);
+        } else {
+          // keep at least one payer selected — revert the checkbox instead of leaving an empty filter
+          e.target.checked = true;
+          showToast('At least one payer must stay selected.');
+          return;
+        }
         renderPayerList();
         renderAll();
       });
@@ -1012,8 +1036,8 @@
           state.selectedFacilities.forEach(function(fac){
             var node = byFacCohortAsOf[fac] && byFacCohortAsOf[fac][ck] && byFacCohortAsOf[fac][ck][asOfKey];
             if(!node) return;
-            var pct = getPctForNode(node, state.payer);
-            var rev = getRevForNode(node, state.payer);
+            var pct = getPctForNode(node, state.selectedPayers);
+            var rev = getRevForNode(node, state.selectedPayers);
             if(pct==null) return;
             if(rev!=null && rev>0){ num+=pct*rev; den+=rev; } else { num+=pct; den+=1; }
           });
@@ -1031,7 +1055,7 @@
         deltaClass = d>0.05?'up':(d<-0.05?'down':'flat');
         deltaTxt = (d>=0?'+':'') + d.toFixed(1) + ' pts vs ' + keyLabel(priorAsOf);
       }
-      cards.push({lbl:'Overall % collected ('+payerLabel(state.payer)+')', val: fmtPct(curRate), delta: deltaTxt, deltaClass: deltaClass});
+      cards.push({lbl:'Overall % collected ('+describePayerSelection()+')', val: fmtPct(curRate), delta: deltaTxt, deltaClass: deltaClass});
     } else {
       cards.push({lbl:'Revenue months covered', val:'—'});
       cards.push({lbl:'Latest as‑of date', val:'—'});
@@ -1047,6 +1071,16 @@
   function payerLabel(key){
     var p = PAYER_OPTIONS.filter(function(x){return x.key===key;})[0];
     return p ? p.label : key;
+  }
+
+  // Compact, human-readable description of the current multi-payer selection,
+  // for use in KPI cards and tab notes — e.g. "Medicare" / "Medicare, HMO / Private
+  // Insurance" / "4 payers selected" once it gets too long to list out.
+  function describePayerSelection(){
+    var picked = Array.from(state.selectedPayers);
+    if(!picked.length) return 'None selected';
+    if(picked.length <= 2) return picked.map(payerLabel).join(' + ');
+    return picked.length + ' payers selected';
   }
 
   /* ---------------------------------------------------------
@@ -1129,7 +1163,7 @@
 
     var blendedRow = '<tr class="blended-row"><th>All selected (blended)</th>' + cohorts.map(function(ck){
       if(ck > asOf) return '<td class="empty">·</td>';
-      var v = blendedPct(ck, asOf, state.payer);
+      var v = blendedPct(ck, asOf, state.selectedPayers);
       if(v==null) return '<td class="empty">—</td>';
       var cls = 'cell' + (ck===asOf ? ' cur' : '');
       return '<td class="'+cls+'" style="background:'+colorForPct(v)+'">'+v.toFixed(1)+'%</td>';
@@ -1139,7 +1173,7 @@
       var cells = cohorts.map(function(ck){
         if(ck > asOf) return '<td class="empty">·</td>';
         var node = byFacCohortAsOf[f.facility] && byFacCohortAsOf[f.facility][ck] && byFacCohortAsOf[f.facility][ck][asOf];
-        var v = getPctForNode(node, state.payer);
+        var v = getPctForNode(node, state.selectedPayers);
         if(v==null) return '<td class="empty">—</td>';
         var cls = 'cell' + (ck===asOf ? ' cur' : '');
         return '<td class="'+cls+'" style="background:'+colorForPct(v)+'">'+v.toFixed(1)+'%</td>';
@@ -1220,7 +1254,7 @@
     var thead = '<thead><tr><th>Facility</th>' + asOfs.map(function(a){return '<th>'+keyLabel(a)+'</th>';}).join('') + '</tr></thead>';
 
     var blendedRow = '<tr class="blended-row"><th>All selected (blended)</th>' + asOfs.map(function(ak){
-      var v = blendedPct(month, ak, state.payer);
+      var v = blendedPct(month, ak, state.selectedPayers);
       if(v==null) return '<td class="empty">—</td>';
       var cls = 'cell' + (ak===month ? ' cur' : '');
       return '<td class="'+cls+'" style="background:'+colorForPct(v)+'">'+v.toFixed(1)+'%</td>';
@@ -1229,7 +1263,7 @@
     var rows = facs.map(function(f){
       var cells = asOfs.map(function(ak){
         var node = byFacCohortAsOf[f.facility] && byFacCohortAsOf[f.facility][month] && byFacCohortAsOf[f.facility][month][ak];
-        var v = getPctForNode(node, state.payer);
+        var v = getPctForNode(node, state.selectedPayers);
         if(v==null) return '<td class="empty">—</td>';
         var cls = 'cell' + (ak===month ? ' cur' : '');
         return '<td class="'+cls+'" style="background:'+colorForPct(v)+'">'+v.toFixed(1)+'%</td>';
@@ -1276,14 +1310,14 @@
     // straight sum — not the revenue-weighted blend used for % Collected elsewhere).
     var blendedCells = cohorts.map(function(ck){
       if(ck > asOf) return '<td class="empty">·</td>';
-      var v = sumMetric(ck, asOf, state.payer, 'Aging Bals');
+      var v = sumMetric(ck, asOf, state.selectedPayers, 'Aging Bals');
       if(v==null) return '<td class="empty">—</td>';
       return '<td class="dollar-cell">'+fmtMoneyFull(v)+'</td>';
     }).join('');
     var blendedTotal = sumMetric ? (function(){
       var sum=0, any=false;
       visibleCohorts.forEach(function(ck){
-        var v = sumMetric(ck, asOf, state.payer, 'Aging Bals');
+        var v = sumMetric(ck, asOf, state.selectedPayers, 'Aging Bals');
         if(v!=null){ sum+=v; any=true; }
       });
       return any ? sum : null;
@@ -1296,7 +1330,7 @@
       var cells = cohorts.map(function(ck){
         if(ck > asOf) return '<td class="empty">·</td>';
         var node = byFacCohortAsOf[f.facility] && byFacCohortAsOf[f.facility][ck] && byFacCohortAsOf[f.facility][ck][asOf];
-        var v = getDollarForNode(node, 'Aging Bals', state.payer);
+        var v = getDollarForNode(node, 'Aging Bals', state.selectedPayers);
         if(v!=null){ rowTotal += v; rowAny = true; }
         if(v==null) return '<td class="empty">—</td>';
         return '<td class="dollar-cell">'+fmtMoneyFull(v)+'</td>';
@@ -1340,7 +1374,7 @@
       var cells = offsets.map(function(o){
         var ak = ck + o.months;
         if(asOfCeiling!=null && ak > asOfCeiling) return '<td class="empty">·</td>';
-        var v = blendedPct(ck, ak, state.payer);
+        var v = blendedPct(ck, ak, state.selectedPayers);
         if(v==null) return '<td class="empty">—</td>';
         return '<td class="cell" style="background:'+colorForPct(v)+'">'+v.toFixed(1)+'%</td>';
       }).join('');
@@ -1368,7 +1402,7 @@
       var pts = [];
       asOfs.forEach(function(ak){
         if(ak < ck) return;
-        var v = blendedPct(ck, ak, state.payer);
+        var v = blendedPct(ck, ak, state.selectedPayers);
         if(v==null) return;
         pts.push({x: ak-ck, y:v});
       });
@@ -1462,11 +1496,11 @@
 
     var cohorts = allCohortKeys().filter(function(ck){ return state.selectedMonths.has(ck) && ck <= asOf; });
     var data = cohorts.map(function(ck){
-      var rev = sumMetric(ck, asOf, state.payer, 'Revenue');
-      var cashRaw = sumMetric(ck, asOf, state.payer, 'Cash Receipts');
+      var rev = sumMetric(ck, asOf, state.selectedPayers, 'Revenue');
+      var cashRaw = sumMetric(ck, asOf, state.selectedPayers, 'Cash Receipts');
       var cash = cashRaw==null ? null : -cashRaw;
-      var aging = sumMetric(ck, asOf, state.payer, 'Aging Bals');
-      var pct = blendedPct(ck, asOf, state.payer);
+      var aging = sumMetric(ck, asOf, state.selectedPayers, 'Aging Bals');
+      var pct = blendedPct(ck, asOf, state.selectedPayers);
       return {ck:ck, rev:rev, cash:cash, aging:aging, pct:pct};
     }).filter(function(d){ return d.rev!=null || d.cash!=null || d.aging!=null; });
 
@@ -1568,16 +1602,16 @@
       note.innerHTML = intro + 'Pick months of service and an as‑of date above to see totals.';
       return;
     }
-    note.innerHTML = intro + 'Showing ' + cohorts.map(keyLabel).join(', ') + ' as of ' + keyLabel(asOf) + ' · payer: ' + payerLabel(state.payer);
+    note.innerHTML = intro + 'Showing ' + cohorts.map(keyLabel).join(', ') + ' as of ' + keyLabel(asOf) + ' · payer: ' + describePayerSelection();
 
     var data = [];
     state.facilities.forEach(function(f){
       if(!state.selectedFacilities.has(f.facility)) return;
       var rev=0, cash=0, aging=0, hasAny=false;
       cohorts.forEach(function(ck){
-        var r = sumMetric(ck, asOf, state.payer, 'Revenue', [f.facility]);
-        var c = sumMetric(ck, asOf, state.payer, 'Cash Receipts', [f.facility]);
-        var a = sumMetric(ck, asOf, state.payer, 'Aging Bals', [f.facility]);
+        var r = sumMetric(ck, asOf, state.selectedPayers, 'Revenue', [f.facility]);
+        var c = sumMetric(ck, asOf, state.selectedPayers, 'Cash Receipts', [f.facility]);
+        var a = sumMetric(ck, asOf, state.selectedPayers, 'Aging Bals', [f.facility]);
         if(r!=null){ rev+=r; hasAny=true; }
         if(c!=null){ cash+=(-c); }
         if(a!=null){ aging+=a; }
