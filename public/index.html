@@ -114,6 +114,26 @@
   .payer-option.active{background:var(--emerald);color:#fff;}
   .payer-option input{display:none;}
 
+  .source-payer-list{display:flex;flex-direction:column;gap:6px;}
+  .source-payer-group{border:1px solid var(--sidebar-line);border-radius:8px;overflow:hidden;}
+  .source-payer-header{
+    display:flex;align-items:center;justify-content:space-between;width:100%;
+    background:#0A1A14;border:none;padding:9px 10px;cursor:pointer;color:var(--sidebar-ink);
+    font-family:inherit;
+  }
+  .source-payer-header:hover{background:var(--sidebar-2);}
+  .source-payer-header .sph-label{font-size:12.5px;font-weight:600;}
+  .source-payer-header .sph-count{font-size:10px;color:var(--emerald-bright);font-family:'IBM Plex Mono';}
+  .source-payer-header svg{flex:none;color:var(--sidebar-ink-soft);transition:.15s;}
+  .source-payer-header.open svg{transform:rotate(180deg);}
+  .source-payer-children{padding:8px 8px 10px;background:#0A1A14;border-top:1px solid var(--sidebar-line);}
+  .source-payer-actions{display:flex;gap:6px;margin-bottom:6px;}
+  .source-payer-actions button{
+    flex:1;background:transparent;border:1px solid var(--sidebar-line);color:var(--sidebar-ink-soft);
+    font-size:10.5px;padding:4px 0;border-radius:6px;font-family:inherit;
+  }
+  .source-payer-actions button:hover{border-color:var(--emerald-bright);color:var(--sidebar-ink);}
+
   .sidebar-footer{margin-top:auto;font-size:10.5px;color:var(--sidebar-ink-soft);line-height:1.5;border-top:1px solid var(--sidebar-line);padding-top:14px;}
 
   /* ===== MAIN ===== */
@@ -247,6 +267,16 @@
   .popout-panel-actions{display:flex;justify-content:flex-end;margin-top:12px;}
   .popout-panel-actions .btn-load{padding:7px 18px;font-size:12px;}
 
+  .ds-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--surface-2);}
+  .ds-row:last-child{border-bottom:none;}
+  .ds-row-label{font-size:12.5px;font-weight:600;color:var(--ink);}
+  .ds-row-status{font-size:11px;color:var(--ink-soft);margin-top:2px;line-height:1.4;}
+  .ds-row-btn{
+    background:var(--surface-2);color:var(--ink);border:1px solid var(--line);
+    padding:6px 13px;border-radius:14px;font-size:11.5px;font-weight:600;white-space:nowrap;flex:none;
+  }
+  .ds-row-btn:hover{border-color:var(--emerald);color:var(--emerald);}
+
   /* Trend chart */
   .cohort-picker{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
   .cohort-chip{
@@ -271,29 +301,42 @@
 
   /* Empty state / dropzone */
   #dropzone{
-    position:fixed;inset:0;background:var(--bg);z-index:100;
+    position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto;
     display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;
-    text-align:center;padding:20px;
+    text-align:center;padding:40px 20px;
   }
   #dropzone.hidden{display:none;}
-  .dz-box{
-    width:min(560px,92vw);border:2px dashed var(--line);border-radius:16px;
-    background:var(--surface);padding:52px 34px;box-shadow:var(--shadow);
+  .dz-wrap{
+    width:min(820px,94vw);border:2px dashed var(--line);border-radius:16px;
+    background:var(--surface);padding:44px 36px;box-shadow:var(--shadow);
     transition:.15s;
   }
-  .dz-box.drag{border-color:var(--emerald-bright);background:var(--emerald-pale);}
   .dz-icon{
     width:56px;height:56px;border-radius:14px;background:var(--emerald-pale);
     display:flex;align-items:center;justify-content:center;margin:0 auto 18px;color:var(--emerald);
   }
-  .dz-box h2{font-size:20px;margin:0 0 8px;}
-  .dz-box p{font-size:13px;color:var(--ink-soft);margin:0 0 20px;line-height:1.6;}
-  .dz-browse{
-    background:var(--ink);color:#fff;border:none;padding:10px 20px;border-radius:20px;
-    font-size:13px;font-weight:600;
+  .dz-wrap h2{font-size:20px;margin:0 0 8px;}
+  .dz-wrap p{font-size:13px;color:var(--ink-soft);margin:0 0 26px;line-height:1.6;max-width:560px;margin-left:auto;margin-right:auto;}
+  .dz-hint{font-size:11px;color:var(--ink-faint);margin-top:18px;}
+
+  .dz-source-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .dz-source-card{
+    border:1.5px solid var(--line);border-radius:12px;padding:18px 16px;text-align:left;
+    background:var(--surface-2);transition:.15s;
   }
-  .dz-browse:hover{background:var(--emerald);}
-  .dz-hint{font-size:11px;color:var(--ink-faint);margin-top:16px;}
+  .dz-source-card.drag{border-color:var(--emerald-bright);background:var(--emerald-pale);}
+  .dz-source-card.has-data{border-color:var(--emerald-bright);background:var(--emerald-pale);}
+  .dz-source-title{font-family:'Space Grotesk';font-weight:600;font-size:14.5px;color:var(--ink);margin-bottom:4px;}
+  .dz-source-status{font-size:11px;color:var(--ink-soft);line-height:1.5;margin-bottom:12px;min-height:32px;}
+  .dz-source-btn{
+    background:var(--ink);color:#fff;border:none;padding:7px 15px;border-radius:16px;
+    font-size:11.5px;font-weight:600;width:100%;
+  }
+  .dz-source-btn:hover{background:var(--emerald);}
+  @media(max-width:640px){ .dz-source-grid{grid-template-columns:1fr;} }
+
+  .popout-panel.align-right{left:auto;right:0;}
+
   .toast{
     position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
     background:var(--ink);color:#fff;padding:11px 20px;border-radius:10px;font-size:12.5px;
@@ -407,18 +450,17 @@
 <div id="arCollectionsApp" style="display:none;">
 
 <div id="dropzone">
-  <div class="dz-box" id="dzBox">
+  <div class="dz-wrap">
     <div class="dz-icon">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
     </div>
     <h2>AR Collections Explorer</h2>
-    <p>Drag &amp; drop your <b>AR Collections</b> workbook here — the same “LFS – AR Collections – Data.xlsx” format, with Sheet1 rows by facility, metric and as‑of date. Drop an updated file any time to refresh with new months.</p>
-    <button class="dz-browse" id="dzBrowse">Choose file…</button>
+    <p>Upload each of the four data sources below — Part A, Part A Coinsurance, Part B, and Part B Coinsurance. They're maintained separately, so update whichever one has new months whenever it's ready; you don't need all four at once.</p>
+    <div class="dz-source-grid" id="dzSourceGrid"></div>
     <div class="dz-hint">Parsing happens locally in your browser first — nothing is sent anywhere until you choose to publish it.</div>
-    <div class="dz-hint" id="dzLiveHint" style="display:none;color:var(--emerald);font-weight:600;">This link is connected to shared storage — no data has been published yet. Drop a file below to publish it for everyone.</div>
+    <div class="dz-hint" id="dzLiveHint" style="display:none;color:var(--emerald);font-weight:600;">This link is connected to shared storage. Anything already published below is visible to everyone already — add or update a source any time.</div>
   </div>
 </div>
-<input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
 
 <div id="app">
   <aside class="sidebar">
@@ -444,12 +486,12 @@
     </div>
 
     <div class="side-section">
-      <div class="side-label">Payer <span style="color:var(--sidebar-ink-soft);font-weight:400;text-transform:none;letter-spacing:0;">— pick one or more</span></div>
-      <div class="payer-grid" id="payerList"></div>
+      <div class="side-label">Payers <span style="color:var(--sidebar-ink-soft);font-weight:400;text-transform:none;letter-spacing:0;">— pick one or more per source</span></div>
+      <div class="source-payer-list" id="sourcePayerList"></div>
     </div>
 
     <div class="sidebar-footer">
-      Aggregating multiple facilities — or the combined Medicaid payer — computes a revenue‑weighted % collected, so the blended rate stays mathematically consistent.
+      Aggregating multiple facilities — or several payers within (or across) sources — computes a revenue‑weighted % collected, so the blended rate stays mathematically consistent.
     </div>
   </aside>
 
@@ -457,24 +499,27 @@
     <div class="topbar">
       <div>
         <h1>AR Collections Explorer</h1>
-        <div class="sub" id="topSub">No file loaded yet</div>
+        <div class="sub" id="topSub">No data loaded yet</div>
       </div>
       <div class="file-status">
-        <div class="file-chip" id="fileChip" style="display:none;">
-          <span class="dot"></span>
-          <span><b id="fileName"></b> · <span id="fileMeta"></span></span>
+        <div class="popout-group">
+          <button class="popout-trigger" id="dataSourcesTrigger" type="button">
+            <span class="popout-trigger-label">Data Sources</span>
+            <span class="popout-trigger-value" id="dataSourcesSummary">0 / 4 loaded</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="popout-panel align-right" id="dataSourcesPanel" style="display:none;">
+            <div class="popout-panel-head">Manage data sources</div>
+            <div id="dataSourcesRows"></div>
+          </div>
         </div>
-        <button class="btn-load" id="loadNewBtn">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
-          Load file
-        </button>
       </div>
     </div>
 
     <div id="publishBar" class="publish-bar" style="display:none;">
       <div class="publish-text">
-        <b>Publish this file for everyone with this link?</b>
-        <span>Only you can see it until you publish it — this replaces the shared data for the whole team.</span>
+        <b id="publishBarTitle">Publish this file for everyone with this link?</b>
+        <span>Only you can see it until you publish it — this replaces the shared data for that source, for the whole team.</span>
       </div>
       <input type="password" id="adminKeyInput" placeholder="Admin key" autocomplete="off">
       <button class="btn-load" id="publishBtn" style="background:var(--emerald);">Publish</button>
@@ -686,6 +731,25 @@
   /* ---------------------------------------------------------
      CONFIG
   --------------------------------------------------------- */
+  // Four independently-uploaded workbooks, merged into one combined
+  // dataset on the frontend. Each has its own upload cadence, its own
+  // publish flow, and its own payer columns (a subset of PAYER_COLUMNS
+  // below) — payer keys get namespaced per source (e.g. "partA::medicare")
+  // so the same underlying analysis logic (blending, sums, etc.) works
+  // unchanged across sources without ever mixing up e.g. Part A's
+  // Medicare figures with Part B's.
+  var SOURCES = [
+    {key:'partA', label:'Part A'},
+    {key:'partACoinsurance', label:'Part A Coinsurance'},
+    {key:'partB', label:'Part B'},
+    {key:'partBCoinsurance', label:'Part B Coinsurance'}
+  ];
+  var SOURCE_KEYS = SOURCES.map(function(s){return s.key;});
+  function sourceLabel(key){
+    var s = SOURCES.filter(function(x){return x.key===key;})[0];
+    return s ? s.label : key;
+  }
+
   var PAYER_COLUMNS = [
     {key:'allGroups', header:'All  Groups', label:'All Groups'},
     {key:'medicare', header:'Medicare', label:'Medicare'},
@@ -717,15 +781,22 @@
     {key:'respite', label:'Respite'},
     {key:'budget', label:'Budget (target)'}
   ];
-  // Accepts a single payer UI-key, or a Set/Array of them (for multi-payer
-  // selection), and expands each into its underlying raw column key(s) —
-  // e.g. 'medicaidCombined' expands to all three state Medicaid columns.
-  // Always returns a deduplicated flat array of raw column keys.
+  // Accepts a single namespaced payer UI-key (e.g. "partA::medicare"), or a
+  // Set/Array of them (for multi-payer, multi-source selection), and expands
+  // each into its underlying namespaced raw column key(s) — e.g.
+  // "partA::medicaidCombined" expands to "partA::neMedicaid",
+  // "partA::kyMedicaid", "partA::okMedicaid". Always returns a deduplicated
+  // flat array of namespaced raw keys, ready to look up on an index node.
   function payerKeysFor(selection){
     var out = [];
     function addKey(k){
-      var subs = (k==='medicaidCombined') ? MEDICAID_COMBO_KEYS : [k];
-      subs.forEach(function(s){ if(out.indexOf(s)===-1) out.push(s); });
+      var parts = String(k).split('::');
+      var src = parts[0], child = parts[1];
+      var subs = (child==='medicaidCombined') ? MEDICAID_COMBO_KEYS : [child];
+      subs.forEach(function(s){
+        var full = src+'::'+s;
+        if(out.indexOf(full)===-1) out.push(full);
+      });
     }
     if(selection && typeof selection.forEach === 'function'){
       selection.forEach(addKey);
@@ -733,6 +804,14 @@
       addKey(selection);
     }
     return out;
+  }
+
+  // Namespaced payer options for one source's popout, e.g. for 'partA':
+  // [{key:'partA::allGroups', label:'All Groups'}, {key:'partA::medicare', ...}, ...]
+  function payerOptionsForSource(sourceKey){
+    return PAYER_OPTIONS.map(function(p){
+      return {key: sourceKey+'::'+p.key, label: p.label};
+    });
   }
   var MONTH_IDX = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
   var MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -745,43 +824,57 @@
      STATE
   --------------------------------------------------------- */
   var state = {
-    rows: [],              // flat parsed records
-    facilities: [],        // [{code,facility,company}]
+    sources: {},            // sourceKey -> {rows, fileName, rowCount, uploadedAt, isLive} | undefined if never loaded
+    facilities: [],        // [{code,facility,company}] — union across all loaded sources
     selectedFacilities: new Set(),
-    selectedPayers: new Set(['allGroups']),   // multi-select payer filter — e.g. Medicare + HMO together
+    selectedPayers: new Set(['partA::allGroups']),   // namespaced multi-select — e.g. partA::medicare + partB::hmo together
     selectedMonths: new Set(),   // shared "months of service" tile selection (multi), used by every tab
     selectedAsOf: null,          // shared "as-of date" tile selection (single), used by every tab
     byAsOfMonth: null,           // "Collections by As-Of-Date" tab: single month of service selection
     byAsOfDates: new Set(),      // "Collections by As-Of-Date" tab: multi as-of date selection
     summarySort: {col:'delta', dir:'desc'},
-    fileName: '', fileRows: 0,
     liveMode: false   // true once we've confirmed a backend (server.js) is serving this page
   };
 
+  function anySourceLoaded(){
+    return SOURCE_KEYS.some(function(k){ return state.sources[k] && state.sources[k].rows && state.sources[k].rows.length; });
+  }
+
   /* ---------------------------------------------------------
-     PARSING
+     PARSING — parses one workbook into state.sources[sourceKey],
+     tolerant of either the original column names ("As Of", "Month",
+     "Year") or the newer per-part names ("As Of Date", "Month Of
+     Service", "Year of Service"), and either sheet name ("Sheet1" or
+     "Percentage Collected Summary") — whichever the file actually uses.
   --------------------------------------------------------- */
-  function parseWorkbook(arrayBuffer, fileName){
+  function findCol(headerRow, names){
+    var list = Array.isArray(names) ? names : [names];
+    for(var i=0;i<list.length;i++){
+      var idx = headerRow.indexOf(normHeader(list[i]));
+      if(idx >= 0) return idx;
+    }
+    return -1;
+  }
+
+  function parseWorkbookForSource(arrayBuffer, fileName, sourceKey){
     var wb = XLSX.read(arrayBuffer, {type:'array', cellDates:true});
-    var sheetName = wb.SheetNames.indexOf('Sheet1') >= 0 ? 'Sheet1' : wb.SheetNames[0];
+    var preferredSheets = ['Sheet1', 'Percentage Collected Summary'];
+    var sheetName = preferredSheets.filter(function(n){ return wb.SheetNames.indexOf(n) >= 0; })[0] || wb.SheetNames[0];
     var ws = wb.Sheets[sheetName];
     var grid = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
     if(!grid.length){ throw new Error('The selected sheet appears to be empty.'); }
 
     var headerRow = grid[0].map(normHeader);
-    function col(name){ return headerRow.indexOf(normHeader(name)); }
-
     var idx = {
-      company: col('Company'),
-      metric: col('Metric'),
-      monthRaw: col('Month Raw'),
-      asOf: col('As Of'),
-      month: col('Month'),
-      year: col('Year'),
-      code: col('Code'),
-      facility: col('Facility')
+      company: findCol(headerRow, 'Company'),
+      metric: findCol(headerRow, 'Metric'),
+      asOf: findCol(headerRow, ['As Of', 'As Of Date']),
+      month: findCol(headerRow, ['Month', 'Month Of Service']),
+      year: findCol(headerRow, ['Year', 'Year of Service']),
+      code: findCol(headerRow, 'Code'),
+      facility: findCol(headerRow, 'Facility')
     };
-    var payerIdx = PAYER_COLUMNS.map(function(p){ return col(p.header); });
+    var payerIdx = PAYER_COLUMNS.map(function(p){ return findCol(headerRow, p.header); });
 
     if(idx.company < 0 || idx.metric < 0 || idx.facility < 0){
       throw new Error('This file does not look like the expected AR Collections layout (missing Company / Metric / Facility columns).');
@@ -793,7 +886,7 @@
       if(!row || row[idx.company] == null || row[idx.company] === '') continue;
       var monthAbbr = row[idx.month];
       var year = row[idx.year];
-      if(monthAbbr === 'Total' || year === 'Total') continue; // skip rollup rows
+      if(monthAbbr === 'Total' || year === 'Total') continue; // tolerate any leftover rollup rows
       if(!(monthAbbr in MONTH_IDX)) continue;
       var asOfVal = row[idx.asOf];
       var asOfDate = (asOfVal instanceof Date) ? asOfVal : null;
@@ -807,6 +900,7 @@
       }
 
       records.push({
+        source: sourceKey,
         company: row[idx.company],
         metric: row[idx.metric],
         facility: row[idx.facility],
@@ -824,50 +918,91 @@
       throw new Error('No usable rows were found — check that the sheet has Month/Year/As Of columns populated.');
     }
 
-    state.rows = records;
-    state.fileName = fileName;
-    state.fileRows = records.length;
+    state.sources[sourceKey] = {
+      rows: records,
+      fileName: fileName,
+      rowCount: records.length,
+      uploadedAt: new Date().toISOString()
+    };
     buildFacilityList();
     buildIndex();
   }
 
-  var byFacCohortAsOf = {}; // facility -> cohortKey -> asOfKey -> {metric: values}
+  var byFacCohortAsOf = {}; // facility -> cohortKey -> asOfKey -> {metric: {namespacedPayerKey: value}}
 
+  // Rebuilds the merged index across every currently-loaded source. Payer
+  // keys get namespaced per source (e.g. "partA::medicare") when merged in,
+  // so the same metric node can hold Part A's and Part B's figures side by
+  // side without ever colliding or overwriting each other.
   function buildIndex(){
     byFacCohortAsOf = {};
-    state.rows.forEach(function(rec){
-      var f = byFacCohortAsOf[rec.facility] || (byFacCohortAsOf[rec.facility] = {});
-      var c = f[rec.cohortKey] || (f[rec.cohortKey] = {});
-      var a = c[rec.asOfKey] || (c[rec.asOfKey] = {});
-      a[rec.metric] = rec.values;
-      a.__asOfDate = rec.asOfDate;
-      a.__monthAbbr = rec.monthAbbr;
-      a.__year = rec.year;
+    SOURCE_KEYS.forEach(function(srcKey){
+      var src = state.sources[srcKey];
+      if(!src || !src.rows) return;
+      src.rows.forEach(function(rec){
+        var f = byFacCohortAsOf[rec.facility] || (byFacCohortAsOf[rec.facility] = {});
+        var c = f[rec.cohortKey] || (f[rec.cohortKey] = {});
+        var a = c[rec.asOfKey] || (c[rec.asOfKey] = {});
+        var metricDict = a[rec.metric] || (a[rec.metric] = {});
+        Object.keys(rec.values).forEach(function(k){
+          metricDict[srcKey+'::'+k] = rec.values[k];
+        });
+        a.__asOfDate = rec.asOfDate;
+        a.__monthAbbr = rec.monthAbbr;
+        a.__year = rec.year;
+      });
     });
   }
 
   function buildFacilityList(){
     var map = {};
-    state.rows.forEach(function(rec){
-      if(!map[rec.facility]){
-        map[rec.facility] = {facility:rec.facility, code:rec.code, company:rec.company};
-      }
+    SOURCE_KEYS.forEach(function(srcKey){
+      var src = state.sources[srcKey];
+      if(!src || !src.rows) return;
+      src.rows.forEach(function(rec){
+        if(!map[rec.facility]){
+          map[rec.facility] = {facility:rec.facility, code:rec.code, company:rec.company};
+        }
+      });
     });
-    state.facilities = Object.keys(map).sort().map(function(k){return map[k];});
-    state.selectedFacilities = new Set(state.facilities.map(function(f){return f.facility;}));
+    var newFacilities = Object.keys(map).sort().map(function(k){return map[k];});
+    // preserve existing facility selection across re-parses/publishes where possible;
+    // only default to "all selected" the first time facilities are ever loaded.
+    var hadSelection = state.selectedFacilities && state.selectedFacilities.size > 0;
+    state.facilities = newFacilities;
+    if(!hadSelection){
+      state.selectedFacilities = new Set(state.facilities.map(function(f){return f.facility;}));
+    } else {
+      // add any newly-appeared facilities to the selection so nothing silently hides
+      state.facilities.forEach(function(f){
+        if(!state.selectedFacilities.has(f.facility)) state.selectedFacilities.add(f.facility);
+      });
+    }
   }
 
   /* ---------------------------------------------------------
      DERIVED HELPERS
   --------------------------------------------------------- */
+  // Flat concatenation of every currently-loaded source's rows — used only
+  // for figuring out which months/as-of dates exist at all (the picker
+  // tiles), not for the actual payer-aware aggregation (which reads the
+  // merged byFacCohortAsOf index instead).
+  function allLoadedRows(){
+    var out = [];
+    SOURCE_KEYS.forEach(function(key){
+      var src = state.sources[key];
+      if(src && src.rows) out.push.apply(out, src.rows);
+    });
+    return out;
+  }
   function allCohortKeys(){
     var s = new Set();
-    state.rows.forEach(function(r){ if(state.selectedFacilities.has(r.facility)) s.add(r.cohortKey); });
+    allLoadedRows().forEach(function(r){ if(state.selectedFacilities.has(r.facility)) s.add(r.cohortKey); });
     return Array.from(s).sort(function(a,b){return a-b;});
   }
   function allAsOfKeys(){
     var s = new Set();
-    state.rows.forEach(function(r){ if(state.selectedFacilities.has(r.facility)) s.add(r.asOfKey); });
+    allLoadedRows().forEach(function(r){ if(state.selectedFacilities.has(r.facility)) s.add(r.asOfKey); });
     return Array.from(s).sort(function(a,b){return a-b;});
   }
   function keyLabel(k){
@@ -965,29 +1100,76 @@
   /* ---------------------------------------------------------
      RENDER: SIDEBAR
   --------------------------------------------------------- */
-  function renderPayerList(){
-    var el = document.getElementById('payerList');
+  var openPayerGroups = {}; // sourceKey -> bool — kept outside `state` since it's pure UI/display state
+
+  function renderSourcePayerList(){
+    var el = document.getElementById('sourcePayerList');
     el.innerHTML = '';
-    PAYER_OPTIONS.forEach(function(p){
-      var d = document.createElement('label');
-      var checked = state.selectedPayers.has(p.key);
-      d.className = 'payer-option' + (checked ? ' active' : '');
-      d.innerHTML = '<input type="checkbox" value="'+p.key+'"' + (checked?' checked':'') + '><span>'+p.label+'</span>';
-      d.querySelector('input').addEventListener('change', function(e){
-        if(e.target.checked){
-          state.selectedPayers.add(p.key);
-        } else if(state.selectedPayers.size > 1){
-          state.selectedPayers.delete(p.key);
-        } else {
-          // keep at least one payer selected — revert the checkbox instead of leaving an empty filter
-          e.target.checked = true;
+    SOURCES.forEach(function(src){
+      var options = payerOptionsForSource(src.key);
+      var optionKeys = options.map(function(o){ return o.key; });
+      var selectedInGroup = options.filter(function(o){ return state.selectedPayers.has(o.key); });
+      var isOpen = !!openPayerGroups[src.key];
+      var countText = selectedInGroup.length===0 ? 'None' : (selectedInGroup.length===options.length ? 'All' : selectedInGroup.length+' selected');
+
+      var group = document.createElement('div');
+      group.className = 'source-payer-group';
+      group.innerHTML =
+        '<button class="source-payer-header'+(isOpen?' open':'')+'" type="button">' +
+          '<span class="sph-label">'+src.label+'</span>' +
+          '<span style="display:flex;align-items:center;gap:6px;">' +
+            '<span class="sph-count">'+countText+'</span>' +
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 9l6 6 6-6"/></svg>' +
+          '</span>' +
+        '</button>' +
+        '<div class="source-payer-children" style="display:'+(isOpen?'block':'none')+'">' +
+          '<div class="source-payer-actions">' +
+            '<button type="button" data-act="all">Select all</button>' +
+            '<button type="button" data-act="clear">Clear</button>' +
+          '</div>' +
+          options.map(function(o){
+            var checked = state.selectedPayers.has(o.key);
+            return '<label class="payer-option'+(checked?' active':'')+'"><input type="checkbox" value="'+o.key+'"'+(checked?' checked':'')+'><span>'+o.label+'</span></label>';
+          }).join('') +
+        '</div>';
+
+      group.querySelector('.source-payer-header').addEventListener('click', function(){
+        openPayerGroups[src.key] = !openPayerGroups[src.key];
+        renderSourcePayerList();
+      });
+      group.querySelector('[data-act="all"]').addEventListener('click', function(){
+        optionKeys.forEach(function(k){ state.selectedPayers.add(k); });
+        renderSourcePayerList();
+        renderAll();
+      });
+      group.querySelector('[data-act="clear"]').addEventListener('click', function(){
+        var wouldEmptyEverything = Array.from(state.selectedPayers).every(function(k){ return optionKeys.indexOf(k) !== -1; });
+        if(wouldEmptyEverything){
           showToast('At least one payer must stay selected.');
           return;
         }
-        renderPayerList();
+        optionKeys.forEach(function(k){ state.selectedPayers.delete(k); });
+        renderSourcePayerList();
         renderAll();
       });
-      el.appendChild(d);
+      Array.prototype.forEach.call(group.querySelectorAll('input[type=checkbox]'), function(input){
+        input.addEventListener('change', function(e){
+          var key = e.target.value;
+          if(e.target.checked){
+            state.selectedPayers.add(key);
+          } else if(state.selectedPayers.size > 1){
+            state.selectedPayers.delete(key);
+          } else {
+            e.target.checked = true;
+            showToast('At least one payer must stay selected.');
+            return;
+          }
+          renderSourcePayerList();
+          renderAll();
+        });
+      });
+
+      el.appendChild(group);
     });
   }
 
@@ -1068,14 +1250,19 @@
     }).join('');
   }
 
+  // key is namespaced like "partA::medicare" — returns "Part A: Medicare"
   function payerLabel(key){
-    var p = PAYER_OPTIONS.filter(function(x){return x.key===key;})[0];
-    return p ? p.label : key;
+    var parts = String(key).split('::');
+    var src = parts[0], child = parts[1];
+    var p = PAYER_OPTIONS.filter(function(x){return x.key===child;})[0];
+    var childLabel = p ? p.label : child;
+    return sourceLabel(src) + ': ' + childLabel;
   }
 
   // Compact, human-readable description of the current multi-payer selection,
-  // for use in KPI cards and tab notes — e.g. "Medicare" / "Medicare, HMO / Private
-  // Insurance" / "4 payers selected" once it gets too long to list out.
+  // for use in KPI cards and tab notes — e.g. "Part A: Medicare" / "Part A:
+  // Medicare + Part B: HMO / Private Insurance" / "4 payers selected" once
+  // it gets too long to list out.
   function describePayerSelection(){
     var picked = Array.from(state.selectedPayers);
     if(!picked.length) return 'None selected';
@@ -1751,6 +1938,7 @@
     registerPopout('asOfTrigger', 'asOfPanel');
     registerPopout('byAsOfMonthTrigger', 'byAsOfMonthPanel');
     registerPopout('byAsOfDatesTrigger', 'byAsOfDatesPanel');
+    registerPopout('dataSourcesTrigger', 'dataSourcesPanel');
     // Clicking anywhere else on the page closes whichever popout is open.
     document.addEventListener('click', function(){
       openPopouts.forEach(function(p){ p.close(); });
@@ -1783,8 +1971,30 @@
   }
 
   var pendingPublishFile = null;
+  var pendingPublishSource = null;
 
-  function handleFile(file){
+  function sourceStatusText(sourceKey){
+    var src = state.sources[sourceKey];
+    if(!src) return 'Not loaded yet';
+    var when = src.uploadedAt ? new Date(src.uploadedAt).toLocaleString() : '';
+    return src.rowCount.toLocaleString() + ' rows' + (when ? ' · updated ' + when : '');
+  }
+
+  function refreshAfterSourceChange(){
+    if(anySourceLoaded()){
+      document.getElementById('dropzone').classList.add('hidden');
+      document.getElementById('mainContent').classList.add('ready');
+      var loadedCount = SOURCE_KEYS.filter(function(k){ return !!state.sources[k]; }).length;
+      document.getElementById('topSub').textContent = state.facilities.length + ' facilities · ' + loadedCount + ' / ' + SOURCE_KEYS.length + ' sources loaded';
+    }
+    renderSourcePayerList();
+    renderFacilityList(document.getElementById('facSearch') ? document.getElementById('facSearch').value : '');
+    renderDzSourceGrid();
+    renderDataSourcesPanel();
+    renderAll();
+  }
+
+  function handleFileForSource(file, sourceKey){
     if(!file) return;
     var reader = new FileReader();
     reader.onload = function(e){
@@ -1793,21 +2003,12 @@
         state.selectedAsOf = null;
         state.byAsOfMonth = null;         // reset so the As-Of-Date tab's pickers re-default
         state.byAsOfDates = new Set();
-        parseWorkbook(e.target.result, file.name);
-        document.getElementById('dropzone').classList.add('hidden');
-        document.getElementById('mainContent').classList.add('ready');
-        document.getElementById('fileChip').style.display = 'flex';
-        document.getElementById('fileName').textContent = file.name;
-        var asOfs = allAsOfKeys();
-        document.getElementById('fileMeta').textContent = state.fileRows.toLocaleString() + ' rows · ' + state.facilities.length + ' facilities' + (asOfs.length ? ' · through ' + keyLabel(asOfs[asOfs.length-1]) : '');
-        document.getElementById('topSub').textContent = state.facilities.length + ' facilities loaded from ' + file.name;
-        renderPayerList();
-        renderFacilityList('');
-        renderAll();
-        showToast('Loaded ' + state.fileRows.toLocaleString() + ' rows from ' + file.name);
-        maybeOfferPublish(file);
+        parseWorkbookForSource(e.target.result, file.name, sourceKey);
+        refreshAfterSourceChange();
+        showToast('Loaded ' + state.sources[sourceKey].rowCount.toLocaleString() + ' rows for ' + sourceLabel(sourceKey) + '.');
+        maybeOfferPublish(file, sourceKey);
       }catch(err){
-        alert('Could not read this file: ' + err.message);
+        alert('Could not read this file for ' + sourceLabel(sourceKey) + ': ' + err.message);
       }
     };
     reader.readAsArrayBuffer(file);
@@ -1817,11 +2018,13 @@
      LIVE MODE — only active when this page is served by
      server.js (see /api/dataset). Falls back to local-only
      drag & drop, exactly as before, if there's no backend.
+     Each of the four sources is fetched/published independently.
   --------------------------------------------------------- */
-  function hydrateServerRecords(raw){
+  function hydrateServerRecords(raw, sourceKey){
     return raw.map(function(rec){
       var asOfDate = new Date(rec.asOfISO);
       return {
+        source: sourceKey,
         company: rec.company, metric: rec.metric, facility: rec.facility, code: rec.code,
         monthAbbr: rec.monthAbbr, year: rec.year,
         cohortKey: rec.year*12 + MONTH_IDX[rec.monthAbbr],
@@ -1832,26 +2035,13 @@
     });
   }
 
-  function applyServerPayload(payload){
-    state.selectedMonths = new Set();
-    state.selectedAsOf = null;
-    state.byAsOfMonth = null;
-    state.byAsOfDates = new Set();
-    state.rows = hydrateServerRecords(payload.records);
-    state.fileName = payload.fileName;
-    state.fileRows = state.rows.length;
-    buildFacilityList();
-    buildIndex();
-    document.getElementById('dropzone').classList.add('hidden');
-    document.getElementById('mainContent').classList.add('ready');
-    document.getElementById('fileChip').style.display = 'flex';
-    document.getElementById('fileName').textContent = payload.fileName + ' (live)';
-    var asOfs = allAsOfKeys();
-    document.getElementById('fileMeta').textContent = state.fileRows.toLocaleString() + ' rows · ' + state.facilities.length + ' facilities' + (asOfs.length ? ' · through ' + keyLabel(asOfs[asOfs.length-1]) : '') + ' · updated ' + new Date(payload.uploadedAt).toLocaleString();
-    document.getElementById('topSub').textContent = state.facilities.length + ' facilities · shared live data';
-    renderPayerList();
-    renderFacilityList('');
-    renderAll();
+  function applyServerSource(sourceKey, payload){
+    state.sources[sourceKey] = {
+      rows: hydrateServerRecords(payload.records, sourceKey),
+      fileName: payload.fileName,
+      rowCount: payload.rowCount,
+      uploadedAt: payload.uploadedAt
+    };
   }
 
   function initLiveMode(){
@@ -1860,40 +2050,61 @@
       return res.json();
     }).then(function(payload){
       state.liveMode = true;
-      if(payload && payload.records && payload.records.length){
-        applyServerPayload(payload);
+      var any = false;
+      SOURCE_KEYS.forEach(function(key){
+        var src = payload ? payload[key] : null;
+        if(src && src.records && src.records.length){
+          applyServerSource(key, src);
+          any = true;
+        }
+      });
+      if(any){
+        state.selectedMonths = new Set();
+        state.selectedAsOf = null;
+        buildFacilityList();
+        buildIndex();
+        refreshAfterSourceChange();
       } else {
         var hint = document.getElementById('dzLiveHint');
         if(hint) hint.style.display = 'block';
+        renderDzSourceGrid();
+        renderDataSourcesPanel();
       }
     }).catch(function(){
       state.liveMode = false; // no backend — behaves exactly like the standalone file
+      renderDzSourceGrid();
+      renderDataSourcesPanel();
     });
   }
 
-  function maybeOfferPublish(file){
+  function maybeOfferPublish(file, sourceKey){
     if(!state.liveMode) return;
     pendingPublishFile = file;
+    pendingPublishSource = sourceKey;
+    document.getElementById('publishBarTitle').textContent = 'Publish ' + sourceLabel(sourceKey) + ' for everyone with this link?';
     document.getElementById('publishBar').style.display = 'flex';
   }
 
   function initPublishBar(){
     document.getElementById('publishBtn').addEventListener('click', function(){
-      if(!pendingPublishFile) return;
+      if(!pendingPublishFile || !pendingPublishSource) return;
       var key = document.getElementById('adminKeyInput').value;
       var fd = new FormData();
       fd.append('file', pendingPublishFile);
       var btn = document.getElementById('publishBtn');
       btn.disabled = true; btn.textContent = 'Publishing…';
-      fetch('/api/upload', { method:'POST', headers:{'x-admin-key':key}, body: fd })
+      fetch('/api/upload/' + pendingPublishSource, { method:'POST', headers:{'x-admin-key':key}, body: fd })
         .then(function(res){ return res.json().then(function(body){ return {ok:res.ok, body:body}; }); })
         .then(function(r){
           btn.disabled = false; btn.textContent = 'Publish';
           if(r.ok){
-            showToast('Published — everyone with this link now sees this data.');
+            showToast('Published ' + sourceLabel(pendingPublishSource) + ' — everyone with this link now sees it.');
             document.getElementById('publishBar').style.display = 'none';
             document.getElementById('adminKeyInput').value = '';
             pendingPublishFile = null;
+            pendingPublishSource = null;
+            renderDataSourcesPanel();
+            renderDzSourceGrid();
           } else {
             alert('Could not publish: ' + (r.body && r.body.error ? r.body.error : 'unknown error'));
           }
@@ -1906,36 +2117,89 @@
     document.getElementById('dismissPublish').addEventListener('click', function(){
       document.getElementById('publishBar').style.display = 'none';
       pendingPublishFile = null;
+      pendingPublishSource = null;
+    });
+  }
+
+  /* ---------------------------------------------------------
+     Data source cards (empty-state grid) + Data Sources popout
+     (topbar) — two views onto the same four upload slots.
+  --------------------------------------------------------- */
+  function renderDzSourceGrid(){
+    var el = document.getElementById('dzSourceGrid');
+    if(!el) return;
+    el.innerHTML = SOURCES.map(function(s){
+      var has = !!state.sources[s.key];
+      return '<div class="dz-source-card'+(has?' has-data':'')+'" data-source="'+s.key+'">' +
+        '<div class="dz-source-title">'+s.label+'</div>' +
+        '<div class="dz-source-status">'+sourceStatusText(s.key)+'</div>' +
+        '<input type="file" accept=".xlsx,.xls" hidden id="fileInput-'+s.key+'">' +
+        '<button class="dz-source-btn" type="button" data-source="'+s.key+'">'+(has?'Update file…':'Choose file…')+'</button>' +
+      '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call(el.querySelectorAll('.dz-source-btn'), function(btn){
+      btn.addEventListener('click', function(){
+        var input = document.getElementById('fileInput-'+btn.getAttribute('data-source'));
+        if(input) input.click();
+      });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('input[type=file]'), function(input){
+      input.addEventListener('change', function(){
+        if(input.files[0]){
+          handleFileForSource(input.files[0], input.id.replace('fileInput-',''));
+        }
+        input.value = '';
+      });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('.dz-source-card'), function(card){
+      var srcKey = card.getAttribute('data-source');
+      ['dragenter','dragover'].forEach(function(ev){
+        card.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); card.classList.add('drag'); });
+      });
+      ['dragleave','drop'].forEach(function(ev){
+        card.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); card.classList.remove('drag'); });
+      });
+      card.addEventListener('drop', function(e){
+        var f = e.dataTransfer.files && e.dataTransfer.files[0];
+        if(f) handleFileForSource(f, srcKey);
+      });
+    });
+  }
+
+  function renderDataSourcesPanel(){
+    var el = document.getElementById('dataSourcesRows');
+    if(!el) return;
+    var loadedCount = SOURCE_KEYS.filter(function(k){ return !!state.sources[k]; }).length;
+    var summaryEl = document.getElementById('dataSourcesSummary');
+    if(summaryEl) summaryEl.textContent = loadedCount + ' / ' + SOURCE_KEYS.length + ' loaded';
+
+    el.innerHTML = SOURCES.map(function(s){
+      return '<div class="ds-row">' +
+        '<div>' +
+          '<div class="ds-row-label">'+s.label+'</div>' +
+          '<div class="ds-row-status">'+sourceStatusText(s.key)+'</div>' +
+        '</div>' +
+        '<button class="ds-row-btn" type="button" data-source="'+s.key+'">'+(state.sources[s.key]?'Update…':'Choose file…')+'</button>' +
+      '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call(el.querySelectorAll('.ds-row-btn'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var input = document.getElementById('fileInput-'+btn.getAttribute('data-source'));
+        if(input) input.click();
+      });
     });
   }
 
   function initDropzone(){
-    var dz = document.getElementById('dzBox');
-    var input = document.getElementById('fileInput');
-    ['dragenter','dragover'].forEach(function(ev){
-      dz.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); dz.classList.add('drag'); });
-      document.body.addEventListener(ev, function(e){ e.preventDefault(); });
-    });
-    ['dragleave','drop'].forEach(function(ev){
-      dz.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); dz.classList.remove('drag'); });
-    });
-    dz.addEventListener('drop', function(e){
-      var f = e.dataTransfer.files && e.dataTransfer.files[0];
-      if(f) handleFile(f);
-    });
-    document.getElementById('dzBrowse').addEventListener('click', function(){ input.click(); });
-    document.getElementById('loadNewBtn').addEventListener('click', function(){ input.click(); });
-    input.addEventListener('change', function(){ if(input.files[0]) handleFile(input.files[0]); input.value=''; });
-
-    // allow dropping anywhere on the page once loaded, to refresh data —
-    // but only while actually inside the AR Collections app, not on the
-    // Vantis home screen or another app.
-    document.body.addEventListener('drop', function(e){
-      if(document.getElementById('arCollectionsApp').style.display === 'none') return;
-      e.preventDefault();
-      var f = e.dataTransfer.files && e.dataTransfer.files[0];
-      if(f) handleFile(f);
-    });
+    renderDzSourceGrid();
+    renderDataSourcesPanel();
+    // Prevent the browser's default "open file" behavior if something is
+    // dropped outside a valid card target.
+    document.body.addEventListener('dragover', function(e){ e.preventDefault(); });
+    document.body.addEventListener('drop', function(e){ e.preventDefault(); });
   }
 
   function initSearch(){
