@@ -4,8 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AR Collections Explorer</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTdBNjczIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iNzAlIiBzdG9wLWNvbG9yPSIjMEY2QjRDIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNSIgZmlsbD0idXJsKCNnKSIvPgogIDx0ZXh0IHg9IjMyIiB5PSI0MyIgZm9udC1mYW1pbHk9IkFyaWFsLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iMjciIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkFSPC90ZXh0Pgo8L3N2Zz4K">
+<title>Vantis</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTdBNjczIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iNzAlIiBzdG9wLWNvbG9yPSIjMEY2QjRDIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNSIgZmlsbD0idXJsKCNnKSIvPgogIDx0ZXh0IHg9IjMyIiB5PSI0NCIgZm9udC1mYW1pbHk9IkFyaWFsLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iMzIiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlY8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -58,7 +58,8 @@
     gap:22px;
     position:sticky;top:0;height:100vh;overflow-y:auto;
   }
-  .brand{display:flex;align-items:center;gap:10px;}
+  .brand{display:flex;align-items:center;gap:10px;background:none;border:none;padding:0;width:100%;text-align:left;cursor:pointer;}
+  .brand:hover .t2{color:var(--emerald-bright);}
   .brand-mark{
     width:34px;height:34px;border-radius:9px;
     background:linear-gradient(140deg,var(--emerald-bright),var(--emerald) 70%);
@@ -67,7 +68,7 @@
     flex:none;
   }
   .brand-text .t1{font-family:'Space Grotesk';font-weight:600;font-size:15px;line-height:1.2;}
-  .brand-text .t2{font-size:11px;color:var(--sidebar-ink-soft);letter-spacing:.03em;}
+  .brand-text .t2{font-size:11px;color:var(--sidebar-ink-soft);letter-spacing:.03em;transition:.15s;}
 
   .side-section{border-top:1px solid var(--sidebar-line);padding-top:16px;}
   .side-label{
@@ -307,6 +308,61 @@
   svg.chart text{font-family:'IBM Plex Mono';fill:var(--ink-soft);}
   .empty-note{padding:40px;text-align:center;color:var(--ink-faint);font-size:13px;}
 
+  /* ===== HOME SCREEN (Vantis app launcher) ===== */
+  #homeScreen{
+    min-height:100vh;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:40px 20px;
+  }
+  .home-wrap{width:min(880px,100%);}
+  .home-brand{display:flex;align-items:center;gap:16px;margin-bottom:44px;justify-content:center;text-align:left;}
+  .home-brand-mark{
+    width:56px;height:56px;border-radius:15px;flex:none;
+    background:linear-gradient(140deg,var(--emerald-bright),var(--emerald) 70%);
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    font-family:'Space Grotesk';font-weight:700;font-size:26px;
+  }
+  .home-t1{font-family:'Space Grotesk';font-weight:700;font-size:30px;color:var(--ink);letter-spacing:-.01em;}
+  .home-t2{font-size:13.5px;color:var(--ink-soft);margin-top:2px;}
+  .home-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .home-card{
+    position:relative;text-align:left;background:var(--surface);border:1px solid var(--line);
+    border-radius:16px;padding:26px 24px;box-shadow:var(--shadow);font-family:inherit;
+    display:flex;flex-direction:column;gap:10px;transition:.15s;cursor:pointer;
+  }
+  .home-card:hover{border-color:var(--emerald-bright);transform:translateY(-2px);}
+  .home-card.disabled{cursor:default;opacity:.72;}
+  .home-card.disabled:hover{border-color:var(--line);transform:none;}
+  .home-card-icon{
+    width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;
+  }
+  .home-card-icon.ar-icon{background:linear-gradient(140deg,var(--emerald-bright),var(--emerald) 70%);}
+  .home-card-icon.census-icon{background:linear-gradient(140deg,#B98B4E,#8A6234 70%);}
+  .home-card-title{font-family:'Space Grotesk';font-weight:600;font-size:17px;color:var(--ink);}
+  .home-card-desc{font-size:12.5px;color:var(--ink-soft);line-height:1.5;flex:1;}
+  .home-card-cta{font-size:12.5px;font-weight:600;color:var(--emerald);display:flex;align-items:center;gap:5px;}
+  .home-card.disabled .home-card-cta{color:var(--ink-faint);}
+  .home-card-badge{
+    position:absolute;top:16px;right:16px;background:var(--surface-2);color:var(--ink-soft);
+    font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:4px 9px;border-radius:20px;
+  }
+  @media(max-width:640px){ .home-grid{grid-template-columns:1fr;} }
+
+  /* ===== Stub app pages (e.g. Census Trends, before it's built) ===== */
+  .stub-wrap{
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:40px 20px;gap:14px;position:relative;
+  }
+  .stub-back{
+    position:absolute;top:24px;left:30px;background:none;border:none;color:var(--ink-soft);
+    font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .stub-back:hover{color:var(--emerald);}
+  .stub-icon{
+    width:64px;height:64px;border-radius:16px;background:linear-gradient(140deg,#B98B4E,#8A6234 70%);
+    color:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:6px;
+  }
+  .stub-wrap h2{font-family:'Space Grotesk';font-size:24px;margin:0;color:var(--ink);}
+  .stub-wrap p{font-size:13.5px;color:var(--ink-soft);max-width:420px;line-height:1.6;margin:0;}
+
   @media(max-width:900px){
     .sidebar{position:fixed;left:-320px;transition:.2s;z-index:50;}
     .kpis{grid-template-columns:repeat(2,1fr);}
@@ -314,6 +370,41 @@
 </style>
 </head>
 <body>
+
+<div id="homeScreen">
+  <div class="home-wrap">
+    <div class="home-brand">
+      <div class="home-brand-mark">V</div>
+      <div class="home-brand-text">
+        <div class="home-t1">Vantis</div>
+        <div class="home-t2">Operational analytics for senior care facilities</div>
+      </div>
+    </div>
+
+    <div class="home-grid">
+      <button class="home-card" id="launchARCollections" type="button">
+        <div class="home-card-icon ar-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+        </div>
+        <div class="home-card-title">AR Collections</div>
+        <div class="home-card-desc">Track % collected, aging balances, and cash performance by facility, payer, and month of service.</div>
+        <div class="home-card-cta">Open <span>→</span></div>
+      </button>
+
+      <button class="home-card disabled" id="launchCensusTrends" type="button">
+        <div class="home-card-badge">Coming soon</div>
+        <div class="home-card-icon census-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3 2.5-5.2 5.5-5.2s5.5 2.2 5.5 5.2"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15 14.4c2.2.2 4.5 1.9 4.5 5.1"/></svg>
+        </div>
+        <div class="home-card-title">Census Trends</div>
+        <div class="home-card-desc">Census and length‑of‑stay reporting across facilities — in progress.</div>
+        <div class="home-card-cta">Coming soon</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="arCollectionsApp" style="display:none;">
 
 <div id="dropzone">
   <div class="dz-box" id="dzBox">
@@ -331,13 +422,13 @@
 
 <div id="app">
   <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-mark">AR</div>
+    <button class="brand" id="backToHomeBtn" type="button" title="Back to Vantis home">
+      <div class="brand-mark">V</div>
       <div class="brand-text">
-        <div class="t1">Collections Explorer</div>
-        <div class="t2">% collected · month over month</div>
+        <div class="t1">AR Collections</div>
+        <div class="t2">← Back to Vantis</div>
       </div>
-    </div>
+    </button>
 
     <div class="side-section">
       <div class="side-label">Facilities <span class="count" id="facCount"></span></div>
@@ -574,6 +665,19 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+</div>
+
+<div id="censusTrendsApp" style="display:none;">
+  <div class="stub-wrap">
+    <button class="stub-back" id="censusBackBtn" type="button">← Back to Vantis</button>
+    <div class="stub-icon">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3 2.5-5.2 5.5-5.2s5.5 2.2 5.5 5.2"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15 14.4c2.2.2 4.5 1.9 4.5 5.1"/></svg>
+    </div>
+    <h2>Census Trends</h2>
+    <p>Census and length‑of‑stay reporting is being built next. Once it's ready, it'll live here alongside AR Collections.</p>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -1540,6 +1644,34 @@
   /* ---------------------------------------------------------
      TABS
   --------------------------------------------------------- */
+  /* ---------------------------------------------------------
+     VANTIS APP NAVIGATION — switches between the home screen
+     and each app (AR Collections is fully built; Census
+     Trends is a stub until that component exists).
+  --------------------------------------------------------- */
+  function showScreen(name){
+    document.getElementById('homeScreen').style.display = (name==='home') ? 'flex' : 'none';
+    document.getElementById('arCollectionsApp').style.display = (name==='ar') ? 'block' : 'none';
+    document.getElementById('censusTrendsApp').style.display = (name==='census') ? 'block' : 'none';
+    document.title = (name==='home') ? 'Vantis' : (name==='ar' ? 'Vantis — AR Collections' : 'Vantis — Census Trends');
+    window.scrollTo(0,0);
+  }
+
+  function initNavigation(){
+    document.getElementById('launchARCollections').addEventListener('click', function(){
+      showScreen('ar');
+    });
+    document.getElementById('launchCensusTrends').addEventListener('click', function(){
+      showScreen('census');
+    });
+    document.getElementById('backToHomeBtn').addEventListener('click', function(){
+      showScreen('home');
+    });
+    document.getElementById('censusBackBtn').addEventListener('click', function(){
+      showScreen('home');
+    });
+  }
+
   function initTabs(){
     Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function(btn){
       btn.addEventListener('click', function(){
@@ -1761,8 +1893,11 @@
     document.getElementById('loadNewBtn').addEventListener('click', function(){ input.click(); });
     input.addEventListener('change', function(){ if(input.files[0]) handleFile(input.files[0]); input.value=''; });
 
-    // allow dropping anywhere on the page once loaded, to refresh data
+    // allow dropping anywhere on the page once loaded, to refresh data —
+    // but only while actually inside the AR Collections app, not on the
+    // Vantis home screen or another app.
     document.body.addEventListener('drop', function(e){
+      if(document.getElementById('arCollectionsApp').style.display === 'none') return;
       e.preventDefault();
       var f = e.dataTransfer.files && e.dataTransfer.files[0];
       if(f) handleFile(f);
@@ -1785,6 +1920,8 @@
     });
   }
 
+  initNavigation();
+  showScreen('home');
   initTabs();
   initPopouts();
   initDropzone();
