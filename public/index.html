@@ -808,10 +808,55 @@
 
   // Namespaced payer options for one source's popout, e.g. for 'partA':
   // [{key:'partA::allGroups', label:'All Groups'}, {key:'partA::medicare', ...}, ...]
+  // — filtered down to only the payers that actually have at least one
+  // non-null value in that source's uploaded file (e.g. Part A Coinsurance's
+  // workbook has no Budget/Hospice/Veterans/Respite columns at all, so those
+  // don't show up there even though they exist as options for Part A itself).
   function payerOptionsForSource(sourceKey){
-    return PAYER_OPTIONS.map(function(p){
+    var src = state.sources[sourceKey];
+    var available = src && src.availableKeys ? src.availableKeys : null;
+    return PAYER_OPTIONS.filter(function(p){
+      if(!available) return true; // nothing uploaded yet for this source — show the full canonical list as a placeholder
+      if(p.key === 'medicaidCombined'){
+        return MEDICAID_COMBO_KEYS.some(function(k){ return available[k]; });
+      }
+      return !!available[p.key];
+    }).map(function(p){
       return {key: sourceKey+'::'+p.key, label: p.label};
     });
+  }
+
+  // Scans a source's parsed records and returns a map of rawKey -> true for
+  // every payer column that has at least one real (non-null) value anywhere.
+  function computeAvailableKeys(rows){
+    var present = {};
+    rows.forEach(function(rec){
+      PAYER_COLUMNS.forEach(function(p){
+        if(rec.values[p.key] != null) present[p.key] = true;
+      });
+    });
+    return present;
+  }
+
+  // Removes any selected payer keys that are no longer available (e.g. after
+  // re-uploading a source with fewer columns), falling back to the first
+  // available option anywhere if that would empty the selection entirely.
+  function pruneUnavailablePayerSelections(){
+    var validKeys = {};
+    SOURCES.forEach(function(src){
+      payerOptionsForSource(src.key).forEach(function(o){ validKeys[o.key] = true; });
+    });
+    var toRemove = [];
+    state.selectedPayers.forEach(function(k){ if(!validKeys[k]) toRemove.push(k); });
+    toRemove.forEach(function(k){ state.selectedPayers.delete(k); });
+    if(state.selectedPayers.size === 0){
+      var fallback = null;
+      for(var i=0; i<SOURCES.length && !fallback; i++){
+        var opts = payerOptionsForSource(SOURCES[i].key);
+        if(opts.length) fallback = opts[0].key;
+      }
+      state.selectedPayers.add(fallback || 'partA::allGroups');
+    }
   }
   var MONTH_IDX = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
   var MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -922,7 +967,8 @@
       rows: records,
       fileName: fileName,
       rowCount: records.length,
-      uploadedAt: new Date().toISOString()
+      uploadedAt: new Date().toISOString(),
+      availableKeys: computeAvailableKeys(records)
     };
     buildFacilityList();
     buildIndex();
@@ -1103,6 +1149,7 @@
   var openPayerGroups = {}; // sourceKey -> bool — kept outside `state` since it's pure UI/display state
 
   function renderSourcePayerList(){
+    pruneUnavailablePayerSelections();
     var el = document.getElementById('sourcePayerList');
     el.innerHTML = '';
     SOURCES.forEach(function(src){
@@ -2036,11 +2083,13 @@
   }
 
   function applyServerSource(sourceKey, payload){
+    var rows = hydrateServerRecords(payload.records, sourceKey);
     state.sources[sourceKey] = {
-      rows: hydrateServerRecords(payload.records, sourceKey),
+      rows: rows,
       fileName: payload.fileName,
       rowCount: payload.rowCount,
-      uploadedAt: payload.uploadedAt
+      uploadedAt: payload.uploadedAt,
+      availableKeys: computeAvailableKeys(rows)
     };
   }
 
