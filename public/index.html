@@ -277,6 +277,48 @@
   }
   .ds-row-btn:hover{border-color:var(--emerald);color:var(--emerald);}
 
+  /* ===== ADMIN ===== */
+  #adminLoginScreen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:var(--bg);padding:40px 20px;position:relative;
+  }
+  .admin-login-wrap{
+    width:min(380px,100%);text-align:center;background:var(--surface);border:1px solid var(--line);
+    border-radius:16px;padding:36px 30px;box-shadow:var(--shadow);
+  }
+  .admin-login-icon{
+    width:52px;height:52px;border-radius:14px;margin:0 auto 16px;
+    background:linear-gradient(140deg,#5B6B7A,#2E3A46 70%);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .admin-login-wrap h2{font-family:'Space Grotesk';font-size:20px;margin:0 0 8px;}
+  .admin-login-wrap p{font-size:12.5px;color:var(--ink-soft);line-height:1.6;margin:0 0 20px;}
+  #adminLoginForm{display:flex;flex-direction:column;gap:10px;}
+  #adminLoginInput{
+    border:1px solid var(--line);border-radius:10px;padding:11px 14px;font-size:13.5px;
+    font-family:inherit;text-align:center;
+  }
+  #adminLoginInput:focus{outline:none;border-color:var(--emerald-bright);}
+  .admin-login-error{
+    margin-top:14px;font-size:12px;color:var(--clay);background:#FBEAE6;
+    border-radius:8px;padding:9px 12px;
+  }
+
+  .admin-import-row{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:14px 0;border-bottom:1px solid var(--surface-2);
+  }
+  .admin-import-row:last-child{border-bottom:none;}
+  .admin-import-label{font-size:13.5px;font-weight:600;color:var(--ink);}
+  .admin-import-status{font-size:11.5px;color:var(--ink-soft);margin-top:3px;line-height:1.5;}
+  .admin-import-status.ok{color:var(--emerald);}
+  .admin-import-btn{
+    background:var(--ink);color:#fff;border:none;padding:8px 18px;border-radius:16px;
+    font-size:12px;font-weight:600;white-space:nowrap;flex:none;
+  }
+  .admin-import-btn:hover{background:var(--emerald);}
+  .admin-import-btn:disabled{opacity:.6;cursor:default;}
+
   /* Trend chart */
   .cohort-picker{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
   .cohort-chip{
@@ -385,6 +427,7 @@
   }
   .home-card-icon.ar-icon{background:linear-gradient(140deg,var(--emerald-bright),var(--emerald) 70%);}
   .home-card-icon.census-icon{background:linear-gradient(140deg,#B98B4E,#8A6234 70%);}
+  .home-card-icon.admin-icon{background:linear-gradient(140deg,#5B6B7A,#2E3A46 70%);}
   .home-card-title{font-family:'Space Grotesk';font-weight:600;font-size:17px;color:var(--ink);}
   .home-card-desc{font-size:12.5px;color:var(--ink-soft);line-height:1.5;flex:1;}
   .home-card-cta{font-size:12.5px;font-weight:600;color:var(--emerald);display:flex;align-items:center;gap:5px;}
@@ -448,6 +491,15 @@
         <div class="home-card-desc">Length-of-stay trends by facility and payer, with year/month filtering.</div>
         <div class="home-card-cta">Open <span>→</span></div>
       </button>
+
+      <button class="home-card" id="launchAdmin" type="button">
+        <div class="home-card-icon admin-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        </div>
+        <div class="home-card-title">Admin</div>
+        <div class="home-card-desc">Import and publish data for every app — password protected.</div>
+        <div class="home-card-cta">Open <span>→</span></div>
+      </button>
     </div>
   </div>
 </div>
@@ -455,15 +507,13 @@
 <div id="arCollectionsApp" style="display:none;">
 
 <div id="dropzone">
-  <div class="dz-wrap">
-    <div class="dz-icon">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
+  <div class="dz-wrap" style="text-align:center;">
+    <div class="dz-icon" style="margin-left:auto;margin-right:auto;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
     </div>
-    <h2>AR Collections Explorer</h2>
-    <p>Upload each of the four data sources below — Part A, Part A Coinsurance, Part B, and Part B Coinsurance. They're maintained separately, so update whichever one has new months whenever it's ready; you don't need all four at once.</p>
-    <div class="dz-source-grid" id="dzSourceGrid"></div>
-    <div class="dz-hint">Parsing happens locally in your browser first — nothing is sent anywhere until you choose to publish it.</div>
-    <div class="dz-hint" id="dzLiveHint" style="display:none;color:var(--emerald);font-weight:600;">This link is connected to shared storage. Anything already published below is visible to everyone already — add or update a source any time.</div>
+    <h2>No data published yet</h2>
+    <p>An admin needs to import Part A, Part A Coinsurance, Part B, or Part B Coinsurance from the Admin tab before there's anything to show here.</p>
+    <button class="dz-source-btn" id="arGoToAdminBtn" type="button" style="width:auto;padding:9px 22px;">Go to Admin →</button>
   </div>
 </div>
 
@@ -506,29 +556,6 @@
         <h1>AR Collections Explorer</h1>
         <div class="sub" id="topSub">No data loaded yet</div>
       </div>
-      <div class="file-status">
-        <div class="popout-group">
-          <button class="popout-trigger" id="dataSourcesTrigger" type="button">
-            <span class="popout-trigger-label">Data Sources</span>
-            <span class="popout-trigger-value" id="dataSourcesSummary">0 / 4 loaded</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div class="popout-panel align-right" id="dataSourcesPanel" style="display:none;">
-            <div class="popout-panel-head">Manage data sources</div>
-            <div id="dataSourcesRows"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="publishBar" class="publish-bar" style="display:none;">
-      <div class="publish-text">
-        <b id="publishBarTitle">Publish this file for everyone with this link?</b>
-        <span>Only you can see it until you publish it — this replaces the shared data for that source, for the whole team.</span>
-      </div>
-      <input type="password" id="adminKeyInput" placeholder="Admin key" autocomplete="off">
-      <button class="btn-load" id="publishBtn" style="background:var(--emerald);">Publish</button>
-      <button class="btn-ghost" id="dismissPublish">Not now</button>
     </div>
 
     <div class="content" id="mainContent">
@@ -721,15 +748,13 @@
 <div id="censusTrendsApp" style="display:none;">
 
 <div id="censusDropzone">
-  <div class="dz-wrap">
-    <div class="dz-icon">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
+  <div class="dz-wrap" style="text-align:center;">
+    <div class="dz-icon" style="margin-left:auto;margin-right:auto;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3 2.5-5.2 5.5-5.2s5.5 2.2 5.5 5.2"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15 14.4c2.2.2 4.5 1.9 4.5 5.1"/></svg>
     </div>
-    <h2>Census Trends</h2>
-    <p>Upload the Length of Stay report and the Payer Mapping file below. The payer mapping is what turns raw payor codes into readable categories (Medicare, Medicaid, Commercial, etc.) — both are maintained separately, so update either one whenever it's ready.</p>
-    <div class="dz-source-grid" id="censusDzGrid"></div>
-    <div class="dz-hint">Parsing happens locally in your browser first — nothing is sent anywhere until you choose to publish it.</div>
-    <div class="dz-hint" id="censusDzLiveHint" style="display:none;color:var(--emerald);font-weight:600;">This link is connected to shared storage. Anything already published below is visible to everyone already — add or update a source any time.</div>
+    <h2>No data published yet</h2>
+    <p>An admin needs to import the Length of Stay report from the Admin tab before there's anything to show here.</p>
+    <button class="dz-source-btn" id="censusGoToAdminBtn" type="button" style="width:auto;padding:9px 22px;">Go to Admin →</button>
   </div>
 </div>
 
@@ -762,7 +787,7 @@
     </div>
 
     <div class="sidebar-footer">
-      Average length of stay is grouped by discharge month (End Date) and blended across your selected facilities and payer types. Payor codes not found in the payer mapping fall into "Unmapped" rather than being dropped.
+      Average length of stay is grouped by discharge month (End Date) and blended across your selected facilities and payer types. Payer categories come from a mapping built into the app; payor codes it doesn't recognize fall into "Unmapped" rather than being dropped.
     </div>
   </aside>
 
@@ -772,29 +797,6 @@
         <h1>Census Trends</h1>
         <div class="sub" id="censusTopSub">No data loaded yet</div>
       </div>
-      <div class="file-status">
-        <div class="popout-group">
-          <button class="popout-trigger" id="censusDataSourcesTrigger" type="button">
-            <span class="popout-trigger-label">Data Sources</span>
-            <span class="popout-trigger-value" id="censusDataSourcesSummary">0 / 2 loaded</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div class="popout-panel align-right" id="censusDataSourcesPanel" style="display:none;">
-            <div class="popout-panel-head">Manage data sources</div>
-            <div id="censusDataSourcesRows"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="censusPublishBar" class="publish-bar" style="display:none;">
-      <div class="publish-text">
-        <b id="censusPublishBarTitle">Publish this file for everyone with this link?</b>
-        <span>Only you can see it until you publish it — this replaces the shared data for that source, for the whole team.</span>
-      </div>
-      <input type="password" id="censusAdminKeyInput" placeholder="Admin key" autocomplete="off">
-      <button class="btn-load" id="censusPublishBtn" style="background:var(--emerald);">Publish</button>
-      <button class="btn-ghost" id="censusDismissPublish">Not now</button>
     </div>
 
     <div class="content" id="censusMainContent">
@@ -862,6 +864,51 @@
 
 <div class="toast" id="censusToast"></div>
 
+</div>
+
+<div id="adminApp" style="display:none;">
+  <div id="adminLoginScreen">
+    <div class="admin-login-wrap">
+      <button class="stub-back" id="adminBackFromLoginBtn" type="button">← Back to Vantis</button>
+      <div class="admin-login-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      </div>
+      <h2>Admin</h2>
+      <p>Enter the admin password to import and publish data for AR Collections and Census Trends.</p>
+      <form id="adminLoginForm">
+        <input type="password" id="adminLoginInput" placeholder="Admin password" autocomplete="current-password">
+        <button type="submit" class="dz-source-btn" id="adminLoginBtn">Log in</button>
+      </form>
+      <div id="adminLoginError" class="admin-login-error" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div id="adminDashboard" style="display:none;">
+    <div class="topbar">
+      <div>
+        <h1>Admin</h1>
+        <div class="sub">Import and publish data for every Vantis app</div>
+      </div>
+      <div class="file-status">
+        <button class="brand" id="adminBackToHomeBtn" type="button" style="background:none;width:auto;">
+          <span class="t2" style="color:var(--ink-soft);">← Back to Vantis</span>
+        </button>
+        <button class="btn-ghost" id="adminLogoutBtn" type="button">Log out</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head"><div><h2>AR Collections</h2><div class="note">Each source is imported and published independently.</div></div></div>
+        <div id="adminArRows"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div><h2>Census Trends</h2><div class="note">The Length of Stay report is imported monthly; the Payer Mapping only needs updating when payor contracts/rates change.</div></div></div>
+        <div id="adminCensusRows"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 
@@ -2062,8 +2109,10 @@
     document.getElementById('homeScreen').style.display = (name==='home') ? 'flex' : 'none';
     document.getElementById('arCollectionsApp').style.display = (name==='ar') ? 'block' : 'none';
     document.getElementById('censusTrendsApp').style.display = (name==='census') ? 'block' : 'none';
-    document.title = (name==='home') ? 'Vantis - SNF Reporting' : (name==='ar' ? 'Vantis — AR Collections' : 'Vantis — Census Trends');
+    document.getElementById('adminApp').style.display = (name==='admin') ? 'block' : 'none';
+    document.title = (name==='home') ? 'Vantis - SNF Reporting' : (name==='ar' ? 'Vantis — AR Collections' : (name==='census' ? 'Vantis — Census Trends' : 'Vantis — Admin'));
     window.scrollTo(0,0);
+    if(name==='admin') adminShowCorrectView();
   }
 
   function initNavigation(){
@@ -2073,10 +2122,25 @@
     document.getElementById('launchCensusTrends').addEventListener('click', function(){
       showScreen('census');
     });
+    document.getElementById('launchAdmin').addEventListener('click', function(){
+      showScreen('admin');
+    });
     document.getElementById('backToHomeBtn').addEventListener('click', function(){
       showScreen('home');
     });
     document.getElementById('censusBackToHomeBtn').addEventListener('click', function(){
+      showScreen('home');
+    });
+    document.getElementById('arGoToAdminBtn').addEventListener('click', function(){
+      showScreen('admin');
+    });
+    document.getElementById('censusGoToAdminBtn').addEventListener('click', function(){
+      showScreen('admin');
+    });
+    document.getElementById('adminBackFromLoginBtn').addEventListener('click', function(){
+      showScreen('home');
+    });
+    document.getElementById('adminBackToHomeBtn').addEventListener('click', function(){
       showScreen('home');
     });
   }
@@ -2126,7 +2190,6 @@
     registerPopout('asOfTrigger', 'asOfPanel');
     registerPopout('byAsOfMonthTrigger', 'byAsOfMonthPanel');
     registerPopout('byAsOfDatesTrigger', 'byAsOfDatesPanel');
-    registerPopout('dataSourcesTrigger', 'dataSourcesPanel');
     // Clicking anywhere else on the page closes whichever popout is open.
     document.addEventListener('click', function(){
       openPopouts.forEach(function(p){ p.close(); });
@@ -2158,9 +2221,6 @@
     setTimeout(function(){ t.classList.remove('show'); }, 3200);
   }
 
-  var pendingPublishFile = null;
-  var pendingPublishSource = null;
-
   function sourceStatusText(sourceKey){
     var src = state.sources[sourceKey];
     if(!src) return 'Not loaded yet';
@@ -2177,29 +2237,7 @@
     }
     renderSourcePayerList();
     renderFacilityList(document.getElementById('facSearch') ? document.getElementById('facSearch').value : '');
-    renderDzSourceGrid();
-    renderDataSourcesPanel();
     renderAll();
-  }
-
-  function handleFileForSource(file, sourceKey){
-    if(!file) return;
-    var reader = new FileReader();
-    reader.onload = function(e){
-      try{
-        state.selectedMonths = new Set(); // reset so global picker re-defaults
-        state.selectedAsOf = null;
-        state.byAsOfMonth = null;         // reset so the As-Of-Date tab's pickers re-default
-        state.byAsOfDates = new Set();
-        parseWorkbookForSource(e.target.result, file.name, sourceKey);
-        refreshAfterSourceChange();
-        showToast('Loaded ' + state.sources[sourceKey].rowCount.toLocaleString() + ' rows for ' + sourceLabel(sourceKey) + '.');
-        maybeOfferPublish(file, sourceKey);
-      }catch(err){
-        alert('Could not read this file for ' + sourceLabel(sourceKey) + ': ' + err.message);
-      }
-    };
-    reader.readAsArrayBuffer(file);
   }
 
   /* ---------------------------------------------------------
@@ -2235,7 +2273,7 @@
   }
 
   function initLiveMode(){
-    fetch('/api/dataset').then(function(res){
+    return fetch('/api/dataset').then(function(res){
       if(!res.ok) throw new Error('no api');
       return res.json();
     }).then(function(payload){
@@ -2254,140 +2292,16 @@
         buildFacilityList();
         buildIndex();
         refreshAfterSourceChange();
-      } else {
-        var hint = document.getElementById('dzLiveHint');
-        if(hint) hint.style.display = 'block';
-        renderDzSourceGrid();
-        renderDataSourcesPanel();
       }
     }).catch(function(){
-      state.liveMode = false; // no backend — behaves exactly like the standalone file
-      renderDzSourceGrid();
-      renderDataSourcesPanel();
-    });
-  }
-
-  function maybeOfferPublish(file, sourceKey){
-    if(!state.liveMode) return;
-    pendingPublishFile = file;
-    pendingPublishSource = sourceKey;
-    document.getElementById('publishBarTitle').textContent = 'Publish ' + sourceLabel(sourceKey) + ' for everyone with this link?';
-    document.getElementById('publishBar').style.display = 'flex';
-  }
-
-  function initPublishBar(){
-    document.getElementById('publishBtn').addEventListener('click', function(){
-      if(!pendingPublishFile || !pendingPublishSource) return;
-      var key = document.getElementById('adminKeyInput').value;
-      var fd = new FormData();
-      fd.append('file', pendingPublishFile);
-      var btn = document.getElementById('publishBtn');
-      btn.disabled = true; btn.textContent = 'Publishing…';
-      fetch('/api/upload/' + pendingPublishSource, { method:'POST', headers:{'x-admin-key':key}, body: fd })
-        .then(function(res){ return res.json().then(function(body){ return {ok:res.ok, body:body}; }); })
-        .then(function(r){
-          btn.disabled = false; btn.textContent = 'Publish';
-          if(r.ok){
-            showToast('Published ' + sourceLabel(pendingPublishSource) + ' — everyone with this link now sees it.');
-            document.getElementById('publishBar').style.display = 'none';
-            document.getElementById('adminKeyInput').value = '';
-            pendingPublishFile = null;
-            pendingPublishSource = null;
-            renderDataSourcesPanel();
-            renderDzSourceGrid();
-          } else {
-            alert('Could not publish: ' + (r.body && r.body.error ? r.body.error : 'unknown error'));
-          }
-        })
-        .catch(function(){
-          btn.disabled = false; btn.textContent = 'Publish';
-          alert('Could not reach the server to publish.');
-        });
-    });
-    document.getElementById('dismissPublish').addEventListener('click', function(){
-      document.getElementById('publishBar').style.display = 'none';
-      pendingPublishFile = null;
-      pendingPublishSource = null;
-    });
-  }
-
-  /* ---------------------------------------------------------
-     Data source cards (empty-state grid) + Data Sources popout
-     (topbar) — two views onto the same four upload slots.
-  --------------------------------------------------------- */
-  function renderDzSourceGrid(){
-    var el = document.getElementById('dzSourceGrid');
-    if(!el) return;
-    el.innerHTML = SOURCES.map(function(s){
-      var has = !!state.sources[s.key];
-      return '<div class="dz-source-card'+(has?' has-data':'')+'" data-source="'+s.key+'">' +
-        '<div class="dz-source-title">'+s.label+'</div>' +
-        '<div class="dz-source-status">'+sourceStatusText(s.key)+'</div>' +
-        '<input type="file" accept=".xlsx,.xls" hidden id="fileInput-'+s.key+'">' +
-        '<button class="dz-source-btn" type="button" data-source="'+s.key+'">'+(has?'Update file…':'Choose file…')+'</button>' +
-      '</div>';
-    }).join('');
-
-    Array.prototype.forEach.call(el.querySelectorAll('.dz-source-btn'), function(btn){
-      btn.addEventListener('click', function(){
-        var input = document.getElementById('fileInput-'+btn.getAttribute('data-source'));
-        if(input) input.click();
-      });
-    });
-    Array.prototype.forEach.call(el.querySelectorAll('input[type=file]'), function(input){
-      input.addEventListener('change', function(){
-        if(input.files[0]){
-          handleFileForSource(input.files[0], input.id.replace('fileInput-',''));
-        }
-        input.value = '';
-      });
-    });
-    Array.prototype.forEach.call(el.querySelectorAll('.dz-source-card'), function(card){
-      var srcKey = card.getAttribute('data-source');
-      ['dragenter','dragover'].forEach(function(ev){
-        card.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); card.classList.add('drag'); });
-      });
-      ['dragleave','drop'].forEach(function(ev){
-        card.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); card.classList.remove('drag'); });
-      });
-      card.addEventListener('drop', function(e){
-        var f = e.dataTransfer.files && e.dataTransfer.files[0];
-        if(f) handleFileForSource(f, srcKey);
-      });
-    });
-  }
-
-  function renderDataSourcesPanel(){
-    var el = document.getElementById('dataSourcesRows');
-    if(!el) return;
-    var loadedCount = SOURCE_KEYS.filter(function(k){ return !!state.sources[k]; }).length;
-    var summaryEl = document.getElementById('dataSourcesSummary');
-    if(summaryEl) summaryEl.textContent = loadedCount + ' / ' + SOURCE_KEYS.length + ' loaded';
-
-    el.innerHTML = SOURCES.map(function(s){
-      return '<div class="ds-row">' +
-        '<div>' +
-          '<div class="ds-row-label">'+s.label+'</div>' +
-          '<div class="ds-row-status">'+sourceStatusText(s.key)+'</div>' +
-        '</div>' +
-        '<button class="ds-row-btn" type="button" data-source="'+s.key+'">'+(state.sources[s.key]?'Update…':'Choose file…')+'</button>' +
-      '</div>';
-    }).join('');
-
-    Array.prototype.forEach.call(el.querySelectorAll('.ds-row-btn'), function(btn){
-      btn.addEventListener('click', function(e){
-        e.stopPropagation();
-        var input = document.getElementById('fileInput-'+btn.getAttribute('data-source'));
-        if(input) input.click();
-      });
+      state.liveMode = false;
     });
   }
 
   function initDropzone(){
-    renderDzSourceGrid();
-    renderDataSourcesPanel();
-    // Prevent the browser's default "open file" behavior if something is
-    // dropped outside a valid card target.
+    // Imports now happen exclusively through the Admin tab — this view is
+    // read-only. Just guard against the browser's default "open file"
+    // behavior if someone drags a file onto the page by mistake.
     document.body.addEventListener('dragover', function(e){ e.preventDefault(); });
     document.body.addEventListener('drop', function(e){ e.preventDefault(); });
   }
@@ -2410,10 +2324,20 @@
 
   /* =========================================================
      CENSUS TRENDS APP — independent dataset (Length of Stay +
-     Payer Mapping), sharing this scope so it can reuse showToast,
-     registerPopout/openPopouts, MONTH_IDX, MONTH_ABBR, and the
-     same CSS/UI patterns as AR Collections above, without any
-     naming collisions (everything here is census-prefixed).
+     Payer Mapping, both imported via the Admin tab), sharing this
+     scope so it can reuse showToast, registerPopout/openPopouts,
+     MONTH_IDX, MONTH_ABBR, and the same CSS/UI patterns as AR
+     Collections above, without any naming collisions (everything
+     here is census-prefixed).
+
+     The payer mapping (payor code -> payer type) ships with a
+     built-in default below, built from the NCS Payer Listing's
+     "List of Payors Detail" tab (Company+Code -> Payor name) joined
+     with "Sheet1" (Payor name -> Payer Type category). Since payor
+     rates/contracts change over time, an admin can import an updated
+     NCS Payer Listing at any point from the Admin tab — once one has
+     been published, it overrides this built-in default automatically
+     (see censusResolvePayerType).
   ========================================================== */
   var CENSUS_SOURCES = [
     {key:'losReport', label:'Length of Stay Report'},
@@ -2436,8 +2360,13 @@
   }
   function censusNormPayor(s){ return String(s||'').trim().toUpperCase().replace(/\s+/g,' '); }
 
+  // Built-in payer mapping (see comment block above) — replaces the old
+  // uploadable "Payer Mapping" source entirely.
+  var CENSUS_PAYER_TYPE_BY_COMPANY_CODE = {"Emerald Care Center Columbus||PHAETN":"COMMERCIAL","Emerald Care Center Columbus||PHAETM":"MANAGED MCR","Emerald Care Center Columbus||PHAMBE":"COMMERCIAL","Emerald Care Center Columbus||PHBCBS":"COMMERCIAL","Emerald Care Center Columbus||PHBCBM":"MANAGED MCR","Emerald Care Center Columbus||PHCHAM":"COMMERCIAL","Emerald Care Center Columbus||PHWELL":"MANAGED MCD","Emerald Care Center Columbus||PCHASE":"HOSPICE","Emerald Care Center Columbus||PCHCCH":"HOSPICE","Emerald Care Center Columbus||PCHSTC":"HOSPICE","Emerald Care Center Columbus||PCHTAB":"HOSPICE","Emerald Care Center Columbus||PCHHOR":"HOSPICE","Emerald Care Center Columbus||PHHUMC":"COMMERCIAL","Emerald Care Center Columbus||PHHUMM":"MANAGED MCR","Emerald Care Center Columbus||PHMEDH":"COMMERCIAL","Emerald Care Center Columbus||PMCA":"MEDICARE","Emerald Care Center Columbus||PHMOLI":"MANAGED MCD","Emerald Care Center Columbus||PMNE":"MEDICAID","Emerald Care Center Columbus||PHNETO":"MANAGED MCD","Emerald Care Center Columbus||PHPSWO":"COMMERCIAL","Emerald Care Center Columbus||PPRVPW":"PRIVATE","Emerald Care Center Columbus||PPRVH":"PRIVATE","Emerald Care Center Columbus||PPRV":"PRIVATE","Emerald Care Center Columbus||PHSWOR":"COMMERCIAL","Emerald Care Center Columbus||TRWOC":"COMMERCIAL","Emerald Care Center Columbus||PHTRIC":"COMMERCIAL","Emerald Care Center Columbus||PHUHCC":"COMMERCIAL","Emerald Care Center Columbus||PHUHP":"MANAGED MCD","Emerald Care Center Columbus||PHUHCD":"MANAGED MCD","Emerald Care Center Columbus||PHUHCB":"MANAGED MCR","Emerald Care Center Columbus||PHWELC":"COMMERCIAL","Emerald Care Center Columbus||PHUHCM":"MANAGED MCR","Emerald Care Center Columbus ALF||AHRBM":"HOSPICE","Emerald Care Center Columbus ALF||PMNE":"MEDICAID","Emerald Care Center Columbus ALF||PPRV":"PRIVATE","Emerald Care Center Cozad||PHAETC":"COMMERCIAL","Emerald Care Center Cozad||PHAETN":"MANAGED MCR","Emerald Care Center Cozad||PCHASE":"HOSPICE","Emerald Care Center Cozad||PHBCBC":"COMMERCIAL","Emerald Care Center Cozad||PCHCHI":"HOSPICE","Emerald Care Center Cozad||PHCIGN":"COMMERCIAL","Emerald Care Center Cozad||PCHCEN":"HOSPICE","Emerald Care Center Cozad||PHWELL":"MANAGED MCD","Emerald Care Center Cozad||PHMIDL":"COMMERCIAL","Emerald Care Center Cozad||PHMOLI":"MANAGED MCD","Emerald Care Center Cozad||PMNE":"MEDICAID","Emerald Care Center Cozad||PHNETO":"MANAGED MCD","Emerald Care Center Cozad||PPRVPW":"PRIVATE","Emerald Care Center Cozad||PPRVHS":"PRIVATE","Emerald Care Center Cozad||PPRV":"PRIVATE","Emerald Care Center Cozad||PCHRUR":"HOSPICE","Emerald Care Center Cozad||PHSILC":"COMMERCIAL","Emerald Care Center Cozad||PHUHCC":"COMMERCIAL","Emerald Care Center Cozad||PHUHCP":"MANAGED MCD","Emerald Care Center Cozad||PHUHCD":"MANAGED MCD","Emerald Care Center Cozad||PHUHCM":"MANAGED MCR","Emerald Care Center Cozad ALF||PHMOLI":"MANAGED MCD","Emerald Care Center Cozad ALF||PMNE":"MEDICAID","Emerald Care Center Cozad ALF||PHNETO":"MANAGED MCD","Emerald Care Center Cozad ALF||PPRV1":"PRIVATE","Emerald Care Center Cozad ALF||PPRV2":"PRIVATE","Emerald Care Center Cozad ALF||PPRV3":"PRIVATE","Emerald Care Center Cozad ALF||PPRV":"PRIVATE","Emerald Care Center Lakeview||PHAETN":"COMMERCIAL","Emerald Care Center Lakeview||PHAETM":"MANAGED MCR","Emerald Care Center Lakeview||PHAMCO":"COMMERCIAL","Emerald Care Center Lakeview||PHBCBS":"COMMERCIAL","Emerald Care Center Lakeview||PHBCBM":"MANAGED MCR","Emerald Care Center Lakeview||PHCHAM":"COMMERCIAL","Emerald Care Center Lakeview||PHEMCW":"COMMERCIAL","Emerald Care Center Lakeview||PHWELL":"MANAGED MCD","Emerald Care Center Lakeview||PCHASE":"HOSPICE","Emerald Care Center Lakeview||PCHMAR":"HOSPICE","Emerald Care Center Lakeview||PCHSTC":"HOSPICE","Emerald Care Center Lakeview||PCHTAB":"HOSPICE","Emerald Care Center Lakeview||PCHS":"HOSPICE","Emerald Care Center Lakeview||PHHUMC":"COMMERCIAL","Emerald Care Center Lakeview||PHHUCO":"COMMERCIAL","Emerald Care Center Lakeview||PHHUMR":"MANAGED MCR","Emerald Care Center Lakeview||PHHUMM":"MANAGED MCR","Emerald Care Center Lakeview||PHMEDI":"COMMERCIAL","Emerald Care Center Lakeview||PHMEDM":"MANAGED MCR","Emerald Care Center Lakeview||PMCACV":"MEDICARE","Emerald Care Center Lakeview||PMCA":"MEDICARE","Emerald Care Center Lakeview||PHMLMD":"MANAGED MCD","Emerald Care Center Lakeview||PMNE":"MEDICAID","Emerald Care Center Lakeview||PHNETO":"MANAGED MCD","Emerald Care Center Lakeview||PHNONC":"COMMERCIAL","Emerald Care Center Lakeview||PHNOND":"MANAGED MCD","Emerald Care Center Lakeview||PHNONR":"MANAGED MCR","Emerald Care Center Lakeview||PCHNON":"HOSPICE","Emerald Care Center Lakeview||PMNENO":"MEDICAID","Emerald Care Center Lakeview||NONMCR":"MEDICARE","Emerald Care Center Lakeview||PPRVNO":"PRIVATE","Emerald Care Center Lakeview||PPRVPW":"PRIVATE","Emerald Care Center Lakeview||PPRVH":"PRIVATE","Emerald Care Center Lakeview||PPRV":"PRIVATE","Emerald Care Center Lakeview||PHSPVA":"COMMERCIAL","Emerald Care Center Lakeview||PHTRIC":"COMMERCIAL","Emerald Care Center Lakeview||PHUHCC":"COMMERCIAL","Emerald Care Center Lakeview||PHUHPD":"MANAGED MCD","Emerald Care Center Lakeview||PHUHCM":"MANAGED MCD","Emerald Care Center Lakeview||PHUHCR":"MANAGED MCR","Emerald Care Center Lakeview||PHUMRC":"COMMERCIAL","Emerald Care Center Lakeview||PHUSAA":"COMMERCIAL","Emerald Care Center Lakeview||PHOPTU":"COMMERCIAL","Emerald Care Center Lakeview ALF||PMNE":"MEDICAID","Emerald Care Center Lakeview ALF||PPRV":"PRIVATE","Emerald Care Center Omaha||PHAETC":"COMMERCIAL","Emerald Care Center Omaha||PHAETN":"MANAGED MCR","Emerald Care Center Omaha||PHABCO":"COMMERCIAL","Emerald Care Center Omaha||PHBCBS":"COMMERCIAL","Emerald Care Center Omaha||PHBCBM":"MANAGED MCR","Emerald Care Center Omaha||PHBCBP":"MANAGED MCR","Emerald Care Center Omaha||PHCOVE":"MANAGED MCR","Emerald Care Center Omaha||PCHGEN":"HOSPICE","Emerald Care Center Omaha||PHMO1":"COMMERCIAL","Emerald Care Center Omaha||PHHARK":"MANAGED MCR","Emerald Care Center Omaha||PHWELL":"MANAGED MCD","Emerald Care Center Omaha||PCHASE":"HOSPICE","Emerald Care Center Omaha||PCHCHI":"HOSPICE","Emerald Care Center Omaha||PCHEND":"HOSPICE","Emerald Care Center Omaha||PCHHIL":"HOSPICE","Emerald Care Center Omaha||PCHKIN":"HOSPICE","Emerald Care Center Omaha||PCHSTC":"HOSPICE","Emerald Care Center Omaha||PCHSTJ":"HOSPICE","Emerald Care Center Omaha||PCHVNA":"HOSPICE","Emerald Care Center Omaha||PCHS":"HOSPICE","Emerald Care Center Omaha||PHHUML":"MANAGED MCR","Emerald Care Center Omaha||PHMEDC":"COMMERCIAL","Emerald Care Center Omaha||PHMERT":"COMMERCIAL","Emerald Care Center Omaha||PHMOMD":"MANAGED MCD","Emerald Care Center Omaha||PMNENO":"MEDICAID","Emerald Care Center Omaha||PMNE":"MEDICAID","Emerald Care Center Omaha||PHNETO":"MANAGED MCD","Emerald Care Center Omaha||PHNONC":"COMMERCIAL","Emerald Care Center Omaha||PHNOND":"MANAGED MCD","Emerald Care Center Omaha||PHNONR":"MANAGED MCR","Emerald Care Center Omaha||PCHNON":"HOSPICE","Emerald Care Center Omaha||PMNENN":"MEDICAID","Emerald Care Center Omaha||NONMCR":"MEDICARE","Emerald Care Center Omaha||PPRVNO":"PRIVATE","Emerald Care Center Omaha||PPRV":"PRIVATE","Emerald Care Center Omaha||PCHSUN":"HOSPICE","Emerald Care Center Omaha||PHUHCC":"COMMERCIAL","Emerald Care Center Omaha||PHGOLD":"COMMERCIAL","Emerald Care Center Omaha||PHUHCA":"MANAGED MCD","Emerald Care Center Omaha||PHUHCD":"MANAGED MCD","Emerald Care Center Omaha||PHUHCM":"MANAGED MCR","Emerald Care Center Omaha||PHUMRC":"COMMERCIAL","Emerald Care Center Omaha||PHUMR":"COMMERCIAL","Emerald Care Center Omaha||PHWELC":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHNTCC":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHAONF":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHBCBC":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHBCBS":"MANAGED MCR","Emerald Nursing & Rehab Brookside LLC||PHDPUD":"MANAGED MCD","Emerald Nursing & Rehab Brookside LLC||PHDPUH":"MANAGED MCR","Emerald Nursing & Rehab Brookside LLC||PMNEDP":"MEDICAID","Emerald Nursing & Rehab Brookside LLC||PCHEND":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHEVE":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHG":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PHMO1":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHHEAL":"MANAGED MCD","Emerald Nursing & Rehab Brookside LLC||PCHHC":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHASE":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHCHI":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHCOM":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHH":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHPEA":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHSTC":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHTAB":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHTRH":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHS":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PHHUMA":"MANAGED MCR","Emerald Nursing & Rehab Brookside LLC||PHMEDI":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHMOLI":"MANAGED MCD","Emerald Nursing & Rehab Brookside LLC||PMNE":"MEDICAID","Emerald Nursing & Rehab Brookside LLC||PHNETO":"MANAGED MCD","Emerald Nursing & Rehab Brookside LLC||PHNONC":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHNOND":"MANAGED MCD","Emerald Nursing & Rehab Brookside LLC||PHNONR":"MANAGED MCR","Emerald Nursing & Rehab Brookside LLC||PCHNON":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PMNENO":"MEDICAID","Emerald Nursing & Rehab Brookside LLC||PPRVNO":"PRIVATE","Emerald Nursing & Rehab Brookside LLC||PPRVPW":"PRIVATE","Emerald Nursing & Rehab Brookside LLC||PPRV":"PRIVATE","Emerald Nursing & Rehab Brookside LLC||PHTRI":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHUHCC":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHUHCP":"MANAGED MCD","Emerald Nursing & Rehab Brookside LLC||PHUHCM":"MANAGED MCD","Emerald Nursing & Rehab Brookside LLC||PHUHCR":"MANAGED MCR","Emerald Nursing & Rehab Brookside LLC||PHUMR":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHAARP":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHAMBC":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHAUXI":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHBCBS":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHBANK":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHGSOU":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHHEAL":"MANAGED MCD","Emerald Nursing & Rehab Lancaster LLC||PCHASE":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHCHU":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHCHI":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHENJ":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHHIL":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHHOR":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHKIN":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||HSPP":"PRIVATE","Emerald Nursing & Rehab Lancaster LLC||PCHCRO":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHTAB":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHTRA":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PHHUMC":"MANAGED MCR","Emerald Nursing & Rehab Lancaster LLC||PHMANH":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHMEDC":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHMEMA":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHMEDM":"MANAGED MCR","Emerald Nursing & Rehab Lancaster LLC||PHMOLI":"MANAGED MCD","Emerald Nursing & Rehab Lancaster LLC||PHNALC":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||NEMENR":"MEDICAID","Emerald Nursing & Rehab Lancaster LLC||PMNEUN":"MEDICAID","Emerald Nursing & Rehab Lancaster LLC||PMNE":"MEDICAID","Emerald Nursing & Rehab Lancaster LLC||PHNETO":"MANAGED MCD","Emerald Nursing & Rehab Lancaster LLC||NRAEMC":"MANAGED MCR","Emerald Nursing & Rehab Lancaster LLC||NRHUMC":"MANAGED MCR","Emerald Nursing & Rehab Lancaster LLC||PHNAES":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHOSCA":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PPRVPW":"PRIVATE","Emerald Nursing & Rehab Lancaster LLC||PPRV":"PRIVATE","Emerald Nursing & Rehab Lancaster LLC||PHRES":"RSPITE","Emerald Nursing & Rehab Lancaster LLC||PHSILC":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHTHRI":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHUHCC":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHUHCP":"MANAGED MCD","Emerald Nursing & Rehab Lancaster LLC||PHUHMC":"MANAGED MCD","Emerald Nursing & Rehab Lancaster LLC||PHUHCM":"MANAGED MCR","Emerald Nursing & Rehab Lancaster LLC||PHUMRC":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHUNIA":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PVVET":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PCHAME":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHHRZ":"HOSPICE","Emerald Nursing & Rehab Legacy Pointe LLC||PHAETC":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PHAENT":"MANAGED MCR","Emerald Nursing & Rehab Legacy Pointe LLC||PHBCFD":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PHBCB":"MANAGED MCR","Emerald Nursing & Rehab Legacy Pointe LLC||PHBCMR":"MANAGED MCR","Emerald Nursing & Rehab Legacy Pointe LLC||PHMO1":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PHHEAL":"MANAGED MCD","Emerald Nursing & Rehab Legacy Pointe LLC||PCHCHI":"HOSPICE","Emerald Nursing & Rehab Legacy Pointe LLC||PCHEND":"HOSPICE","Emerald Nursing & Rehab Legacy Pointe LLC||PCHHIL":"HOSPICE","Emerald Nursing & Rehab Legacy Pointe LLC||PCHKIN":"HOSPICE","Emerald Nursing & Rehab Legacy Pointe LLC||PCHHOU":"HOSPICE","Emerald Nursing & Rehab Legacy Pointe LLC||PHHUMA":"MANAGED MCR","Emerald Nursing & Rehab Legacy Pointe LLC||PHMEDI":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PHMLNM":"MANAGED MCD","Emerald Nursing & Rehab Legacy Pointe LLC||PMNE":"MEDICAID","Emerald Nursing & Rehab Legacy Pointe LLC||PHNETO":"MANAGED MCD","Emerald Nursing & Rehab Legacy Pointe LLC||PHNONC":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PHNOND":"MANAGED MCD","Emerald Nursing & Rehab Legacy Pointe LLC||PHNONR":"MANAGED MCR","Emerald Nursing & Rehab Legacy Pointe LLC||PMNENO":"MEDICAID","Emerald Nursing & Rehab Legacy Pointe LLC||PPRVNO":"PRIVATE","Emerald Nursing & Rehab Legacy Pointe LLC||PHOPHC":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PPRVPW":"PRIVATE","Emerald Nursing & Rehab Legacy Pointe LLC||PPRVHC":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PPRV":"PRIVATE","Emerald Nursing & Rehab Legacy Pointe LLC||PCHSTC":"HOSPICE","Emerald Nursing & Rehab Legacy Pointe LLC||PHUHCC":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PHUHP":"MANAGED MCD","Emerald Nursing & Rehab Legacy Pointe LLC||PHUHCM":"MANAGED MCD","Emerald Nursing & Rehab Legacy Pointe LLC||PHUHCR":"MANAGED MCR","Emerald Nursing & Rehab Legacy Pointe LLC||PHUMR":"COMMERCIAL","Holmes Lake Rehabilitation & Care Center||PHATEN":"MANAGED MCR","Holmes Lake Rehabilitation & Care Center||PCHCHI":"HOSPICE","Holmes Lake Rehabilitation & Care Center||PMNEDP":"MEDICAID","Holmes Lake Rehabilitation & Care Center||PCHHH":"HOSPICE","Holmes Lake Rehabilitation & Care Center||PCHH":"HOSPICE","Holmes Lake Rehabilitation & Care Center||PCHN":"HOSPICE","Holmes Lake Rehabilitation & Care Center||PHMED":"MANAGED MCR","Holmes Lake Rehabilitation & Care Center||PHMOLC":"MANAGED MCD","Holmes Lake Rehabilitation & Care Center||PMNE":"MEDICAID","Holmes Lake Rehabilitation & Care Center||PHNETC":"MANAGED MCD","Holmes Lake Rehabilitation & Care Center||PMNENO":"MEDICAID","Holmes Lake Rehabilitation & Care Center||PPRVNO":"PRIVATE","Holmes Lake Rehabilitation & Care Center||PPRVH":"PRIVATE","Holmes Lake Rehabilitation & Care Center||PPRVHC":"COMMERCIAL","Holmes Lake Rehabilitation & Care Center||PPRV":"PRIVATE","Holmes Lake Rehabilitation & Care Center||PCHR":"RSPITE","Holmes Lake Rehabilitation & Care Center||PCHSC":"HOSPICE","Holmes Lake Rehabilitation & Care Center||PCHTH":"HOSPICE","Holmes Lake Rehabilitation & Care Center||PCHTRH":"HOSPICE","Holmes Lake Rehabilitation & Care Center||PHUHCC":"COMMERCIAL","Holmes Lake Rehabilitation & Care Center||PHUHMD":"MANAGED MCD","Holmes Lake Rehabilitation & Care Center||PHUHCM":"MANAGED MCD","Holmes Lake Rehabilitation & Care Center||PHUHC":"MANAGED MCR","Mercy Care Center LLC||PHAETN":"MANAGED MCR","Mercy Care Center LLC||PHAMR":"MANAGED MCR","Mercy Care Center LLC||PHAFLC":"COMMERCIAL","Mercy Care Center LLC||PHAMCO":"COMMERCIAL","Mercy Care Center LLC||PHAMB":"MANAGED MCD","Mercy Care Center LLC||PCHADS":"HOSPICE","Mercy Care Center LLC||PCHANG":"HOSPICE","Mercy Care Center LLC||PHBCM":"MANAGED MCR","Mercy Care Center LLC||PCHCHI":"HOSPICE","Mercy Care Center LLC||PCHC":"HOSPICE","Mercy Care Center LLC||PPRVCR":"COMMERCIAL","Mercy Care Center LLC||PCHEDJ":"HOSPICE","Mercy Care Center LLC||PHGEHA":"COMMERCIAL","Mercy Care Center LLC||PCHGTA":"HOSPICE","Mercy Care Center LLC||PHMO1":"COMMERCIAL","Mercy Care Center LLC||PHHMMD":"MANAGED MCD","Mercy Care Center LLC||PCHHH":"HOSPICE","Mercy Care Center LLC||PHHBMD":"MANAGED MCD","Mercy Care Center LLC||PHBMD":"MANAGED MCD","Mercy Care Center LLC||PCHHCH":"HOSPICE","Mercy Care Center LLC||PCHMW":"HOSPICE","Mercy Care Center LLC||PCHS":"HOSPICE","Mercy Care Center LLC||PHHUMR":"MANAGED MCR","Mercy Care Center LLC||PHMOLM":"MANAGED MCD","Mercy Care Center LLC||PMNE":"MEDICAID","Mercy Care Center LLC||PHNETC":"MANAGED MCD","Mercy Care Center LLC||PHNTTC":"MANAGED MCD","Mercy Care Center LLC||PHNOND":"MANAGED MCD","Mercy Care Center LLC||PHNONR":"MANAGED MCR","Mercy Care Center LLC||PCHNON":"HOSPICE","Mercy Care Center LLC||PMNENO":"MEDICAID","Mercy Care Center LLC||PPRVNO":"PRIVATE","Mercy Care Center LLC||PCHPEA":"HOSPICE","Mercy Care Center LLC||PPRVHC":"COMMERCIAL","Mercy Care Center LLC||PPRVH":"PRIVATE","Mercy Care Center LLC||PPRV":"PRIVATE","Mercy Care Center LLC||PCHSCX":"HOSPICE","Mercy Care Center LLC||PCHSUN":"HOSPICE","Mercy Care Center LLC||PHUHP":"MANAGED MCD","Mercy Care Center LLC||PHUHMD":"MANAGED MCD","Mercy Care Center LLC||PHUHCN":"MANAGED MCR","Mercy Care Center LLC||PHUHMR":"MANAGED MCR","Mercy Care Center LLC||PHUHTC":"MANAGED MCD","Mercy Care Center LLC||PHUMRC":"COMMERCIAL","Mercy Care Center LLC||PHWEMR":"MANAGED MCR","Milford Meadows||PHAARP":"COMMERCIAL","Milford Meadows||PHAMBC":"COMMERCIAL","Milford Meadows||PHAUXI":"COMMERCIAL","Milford Meadows||PHBCBS":"COMMERCIAL","Milford Meadows||PHBANK":"COMMERCIAL","Milford Meadows||PHGSOU":"COMMERCIAL","Milford Meadows||PCHHIL":"HOSPICE","Milford Meadows||PCHHOR":"HOSPICE","Milford Meadows||PCHCRO":"HOSPICE","Milford Meadows||PCHTAB":"HOSPICE","Milford Meadows||PCHS":"HOSPICE","Milford Meadows||PHHUMC":"MANAGED MCR","Milford Meadows||PHMANH":"COMMERCIAL","Milford Meadows||PHMEDC":"COMMERCIAL","Milford Meadows||PHMEMA":"COMMERCIAL","Milford Meadows||PHMEDM":"MANAGED MCR","Milford Meadows||PHNALC":"COMMERCIAL","Milford Meadows||PMNE":"MEDICAID","Milford Meadows||PHNAES":"COMMERCIAL","Milford Meadows||PHOSCA":"COMMERCIAL","Milford Meadows||PPRVPW":"PRIVATE","Milford Meadows||PPRV":"PRIVATE","Milford Meadows||PHRES":"RSPITE","Milford Meadows||PHSILC":"COMMERCIAL","Milford Meadows||PHTHRI":"COMMERCIAL","Milford Meadows||PHUHCC":"COMMERCIAL","Milford Meadows||PHUHCM":"MANAGED MCR","Milford Meadows||PHUMRC":"COMMERCIAL","Milford Meadows||PHUNIA":"COMMERCIAL","Milford Meadows||PVVET":"COMMERCIAL","Emerald Care Center Claremore||PCHAV":"HOSPICE","Emerald Care Center Claremore||PHETNA":"MANAGED MCR","Emerald Care Center Claremore||PHAMBE":"COMMERCIAL","Emerald Care Center Claremore||PHBCBS":"COMMERCIAL","Emerald Care Center Claremore||PHBCBM":"MANAGED MCR","Emerald Care Center Claremore||PHCARE":"MANAGED MCR","Emerald Care Center Claremore||PCHCP":"HOSPICE","Emerald Care Center Claremore||PHDEVO":"MANAGED MCD","Emerald Care Center Claremore||PCHGH":"HOSPICE","Emerald Care Center Claremore||PHMO1":"COMMERCIAL","Emerald Care Center Claremore||PCHALL":"HOSPICE","Emerald Care Center Claremore||PCHCOM":"HOSPICE","Emerald Care Center Claremore||PCHELA":"HOSPICE","Emerald Care Center Claremore||PCHEM":"HOSPICE","Emerald Care Center Claremore||PCHEME":"HOSPICE","Emerald Care Center Claremore||PCHFH":"HOSPICE","Emerald Care Center Claremore||PCHHG":"HOSPICE","Emerald Care Center Claremore||PCHLEG":"HOSPICE","Emerald Care Center Claremore||PCHLP":"HOSPICE","Emerald Care Center Claremore||PCHRVR":"HOSPICE","Emerald Care Center Claremore||PCHROS":"HOSPICE","Emerald Care Center Claremore||PCHSEA":"HOSPICE","Emerald Care Center Claremore||PCHSTJ":"HOSPICE","Emerald Care Center Claremore||PCHSC":"HOSPICE","Emerald Care Center Claremore||PCHTRD":"HOSPICE","Emerald Care Center Claremore||PCHTRA":"HOSPICE","Emerald Care Center Claremore||PCHTH":"HOSPICE","Emerald Care Center Claremore||PCHHGR":"HOSPICE","Emerald Care Center Claremore||PCHS":"HOSPICE","Emerald Care Center Claremore||PHHUMM":"MANAGED MCR","Emerald Care Center Claremore||PHLIFE":"MANAGED MCR","Emerald Care Center Claremore||PHPRL":"COMMERCIAL","Emerald Care Center Claremore||PMCACV":"MEDICARE","Emerald Care Center Claremore||PMCADP":"MEDICARE","Emerald Care Center Claremore||PMCA":"MEDICARE","Emerald Care Center Claremore||PCHM":"HOSPICE","Emerald Care Center Claremore||PHNONC":"COMMERCIAL","Emerald Care Center Claremore||PHNOND":"MANAGED MCD","Emerald Care Center Claremore||PHNONR":"MANAGED MCR","Emerald Care Center Claremore||PCHNON":"HOSPICE","Emerald Care Center Claremore||PMOKNO":"MEDICAID","Emerald Care Center Claremore||PMCANO":"MEDICARE","Emerald Care Center Claremore||PPRVNO":"PRIVATE","Emerald Care Center Claremore||PMOK":"MEDICAID","Emerald Care Center Claremore||PHVACC":"COMMERCIAL","Emerald Care Center Claremore||PPRV":"PRIVATE","Emerald Care Center Claremore||PHUHCC":"COMMERCIAL","Emerald Care Center Claremore||PHUHCM":"MANAGED MCR","Emerald Care Center Claremore||PCHVL":"HOSPICE","Emerald Care Center Claremore||PHWELL":"MANAGED MCR","Emerald Care Center Midwest||PCHAPC":"HOSPICE","Emerald Care Center Midwest||PCHACG":"HOSPICE","Emerald Care Center Midwest||PHAETL":"MANAGED MCR","Emerald Care Center Midwest||PHAEMT":"COMMERCIAL","Emerald Care Center Midwest||PHAMCF":"COMMERCIAL","Emerald Care Center Midwest||PHAMHO":"MANAGED MCR","Emerald Care Center Midwest||PCHAPE":"HOSPICE","Emerald Care Center Midwest||PCHASP":"HOSPICE","Emerald Care Center Midwest||PHBCBS":"COMMERCIAL","Emerald Care Center Midwest||PHBCBM":"MANAGED MCR","Emerald Care Center Midwest||PCHBR":"HOSPICE","Emerald Care Center Midwest||PHBROA":"COMMERCIAL","Emerald Care Center Midwest||PCHCEN":"HOSPICE","Emerald Care Center Midwest||PCHOIC":"HOSPICE","Emerald Care Center Midwest||PHCIGM":"MANAGED MCR","Emerald Care Center Midwest||PHCHMC":"MANAGED MCR","Emerald Care Center Midwest||PCHEC":"HOSPICE","Emerald Care Center Midwest||PCHEMH":"HOSPICE","Emerald Care Center Midwest||PCHEXC":"HOSPICE","Emerald Care Center Midwest||PCHFRO":"HOSPICE","Emerald Care Center Midwest||PHGEHA":"COMMERCIAL","Emerald Care Center Midwest||PHGHCO":"COMMERCIAL","Emerald Care Center Midwest||PHGHMA":"MANAGED MCR","Emerald Care Center Midwest||PCHGSH":"HOSPICE","Emerald Care Center Midwest||PHHCCO":"COMMERCIAL","Emerald Care Center Midwest||PHHEAL":"COMMERCIAL","Emerald Care Center Midwest||PCHHEA":"HOSPICE","Emerald Care Center Midwest||PPRVP1":"PRIVATE","Emerald Care Center Midwest||PCHS":"HOSPICE","Emerald Care Center Midwest||PHHUMO":"COMMERCIAL","Emerald Care Center Midwest||PHHUML":"MANAGED MCR","Emerald Care Center Midwest||PHHUMC":"MANAGED MCR","Emerald Care Center Midwest||PHHUCO":"COMMERCIAL","Emerald Care Center Midwest||PHLONG":"MANAGED MCR","Emerald Care Center Midwest||PHMMMC":"MANAGED MCR","Emerald Care Center Midwest||PMCACV":"MEDICARE","Emerald Care Center Midwest||PMCA":"MEDICARE","Emerald Care Center Midwest||PHNALC":"COMMERCIAL","Emerald Care Center Midwest||PHNO F":"COMMERCIAL","Emerald Care Center Midwest||PHNONC":"COMMERCIAL","Emerald Care Center Midwest||PHNOND":"MANAGED MCD","Emerald Care Center Midwest||PHNONR":"MANAGED MCR","Emerald Care Center Midwest||PCHNON":"HOSPICE","Emerald Care Center Midwest||PMOKNO":"MEDICAID","Emerald Care Center Midwest||NONMCR":"MEDICARE","Emerald Care Center Midwest||PPRVNO":"PRIVATE","Emerald Care Center Midwest||PMOK":"MEDICAID","Emerald Care Center Midwest||PHVACC":"COMMERCIAL","Emerald Care Center Midwest||PHPCMC":"COMMERCIAL","Emerald Care Center Midwest||PPRV":"PRIVATE","Emerald Care Center Midwest||PHSTAT":"COMMERCIAL","Emerald Care Center Midwest||PCHSH":"HOSPICE","Emerald Care Center Midwest||PHTRIW":"COMMERCIAL","Emerald Care Center Midwest||PHUHCF":"COMMERCIAL","Emerald Care Center Midwest||PHUHMF":"MANAGED MCR","Emerald Care Center Midwest||PHUHCM":"MANAGED MCR","Emerald Care Center Midwest||PHUMRC":"COMMERCIAL","Emerald Care Center Midwest||PHUHCC":"COMMERCIAL","Emerald Care Center Midwest||PHWPA":"COMMERCIAL","Emerald Care Center Midwest||PHWCTX":"MANAGED MCR","Emerald Care Center Midwest||PHWORK":"COMMERCIAL","Emerald Care Center Southwest||PHAARP":"COMMERCIAL","Emerald Care Center Southwest||PHAETL":"MANAGED MCR","Emerald Care Center Southwest||PCHAC":"HOSPICE","Emerald Care Center Southwest||PCHAH":"HOSPICE","Emerald Care Center Southwest||PHBCBS":"COMMERCIAL","Emerald Care Center Southwest||PHBCBM":"MANAGED MCR","Emerald Care Center Southwest||PHBANK":"COMMERCIAL","Emerald Care Center Southwest||PCHCHH":"HOSPICE","Emerald Care Center Southwest||PCHCH":"HOSPICE","Emerald Care Center Southwest||PHCIGM":"MANAGED MCR","Emerald Care Center Southwest||PHCCCO":"COMMERCIAL","Emerald Care Center Southwest||PCHRHS":"HOSPICE","Emerald Care Center Southwest||PCHELA":"HOSPICE","Emerald Care Center Southwest||PCHEMH":"HOSPICE","Emerald Care Center Southwest||PCHEXC":"HOSPICE","Emerald Care Center Southwest||PHFRIN":"COMMERCIAL","Emerald Care Center Southwest||PCHFR":"HOSPICE","Emerald Care Center Southwest||PHGPML":"COMMERCIAL","Emerald Care Center Southwest||PHGHCO":"COMMERCIAL","Emerald Care Center Southwest||PHGHMA":"MANAGED MCR","Emerald Care Center Southwest||PCHG":"HOSPICE","Emerald Care Center Southwest||PHHCCO":"COMMERCIAL","Emerald Care Center Southwest||PHMSCO":"COMMERCIAL","Emerald Care Center Southwest||PCHHEA":"HOSPICE","Emerald Care Center Southwest||PCHS":"HOSPICE","Emerald Care Center Southwest||PHHUMO":"COMMERCIAL","Emerald Care Center Southwest||PHHUCO":"COMMERCIAL","Emerald Care Center Southwest||PHHUML":"MANAGED MCR","Emerald Care Center Southwest||PHHUMC":"MANAGED MCR","Emerald Care Center Southwest||PHHUMA":"COMMERCIAL","Emerald Care Center Southwest||PHIRON":"COMMERCIAL","Emerald Care Center Southwest||PCHIND":"HOSPICE","Emerald Care Center Southwest||PHLONG":"MANAGED MCR","Emerald Care Center Southwest||PMCACV":"MEDICARE","Emerald Care Center Southwest||PMCA":"MEDICARE","Emerald Care Center Southwest||PHNALC":"COMMERCIAL","Emerald Care Center Southwest||PHNONC":"COMMERCIAL","Emerald Care Center Southwest||PHNOND":"MANAGED MCD","Emerald Care Center Southwest||PHNONR":"MANAGED MCR","Emerald Care Center Southwest||PCHNON":"HOSPICE","Emerald Care Center Southwest||PMOKNO":"MEDICAID","Emerald Care Center Southwest||NONMCR":"MEDICARE","Emerald Care Center Southwest||PPRVNO":"PRIVATE","Emerald Care Center Southwest||PMOK":"MEDICAID","Emerald Care Center Southwest||PPRV":"PRIVATE","Emerald Care Center Southwest||PCHUAL":"HOSPICE","Emerald Care Center Southwest||PCHRIV":"HOSPICE","Emerald Care Center Southwest||PCHSC":"HOSPICE","Emerald Care Center Southwest||PCHSUN":"HOSPICE","Emerald Care Center Southwest||PCHEND":"HOSPICE","Emerald Care Center Southwest||PCHT":"HOSPICE","Emerald Care Center Southwest||PHUFCW":"COMMERCIAL","Emerald Care Center Southwest||PHUHCC":"COMMERCIAL","Emerald Care Center Southwest||PHUHCN":"MANAGED MCR","Emerald Care Center Southwest||PHUHCM":"MANAGED MCR","Emerald Care Center Southwest||PHUMR":"COMMERCIAL","Emerald Care Center Southwest||PHUAIC":"COMMERCIAL","Emerald Care Center Southwest||PHUNIV":"COMMERCIAL","Emerald Care Center Southwest||PHWPA":"COMMERCIAL","Emerald Care Center Southwest||PHWELL":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHAETM":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHAECM":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHAETC":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHAETN":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHATWB":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHBCBS":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHBCMC":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHCIGL":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHCIGN":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHCCCO":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHCCMC":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PCHCUS":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PHCHCH":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHCHMC":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PCHEMH":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PHFIRS":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHGHMC":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHGHCO":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHGHMA":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PCHGS":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PHHCCO":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHHCSO":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PCHELA":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PCHENH":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PCHGEN":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PCHGRE":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PCHLP":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PCHROS":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PCHS":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PHHUML":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHHUCC":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHHUMD":"MANAGED MCD","Garden Manor Rehab and Nursing of Tulsa||PHHUMM":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHHUMC":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHHUMA":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHLIFC":"MANAGED MCD","Garden Manor Rehab and Nursing of Tulsa||PPRVLP":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHLONG":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PMCACV":"MEDICARE","Garden Manor Rehab and Nursing of Tulsa||PMCA":"MEDICARE","Garden Manor Rehab and Nursing of Tulsa||PHNALC":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHNF":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHNONC":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHNONR":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHNOND":"MANAGED MCD","Garden Manor Rehab and Nursing of Tulsa||PCHNON":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PMOKNO":"MEDICAID","Garden Manor Rehab and Nursing of Tulsa||NONMCR":"MEDICARE","Garden Manor Rehab and Nursing of Tulsa||PPRVNO":"PRIVATE","Garden Manor Rehab and Nursing of Tulsa||PMOK":"MEDICAID","Garden Manor Rehab and Nursing of Tulsa||PHOBJS":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHOPVA":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PCHP":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PPRVPW":"PRIVATE","Garden Manor Rehab and Nursing of Tulsa||PHPCMC":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PPRV":"PRIVATE","Garden Manor Rehab and Nursing of Tulsa||PCHT":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PHUHCF":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHUHMF":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHUHCM":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHUMRC":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHWPA":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHWCR":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHAETL":"MANAGED MCR","Lexington Premier Nursing & Rehab LLC||PHATM":"MANAGED MCD","Lexington Premier Nursing & Rehab LLC||PHBCBC":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHBCBS":"MANAGED MCR","Lexington Premier Nursing & Rehab LLC||PCHBLU":"HOSPICE","Lexington Premier Nursing & Rehab LLC||PHHUMC":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHHUML":"MANAGED MCR","Lexington Premier Nursing & Rehab LLC||PMKY":"MEDICAID","Lexington Premier Nursing & Rehab LLC||PHNIPP":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHNONC":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHNOND":"MANAGED MCD","Lexington Premier Nursing & Rehab LLC||PHNONR":"MANAGED MCR","Lexington Premier Nursing & Rehab LLC||PMKYNO":"MEDICAID","Lexington Premier Nursing & Rehab LLC||PMCANO":"MEDICARE","Lexington Premier Nursing & Rehab LLC||PPRVNO":"PRIVATE","Lexington Premier Nursing & Rehab LLC||PPRV":"PRIVATE","Lexington Premier Nursing & Rehab LLC||PHUHCC":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHUHCM":"MANAGED MCR","Lexington Premier Nursing & Rehab LLC||PHUMRC":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHWELC":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHWELL":"MANAGED MCR","Memory Care Center at Emerald||PHAETM":"MANAGED MCR","Memory Care Center at Emerald||PHCHER":"MANAGED MCR","Memory Care Center at Emerald||PHGLOB":"MANAGED MCR","Memory Care Center at Emerald||PHMO1":"COMMERCIAL","Memory Care Center at Emerald||PCHAVO":"HOSPICE","Memory Care Center at Emerald||PCHANG":"HOSPICE","Memory Care Center at Emerald||PCHHCM":"HOSPICE","Memory Care Center at Emerald||PCHGV":"HOSPICE","Memory Care Center at Emerald||PCHLP":"HOSPICE","Memory Care Center at Emerald||PCHHSP":"HOSPICE","Memory Care Center at Emerald||PCHTRA":"HOSPICE","Memory Care Center at Emerald||PCHLIF":"HOSPICE","Memory Care Center at Emerald||PCHVL":"HOSPICE","Memory Care Center at Emerald||PCHHSG":"HOSPICE","Memory Care Center at Emerald||PCHS":"HOSPICE","Memory Care Center at Emerald||PHPRL":"COMMERCIAL","Memory Care Center at Emerald||PMCACV":"MEDICARE","Memory Care Center at Emerald||PMCA":"MEDICARE","Memory Care Center at Emerald||PCHM":"HOSPICE","Memory Care Center at Emerald||PHNOND":"MANAGED MCD","Memory Care Center at Emerald||PHNONR":"MANAGED MCR","Memory Care Center at Emerald||PCHNON":"HOSPICE","Memory Care Center at Emerald||PMOKNO":"MEDICAID","Memory Care Center at Emerald||PMCANM":"MEDICARE","Memory Care Center at Emerald||PPRVNO":"PRIVATE","Memory Care Center at Emerald||PMOK":"MEDICAID","Memory Care Center at Emerald||PPRVPW":"PRIVATE","Memory Care Center at Emerald||PPRV":"PRIVATE","Memory Care Center at Emerald||PHRAVE":"COMMERCIAL","Memory Care Center at Emerald||PHUHCC":"COMMERCIAL","Memory Care Center at Emerald||PHUHCM":"MANAGED MCR","Memory Care Center at Emerald||PHUMRC":"COMMERCIAL","Memory Care Center at Emerald||PHUNIA":"COMMERCIAL","Pikeville Nursing and Rehab Center||PHBCMR":"MANAGED MCR","Pikeville Nursing and Rehab Center||PHBCBS":"COMMERCIAL","Pikeville Nursing and Rehab Center||PHMO1":"COMMERCIAL","Pikeville Nursing and Rehab Center||PCHBLU":"HOSPICE","Pikeville Nursing and Rehab Center||PHHUCL":"COMMERCIAL","Pikeville Nursing and Rehab Center||PHHUML":"MANAGED MCR","Pikeville Nursing and Rehab Center||PMKYC":"MEDICAID","Pikeville Nursing and Rehab Center||PMKY":"MEDICAID","Pikeville Nursing and Rehab Center||PHLPTC":"COMMERCIAL","Pikeville Nursing and Rehab Center||PHNONC":"COMMERCIAL","Pikeville Nursing and Rehab Center||PHNOND":"MANAGED MCD","Pikeville Nursing and Rehab Center||PHNONR":"MANAGED MCR","Pikeville Nursing and Rehab Center||PMKYNO":"MEDICAID","Pikeville Nursing and Rehab Center||PPRVNO":"PRIVATE","Pikeville Nursing and Rehab Center||PHPAMD":"MANAGED MCD","Pikeville Nursing and Rehab Center||PPRV":"PRIVATE","Pikeville Nursing and Rehab Center||PHUHCC":"COMMERCIAL","Pikeville Nursing and Rehab Center||PHUMC":"MANAGED MCR","Pikeville Nursing and Rehab Center||PHUMR":"COMMERCIAL","Pikeville Nursing and Rehab Center||PHWELM":"MANAGED MCR"};
+  var CENSUS_PAYER_TYPE_BY_CODE_FALLBACK = {"PHAETN":"MANAGED MCR","PHAETM":"MANAGED MCR","PHAMBE":"COMMERCIAL","PHBCBS":"COMMERCIAL","PHBCBM":"MANAGED MCR","PHCHAM":"COMMERCIAL","PHWELL":"MANAGED MCR","PCHASE":"HOSPICE","PCHCCH":"HOSPICE","PCHSTC":"HOSPICE","PCHTAB":"HOSPICE","PCHHOR":"HOSPICE","PHHUMC":"MANAGED MCR","PHHUMM":"MANAGED MCR","PHMEDH":"COMMERCIAL","PMCA":"MEDICARE","PHMOLI":"MANAGED MCD","PMNE":"MEDICAID","PHNETO":"MANAGED MCD","PHPSWO":"COMMERCIAL","PPRVPW":"PRIVATE","PPRVH":"PRIVATE","PPRV":"PRIVATE","PHSWOR":"COMMERCIAL","TRWOC":"COMMERCIAL","PHTRIC":"COMMERCIAL","PHUHCC":"COMMERCIAL","PHUHP":"MANAGED MCD","PHUHCD":"MANAGED MCD","PHUHCB":"MANAGED MCR","PHWELC":"COMMERCIAL","PHUHCM":"MANAGED MCR","AHRBM":"HOSPICE","PHAETC":"COMMERCIAL","PHBCBC":"COMMERCIAL","PCHCHI":"HOSPICE","PHCIGN":"COMMERCIAL","PCHCEN":"HOSPICE","PHMIDL":"COMMERCIAL","PPRVHS":"PRIVATE","PCHRUR":"HOSPICE","PHSILC":"COMMERCIAL","PHUHCP":"MANAGED MCD","PPRV1":"PRIVATE","PPRV2":"PRIVATE","PPRV3":"PRIVATE","PHAMCO":"COMMERCIAL","PHEMCW":"COMMERCIAL","PCHMAR":"HOSPICE","PCHS":"HOSPICE","PHHUCO":"COMMERCIAL","PHHUMR":"MANAGED MCR","PHMEDI":"COMMERCIAL","PHMEDM":"MANAGED MCR","PMCACV":"MEDICARE","PHMLMD":"MANAGED MCD","PHNONC":"COMMERCIAL","PHNOND":"MANAGED MCD","PHNONR":"MANAGED MCR","PCHNON":"HOSPICE","PMNENO":"MEDICAID","NONMCR":"MEDICARE","PPRVNO":"PRIVATE","PHSPVA":"COMMERCIAL","PHUHPD":"MANAGED MCD","PHUHCR":"MANAGED MCR","PHUMRC":"COMMERCIAL","PHUSAA":"COMMERCIAL","PHOPTU":"COMMERCIAL","PHABCO":"COMMERCIAL","PHBCBP":"MANAGED MCR","PHCOVE":"MANAGED MCR","PCHGEN":"HOSPICE","PHMO1":"COMMERCIAL","PHHARK":"MANAGED MCR","PCHEND":"HOSPICE","PCHHIL":"HOSPICE","PCHKIN":"HOSPICE","PCHSTJ":"HOSPICE","PCHVNA":"HOSPICE","PHHUML":"COMMERCIAL","PHMEDC":"COMMERCIAL","PHMERT":"COMMERCIAL","PHMOMD":"MANAGED MCD","PMNENN":"MEDICAID","PCHSUN":"HOSPICE","PHGOLD":"COMMERCIAL","PHUHCA":"MANAGED MCD","PHUMR":"COMMERCIAL","PHNTCC":"COMMERCIAL","PHAONF":"COMMERCIAL","PHDPUD":"MANAGED MCD","PHDPUH":"MANAGED MCR","PMNEDP":"MEDICAID","PCHEVE":"HOSPICE","PCHG":"HOSPICE","PHHEAL":"MANAGED MCD","PCHHC":"HOSPICE","PCHCOM":"HOSPICE","PCHH":"HOSPICE","PCHPEA":"HOSPICE","PCHTRH":"HOSPICE","PHHUMA":"COMMERCIAL","PHTRI":"COMMERCIAL","PHAARP":"COMMERCIAL","PHAMBC":"COMMERCIAL","PHAUXI":"COMMERCIAL","PHBANK":"COMMERCIAL","PHGSOU":"COMMERCIAL","PCHCHU":"HOSPICE","PCHENJ":"HOSPICE","HSPP":"PRIVATE","PCHCRO":"HOSPICE","PCHTRA":"HOSPICE","PHMANH":"COMMERCIAL","PHMEMA":"COMMERCIAL","PHNALC":"COMMERCIAL","NEMENR":"MEDICAID","PMNEUN":"MEDICAID","NRAEMC":"MANAGED MCR","NRHUMC":"MANAGED MCR","PHNAES":"COMMERCIAL","PHOSCA":"COMMERCIAL","PHRES":"RSPITE","PHTHRI":"COMMERCIAL","PHUHMC":"MANAGED MCD","PHUNIA":"COMMERCIAL","PVVET":"COMMERCIAL","PCHAME":"HOSPICE","PCHHRZ":"HOSPICE","PHAENT":"MANAGED MCR","PHBCFD":"COMMERCIAL","PHBCB":"MANAGED MCR","PHBCMR":"MANAGED MCR","PCHHOU":"HOSPICE","PHMLNM":"MANAGED MCD","PHOPHC":"COMMERCIAL","PPRVHC":"COMMERCIAL","PHATEN":"MANAGED MCR","PCHHH":"HOSPICE","PCHN":"HOSPICE","PHMED":"MANAGED MCR","PHMOLC":"MANAGED MCD","PHNETC":"MANAGED MCD","PCHR":"RSPITE","PCHSC":"HOSPICE","PCHTH":"HOSPICE","PHUHMD":"MANAGED MCD","PHUHC":"MANAGED MCR","PHAMR":"MANAGED MCR","PHAFLC":"COMMERCIAL","PHAMB":"MANAGED MCD","PCHADS":"HOSPICE","PCHANG":"HOSPICE","PHBCM":"MANAGED MCR","PCHC":"HOSPICE","PPRVCR":"COMMERCIAL","PCHEDJ":"HOSPICE","PHGEHA":"COMMERCIAL","PCHGTA":"HOSPICE","PHHMMD":"MANAGED MCD","PHHBMD":"MANAGED MCD","PHBMD":"MANAGED MCD","PCHHCH":"HOSPICE","PCHMW":"HOSPICE","PHMOLM":"MANAGED MCD","PHNTTC":"MANAGED MCD","PCHSCX":"HOSPICE","PHUHCN":"MANAGED MCR","PHUHMR":"MANAGED MCR","PHUHTC":"MANAGED MCD","PHWEMR":"MANAGED MCR","PCHAV":"HOSPICE","PHETNA":"MANAGED MCR","PHCARE":"MANAGED MCR","PCHCP":"HOSPICE","PHDEVO":"MANAGED MCD","PCHGH":"HOSPICE","PCHALL":"HOSPICE","PCHELA":"HOSPICE","PCHEM":"HOSPICE","PCHEME":"HOSPICE","PCHFH":"HOSPICE","PCHHG":"HOSPICE","PCHLEG":"HOSPICE","PCHLP":"HOSPICE","PCHRVR":"HOSPICE","PCHROS":"HOSPICE","PCHSEA":"HOSPICE","PCHTRD":"HOSPICE","PCHHGR":"HOSPICE","PHLIFE":"MANAGED MCR","PHPRL":"COMMERCIAL","PMCADP":"MEDICARE","PCHM":"HOSPICE","PMOKNO":"MEDICAID","PMCANO":"MEDICARE","PMOK":"MEDICAID","PHVACC":"COMMERCIAL","PCHVL":"HOSPICE","PCHAPC":"HOSPICE","PCHACG":"HOSPICE","PHAETL":"MANAGED MCR","PHAEMT":"COMMERCIAL","PHAMCF":"COMMERCIAL","PHAMHO":"MANAGED MCR","PCHAPE":"HOSPICE","PCHASP":"HOSPICE","PCHBR":"HOSPICE","PHBROA":"COMMERCIAL","PCHOIC":"HOSPICE","PHCIGM":"MANAGED MCR","PHCHMC":"MANAGED MCR","PCHEC":"HOSPICE","PCHEMH":"HOSPICE","PCHEXC":"HOSPICE","PCHFRO":"HOSPICE","PHGHCO":"COMMERCIAL","PHGHMA":"MANAGED MCR","PCHGSH":"HOSPICE","PHHCCO":"COMMERCIAL","PCHHEA":"HOSPICE","PPRVP1":"PRIVATE","PHHUMO":"COMMERCIAL","PHLONG":"MANAGED MCR","PHMMMC":"MANAGED MCR","PHNO F":"COMMERCIAL","PHPCMC":"COMMERCIAL","PHSTAT":"COMMERCIAL","PCHSH":"HOSPICE","PHTRIW":"COMMERCIAL","PHUHCF":"COMMERCIAL","PHUHMF":"MANAGED MCR","PHWPA":"COMMERCIAL","PHWCTX":"MANAGED MCR","PHWORK":"COMMERCIAL","PCHAC":"HOSPICE","PCHAH":"HOSPICE","PCHCHH":"HOSPICE","PCHCH":"HOSPICE","PHCCCO":"COMMERCIAL","PCHRHS":"HOSPICE","PHFRIN":"COMMERCIAL","PCHFR":"HOSPICE","PHGPML":"COMMERCIAL","PHMSCO":"COMMERCIAL","PHIRON":"COMMERCIAL","PCHIND":"HOSPICE","PCHUAL":"HOSPICE","PCHRIV":"HOSPICE","PCHT":"HOSPICE","PHUFCW":"COMMERCIAL","PHUAIC":"COMMERCIAL","PHUNIV":"COMMERCIAL","PHAECM":"COMMERCIAL","PHATWB":"COMMERCIAL","PHBCMC":"MANAGED MCR","PHCIGL":"COMMERCIAL","PHCCMC":"MANAGED MCR","PCHCUS":"HOSPICE","PHCHCH":"COMMERCIAL","PHFIRS":"COMMERCIAL","PHGHMC":"MANAGED MCR","PCHGS":"HOSPICE","PHHCSO":"COMMERCIAL","PCHENH":"HOSPICE","PCHGRE":"HOSPICE","PHHUCC":"COMMERCIAL","PHHUMD":"MANAGED MCD","PHLIFC":"MANAGED MCD","PPRVLP":"COMMERCIAL","PHNF":"COMMERCIAL","PHOBJS":"COMMERCIAL","PHOPVA":"COMMERCIAL","PCHP":"HOSPICE","PHWCR":"COMMERCIAL","PHATM":"MANAGED MCD","PCHBLU":"HOSPICE","PMKY":"MEDICAID","PHNIPP":"COMMERCIAL","PMKYNO":"MEDICAID","PHCHER":"MANAGED MCR","PHGLOB":"MANAGED MCR","PCHAVO":"HOSPICE","PCHHCM":"HOSPICE","PCHGV":"HOSPICE","PCHHSP":"HOSPICE","PCHLIF":"HOSPICE","PCHHSG":"HOSPICE","PMCANM":"MEDICARE","PHRAVE":"COMMERCIAL","PHHUCL":"COMMERCIAL","PMKYC":"MEDICAID","PHLPTC":"COMMERCIAL","PHPAMD":"MANAGED MCD","PHUMC":"MANAGED MCR","PHWELM":"MANAGED MCR"};
+
   var censusState = {
-    sources: {},               // losReport / payerMap -> {fileName, rowCount, uploadedAt, records|dataRows+typeRows}
+    sources: {},               // losReport -> {fileName, rowCount, uploadedAt, records}
     rows: [],                  // flat computed rows: {facility, cohortKey, year, month, days, payorCode, payerType}
     facilities: [],
     selectedFacilities: new Set(),
@@ -2449,8 +2378,6 @@
     selectedMonthsCal: new Set(),
     liveMode: false
   };
-  var censusPendingPublishFile = null;
-  var censusPendingPublishSource = null;
 
   function censusShowToast(msg){
     var t = document.getElementById('censusToast');
@@ -2518,73 +2445,60 @@
     censusRebuild();
   }
 
-  function censusParsePayerMapWorkbook(arrayBuffer, fileName){
-    var wb = XLSX.read(arrayBuffer, {type:'array', cellDates:true});
-    var dataRows = [];
-    if(wb.SheetNames.indexOf('Data') >= 0){
-      var ws = wb.Sheets['Data'];
-      var grid = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
-      var headerIdx = censusFindHeaderRow(grid, 'Company Name');
-      var headerRow = grid[headerIdx].map(normHeader);
-      var iCompany = headerRow.indexOf(normHeader('Company Name'));
-      var iCode = headerRow.indexOf(normHeader('Code'));
-      var iPayor = headerRow.indexOf(normHeader('Payor'));
-      for(var r=headerIdx+1; r<grid.length; r++){
-        var row = grid[r];
-        if(!row || row[iCompany]==null) continue;
-        dataRows.push({company: row[iCompany], code: row[iCode], payorName: row[iPayor]});
-      }
-    }
-    var typeRows = [];
-    if(wb.SheetNames.indexOf('Sheet1') >= 0){
-      var ws2 = wb.Sheets['Sheet1'];
-      var grid2 = XLSX.utils.sheet_to_json(ws2, {header:1, raw:true, defval:null});
-      var headerIdx2 = censusFindHeaderRow(grid2, 'Payer Type');
-      var headerRow2 = grid2[headerIdx2].map(normHeader);
-      var iType = headerRow2.indexOf(normHeader('Payer Type'));
-      var iPayor2 = headerRow2.indexOf(normHeader('Payor'));
-      for(var r2=headerIdx2+1; r2<grid2.length; r2++){
-        var row2 = grid2[r2];
-        if(!row2 || row2[iType]==null) continue;
-        typeRows.push({payerType: row2[iType], payorName: row2[iPayor2]});
-      }
-    }
-    if(!dataRows.length && !typeRows.length) throw new Error('No usable rows were found in this file.');
-
-    censusState.sources.payerMap = {
-      fileName: fileName, rowCount: dataRows.length+typeRows.length, uploadedAt: new Date().toISOString(),
-      dataRows: dataRows, typeRows: typeRows
-    };
-    censusRebuild();
-  }
-
-  function censusBuildPayerMapping(){
+  // Builds a lookup from the currently-imported Payer Mapping source (if
+  // any has been published) — same shape as the embedded defaults, so
+  // censusResolvePayerType can check "was something imported that overrides
+  // this?" before falling back to what ships with the app.
+  function censusBuildUploadedPayerMapping(){
     var payload = censusState.sources.payerMap;
-    var exactMap = {}, codeVotes = {}, typeMap = {};
-    if(payload && payload.dataRows){
-      payload.dataRows.forEach(function(r){
-        exactMap[r.company+'||'+r.code] = r.payorName;
-        codeVotes[r.code] = codeVotes[r.code] || {};
-        codeVotes[r.code][r.payorName] = (codeVotes[r.code][r.payorName]||0)+1;
-      });
-    }
+    if(!payload || !payload.dataRows) return null;
+    var exactMap = {}, codeVotes = {};
+    payload.dataRows.forEach(function(r){
+      exactMap[r.company+'||'+r.code] = r.payorName;
+      codeVotes[r.code] = codeVotes[r.code] || {};
+      codeVotes[r.code][r.payorName] = (codeVotes[r.code][r.payorName]||0)+1;
+    });
     var codeFallback = {};
     Object.keys(codeVotes).forEach(function(code){
       var votes = codeVotes[code], best=null, bestCount=-1;
       Object.keys(votes).forEach(function(name){ if(votes[name]>bestCount){best=name;bestCount=votes[name];} });
       codeFallback[code] = best;
     });
-    if(payload && payload.typeRows){
-      payload.typeRows.forEach(function(r){ typeMap[censusNormPayor(r.payorName)] = r.payerType; });
-    }
-    return {exactMap:exactMap, codeFallback:codeFallback, typeMap:typeMap};
+    var typeMap = {};
+    (payload.typeRows||[]).forEach(function(r){ typeMap[censusNormPayor(r.payorName)] = r.payerType; });
+
+    var byCompanyCode = {}, byCodeFallback = {};
+    Object.keys(exactMap).forEach(function(k){
+      var t = typeMap[censusNormPayor(exactMap[k])];
+      if(t) byCompanyCode[k] = t;
+    });
+    Object.keys(codeFallback).forEach(function(code){
+      var t = typeMap[censusNormPayor(codeFallback[code])];
+      if(t) byCodeFallback[code] = t;
+    });
+    return {byCompanyCode: byCompanyCode, byCodeFallback: byCodeFallback};
   }
-  function censusResolvePayerType(mapping, company, code){
-    var payorName = mapping.exactMap[company+'||'+code];
-    if(!payorName) payorName = mapping.codeFallback[code];
-    if(!payorName) return 'Unmapped';
-    var t = mapping.typeMap[censusNormPayor(payorName)];
-    return t || 'Unmapped';
+
+  // Resolves a (company, payor code) pair to a payer type. An imported Payer
+  // Mapping (via Admin) takes priority if one has been published; otherwise
+  // this falls back to the mapping built into the app — company+code exact
+  // match first, then a code-only match, then "Unmapped".
+  // Resolves a (company, payor code) pair to a payer type against a
+  // pre-built mapping object (see censusBuildUploadedPayerMapping) — if
+  // that mapping is null (nothing imported), falls back to the mapping
+  // built into the app — company+code exact match first, then a
+  // code-only match, then "Unmapped".
+  function censusResolvePayerType(uploaded, company, code){
+    if(uploaded){
+      var uExact = uploaded.byCompanyCode[company+'||'+code];
+      if(uExact) return uExact;
+      var uFallback = uploaded.byCodeFallback[code];
+      if(uFallback) return uFallback;
+    }
+    var exact = CENSUS_PAYER_TYPE_BY_COMPANY_CODE[company+'||'+code];
+    if(exact) return exact;
+    var fallback = CENSUS_PAYER_TYPE_BY_CODE_FALLBACK[code];
+    return fallback || 'Unmapped';
   }
 
   // Rebuilds the flat `rows` array (LOS records × resolved payer type) and
@@ -2594,7 +2508,7 @@
   function censusRebuild(){
     var losSrc = censusState.sources.losReport;
     if(!losSrc || !losSrc.records){ censusState.rows = []; return; }
-    var mapping = censusBuildPayerMapping();
+    var uploadedMapping = censusBuildUploadedPayerMapping(); // built once, not per-row
     censusState.rows = losSrc.records.map(function(rec){
       var endDate = new Date(rec.endISO);
       var year = endDate.getFullYear(), month = endDate.getMonth();
@@ -2604,7 +2518,7 @@
         year: year, month: month,
         days: rec.days,
         payorCode: rec.payorCode,
-        payerType: censusResolvePayerType(mapping, rec.company, rec.payorCode)
+        payerType: censusResolvePayerType(uploadedMapping, rec.company, rec.payorCode)
       };
     });
 
@@ -2921,26 +2835,7 @@
     }
     censusRenderFacilityList(document.getElementById('censusFacSearch') ? document.getElementById('censusFacSearch').value : '');
     censusRenderPayerList();
-    censusRenderDzGrid();
-    censusRenderDataSourcesPanel();
     censusRenderAll();
-  }
-
-  function censusHandleFileForSource(file, sourceKey){
-    if(!file) return;
-    var reader = new FileReader();
-    reader.onload = function(e){
-      try{
-        if(sourceKey === 'losReport') censusParseLOSWorkbook(e.target.result, file.name);
-        else censusParsePayerMapWorkbook(e.target.result, file.name);
-        censusRefreshAfterSourceChange();
-        censusShowToast('Loaded ' + censusState.sources[sourceKey].rowCount.toLocaleString() + ' rows for ' + censusSourceLabel(sourceKey) + '.');
-        censusMaybeOfferPublish(file, sourceKey);
-      }catch(err){
-        alert('Could not read this file for ' + censusSourceLabel(sourceKey) + ': ' + err.message);
-      }
-    };
-    reader.readAsArrayBuffer(file);
   }
 
   function censusHydrateServerLOS(payload){
@@ -2956,7 +2851,7 @@
   }
 
   function censusInitLiveMode(){
-    fetch('/api/census-dataset').then(function(res){
+    return fetch('/api/census-dataset').then(function(res){
       if(!res.ok) throw new Error('no api');
       return res.json();
     }).then(function(payload){
@@ -2971,130 +2866,15 @@
       if(any){
         censusRebuild();
         censusRefreshAfterSourceChange();
-      } else {
-        var hint = document.getElementById('censusDzLiveHint');
-        if(hint) hint.style.display = 'block';
-        censusRenderDzGrid();
-        censusRenderDataSourcesPanel();
       }
     }).catch(function(){
       censusState.liveMode = false;
-      censusRenderDzGrid();
-      censusRenderDataSourcesPanel();
-    });
-  }
-
-  function censusMaybeOfferPublish(file, sourceKey){
-    if(!censusState.liveMode) return;
-    censusPendingPublishFile = file;
-    censusPendingPublishSource = sourceKey;
-    document.getElementById('censusPublishBarTitle').textContent = 'Publish ' + censusSourceLabel(sourceKey) + ' for everyone with this link?';
-    document.getElementById('censusPublishBar').style.display = 'flex';
-  }
-
-  function censusInitPublishBar(){
-    document.getElementById('censusPublishBtn').addEventListener('click', function(){
-      if(!censusPendingPublishFile || !censusPendingPublishSource) return;
-      var key = document.getElementById('censusAdminKeyInput').value;
-      var fd = new FormData();
-      fd.append('file', censusPendingPublishFile);
-      var btn = document.getElementById('censusPublishBtn');
-      btn.disabled = true; btn.textContent = 'Publishing…';
-      fetch('/api/census-upload/' + censusPendingPublishSource, { method:'POST', headers:{'x-admin-key':key}, body: fd })
-        .then(function(res){ return res.json().then(function(body){ return {ok:res.ok, body:body}; }); })
-        .then(function(r){
-          btn.disabled = false; btn.textContent = 'Publish';
-          if(r.ok){
-            censusShowToast('Published ' + censusSourceLabel(censusPendingPublishSource) + ' — everyone with this link now sees it.');
-            document.getElementById('censusPublishBar').style.display = 'none';
-            document.getElementById('censusAdminKeyInput').value = '';
-            censusPendingPublishFile = null; censusPendingPublishSource = null;
-            censusRenderDataSourcesPanel();
-            censusRenderDzGrid();
-          } else {
-            alert('Could not publish: ' + (r.body && r.body.error ? r.body.error : 'unknown error'));
-          }
-        })
-        .catch(function(){
-          btn.disabled = false; btn.textContent = 'Publish';
-          alert('Could not reach the server to publish.');
-        });
-    });
-    document.getElementById('censusDismissPublish').addEventListener('click', function(){
-      document.getElementById('censusPublishBar').style.display = 'none';
-      censusPendingPublishFile = null; censusPendingPublishSource = null;
-    });
-  }
-
-  function censusRenderDzGrid(){
-    var el = document.getElementById('censusDzGrid');
-    if(!el) return;
-    el.innerHTML = CENSUS_SOURCES.map(function(s){
-      var has = !!censusState.sources[s.key];
-      return '<div class="dz-source-card'+(has?' has-data':'')+'" data-source="'+s.key+'">' +
-        '<div class="dz-source-title">'+s.label+'</div>' +
-        '<div class="dz-source-status">'+censusSourceStatusText(s.key)+'</div>' +
-        '<input type="file" accept=".xlsx,.xls" hidden id="censusFileInput-'+s.key+'">' +
-        '<button class="dz-source-btn" type="button" data-source="'+s.key+'">'+(has?'Update file…':'Choose file…')+'</button>' +
-      '</div>';
-    }).join('');
-
-    Array.prototype.forEach.call(el.querySelectorAll('.dz-source-btn'), function(btn){
-      btn.addEventListener('click', function(){
-        var input = document.getElementById('censusFileInput-'+btn.getAttribute('data-source'));
-        if(input) input.click();
-      });
-    });
-    Array.prototype.forEach.call(el.querySelectorAll('input[type=file]'), function(input){
-      input.addEventListener('change', function(){
-        if(input.files[0]) censusHandleFileForSource(input.files[0], input.id.replace('censusFileInput-',''));
-        input.value = '';
-      });
-    });
-    Array.prototype.forEach.call(el.querySelectorAll('.dz-source-card'), function(card){
-      var srcKey = card.getAttribute('data-source');
-      ['dragenter','dragover'].forEach(function(ev){
-        card.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); card.classList.add('drag'); });
-      });
-      ['dragleave','drop'].forEach(function(ev){
-        card.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); card.classList.remove('drag'); });
-      });
-      card.addEventListener('drop', function(e){
-        var f = e.dataTransfer.files && e.dataTransfer.files[0];
-        if(f) censusHandleFileForSource(f, srcKey);
-      });
-    });
-  }
-
-  function censusRenderDataSourcesPanel(){
-    var el = document.getElementById('censusDataSourcesRows');
-    if(!el) return;
-    var loadedCount = CENSUS_SOURCE_KEYS.filter(function(k){ return !!censusState.sources[k]; }).length;
-    var summaryEl = document.getElementById('censusDataSourcesSummary');
-    if(summaryEl) summaryEl.textContent = loadedCount + ' / ' + CENSUS_SOURCE_KEYS.length + ' loaded';
-
-    el.innerHTML = CENSUS_SOURCES.map(function(s){
-      return '<div class="ds-row">' +
-        '<div>' +
-          '<div class="ds-row-label">'+s.label+'</div>' +
-          '<div class="ds-row-status">'+censusSourceStatusText(s.key)+'</div>' +
-        '</div>' +
-        '<button class="ds-row-btn" type="button" data-source="'+s.key+'">'+(censusState.sources[s.key]?'Update…':'Choose file…')+'</button>' +
-      '</div>';
-    }).join('');
-
-    Array.prototype.forEach.call(el.querySelectorAll('.ds-row-btn'), function(btn){
-      btn.addEventListener('click', function(e){
-        e.stopPropagation();
-        var input = document.getElementById('censusFileInput-'+btn.getAttribute('data-source'));
-        if(input) input.click();
-      });
     });
   }
 
   function censusInitDropzone(){
-    censusRenderDzGrid();
-    censusRenderDataSourcesPanel();
+    // Imports now happen exclusively through the Admin tab — this view is
+    // read-only, same as AR Collections.
   }
 
   function censusInitSearch(){
@@ -3116,7 +2896,156 @@
   function censusInitPopouts(){
     registerPopout('censusYearTrigger', 'censusYearPanel');
     registerPopout('censusMonthTrigger', 'censusMonthPanel');
-    registerPopout('censusDataSourcesTrigger', 'censusDataSourcesPanel');
+  }
+
+  /* =========================================================
+     ADMIN — password-gated tab that consolidates every import
+     across both apps. Logging in once (verified against
+     /api/admin/verify) stores the key in sessionStorage so it
+     doesn't have to be re-entered for each subsequent import
+     during this browser session; every actual upload endpoint
+     still independently checks the real x-admin-key header,
+     so security is unchanged — this only smooths out the UX.
+  ========================================================== */
+  var ADMIN_KEY_STORAGE = 'vantisAdminKey';
+  var adminKey = null;
+  var adminAuthed = false;
+
+  function adminVerify(key, cb){
+    fetch('/api/admin/verify', { method:'POST', headers:{'x-admin-key':key} })
+      .then(function(res){ cb(res.ok); })
+      .catch(function(){ cb(false); });
+  }
+
+  function adminShowCorrectView(){
+    var loginEl = document.getElementById('adminLoginScreen');
+    var dashEl = document.getElementById('adminDashboard');
+    if(!loginEl || !dashEl) return;
+    loginEl.style.display = adminAuthed ? 'none' : 'flex';
+    dashEl.style.display = adminAuthed ? 'block' : 'none';
+    if(adminAuthed) adminRenderRows();
+  }
+
+  function adminSourceStatusText(kind, key){
+    if(kind==='ar') return sourceStatusText(key);
+    return censusSourceStatusText(key);
+  }
+
+  function adminRenderRows(){
+    var arEl = document.getElementById('adminArRows');
+    if(arEl){
+      arEl.innerHTML = SOURCES.map(function(s){
+        var has = !!state.sources[s.key];
+        return '<div class="admin-import-row" data-kind="ar" data-source="'+s.key+'">' +
+          '<div><div class="admin-import-label">'+s.label+'</div><div class="admin-import-status'+(has?' ok':'')+'">'+adminSourceStatusText('ar',s.key)+'</div></div>' +
+          '<div><input type="file" accept=".xlsx,.xls" hidden id="adminFileInput-ar-'+s.key+'"><button class="admin-import-btn" type="button" data-kind="ar" data-source="'+s.key+'">'+(has?'Import updated file…':'Import file…')+'</button></div>' +
+        '</div>';
+      }).join('');
+    }
+
+    var censusEl = document.getElementById('adminCensusRows');
+    if(censusEl){
+      censusEl.innerHTML = CENSUS_SOURCES.map(function(s){
+        var has = !!censusState.sources[s.key];
+        return '<div class="admin-import-row" data-kind="census" data-source="'+s.key+'">' +
+          '<div><div class="admin-import-label">'+s.label+'</div><div class="admin-import-status'+(has?' ok':'')+'">'+adminSourceStatusText('census',s.key)+'</div></div>' +
+          '<div><input type="file" accept=".xlsx,.xls" hidden id="adminFileInput-census-'+s.key+'"><button class="admin-import-btn" type="button" data-kind="census" data-source="'+s.key+'">'+(has?'Import updated file…':'Import file…')+'</button></div>' +
+        '</div>';
+      }).join('');
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll('.admin-import-btn'), function(btn){
+      btn.addEventListener('click', function(){
+        var kind = btn.getAttribute('data-kind'), key = btn.getAttribute('data-source');
+        var input = document.getElementById('adminFileInput-'+kind+'-'+key);
+        if(input) input.click();
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.admin-import-row input[type=file]'), function(input){
+      input.addEventListener('change', function(){
+        if(input.files[0]){
+          var rest = input.id.replace('adminFileInput-','');
+          var dashIdx = rest.indexOf('-');
+          var kind = rest.substring(0,dashIdx);
+          var key = rest.substring(dashIdx+1);
+          adminImportAndPublish(input.files[0], kind, key);
+        }
+        input.value = '';
+      });
+    });
+  }
+
+  function adminImportAndPublish(file, kind, sourceKey){
+    var endpoint = (kind==='ar' ? '/api/upload/' : '/api/census-upload/') + sourceKey;
+    var label = kind==='ar' ? sourceLabel(sourceKey) : censusSourceLabel(sourceKey);
+    var fd = new FormData();
+    fd.append('file', file);
+    var row = document.querySelector('.admin-import-row[data-kind="'+kind+'"][data-source="'+sourceKey+'"]');
+    var btn = row ? row.querySelector('.admin-import-btn') : null;
+    if(btn){ btn.disabled = true; btn.textContent = 'Importing…'; }
+    fetch(endpoint, { method:'POST', headers:{'x-admin-key':adminKey}, body: fd })
+      .then(function(res){ return res.json().then(function(body){ return {ok:res.ok, body:body}; }); })
+      .then(function(r){
+        if(r.ok){
+          showToast(label + ' imported — ' + r.body.rowCount.toLocaleString() + ' rows.');
+          // refresh the underlying app's live data so it's current the
+          // moment someone opens it, and wait for that before re-rendering
+          // this dashboard's status text (both are async fetches).
+          var refresh = kind==='ar' ? initLiveMode() : censusInitLiveMode();
+          refresh.then(adminRenderRows);
+        } else {
+          alert('Could not import ' + label + ': ' + (r.body && r.body.error ? r.body.error : 'unknown error'));
+          adminRenderRows();
+        }
+      })
+      .catch(function(){
+        alert('Could not reach the server to import ' + label + '.');
+        adminRenderRows();
+      });
+  }
+
+  function adminTryStoredKey(){
+    var stored = null;
+    try{ stored = sessionStorage.getItem(ADMIN_KEY_STORAGE); }catch(e){}
+    if(!stored) return;
+    adminVerify(stored, function(ok){
+      if(ok){ adminKey = stored; adminAuthed = true; adminShowCorrectView(); }
+      else { try{ sessionStorage.removeItem(ADMIN_KEY_STORAGE); }catch(e){} }
+    });
+  }
+
+  function initAdmin(){
+    adminTryStoredKey();
+
+    document.getElementById('adminLoginForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      var val = document.getElementById('adminLoginInput').value;
+      if(!val) return;
+      var btn = document.getElementById('adminLoginBtn');
+      var errEl = document.getElementById('adminLoginError');
+      errEl.style.display = 'none';
+      btn.disabled = true; btn.textContent = 'Checking…';
+      adminVerify(val, function(ok){
+        btn.disabled = false; btn.textContent = 'Log in';
+        if(ok){
+          adminKey = val;
+          adminAuthed = true;
+          try{ sessionStorage.setItem(ADMIN_KEY_STORAGE, val); }catch(e){}
+          document.getElementById('adminLoginInput').value = '';
+          adminShowCorrectView();
+        } else {
+          errEl.textContent = 'Incorrect password. Try again.';
+          errEl.style.display = 'block';
+        }
+      });
+    });
+
+    document.getElementById('adminLogoutBtn').addEventListener('click', function(){
+      adminKey = null;
+      adminAuthed = false;
+      try{ sessionStorage.removeItem(ADMIN_KEY_STORAGE); }catch(e){}
+      adminShowCorrectView();
+    });
   }
 
   initNavigation();
@@ -3125,14 +3054,14 @@
   initPopouts();
   initDropzone();
   initSearch();
-  initPublishBar();
   initLiveMode();
 
   censusInitPopouts();
   censusInitDropzone();
   censusInitSearch();
-  censusInitPublishBar();
   censusInitLiveMode();
+
+  initAdmin();
 })();
 </script>
 </body>
