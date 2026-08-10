@@ -196,12 +196,12 @@
 
   /* Tabs */
   .tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--line);}
-  .tab-btn{
+  .tab-btn, .census-tab-btn{
     background:none;border:none;padding:10px 4px;margin-right:22px;font-size:13.5px;
     color:var(--ink-soft);font-weight:500;position:relative;top:1px;
   }
-  .tab-btn.active{color:var(--ink);font-weight:600;}
-  .tab-btn.active::after{
+  .tab-btn.active, .census-tab-btn.active{color:var(--ink);font-weight:600;}
+  .tab-btn.active::after, .census-tab-btn.active::after{
     content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--emerald);border-radius:2px;
   }
 
@@ -241,6 +241,12 @@
   .fc-code{color:var(--ink-faint);font-size:10.5px;font-family:'IBM Plex Mono';font-weight:400;margin-left:5px;}
   table.triangle td.total-col, table.triangle th.total-col{font-weight:700;background:var(--surface-2);border-left:2px solid var(--line);color:var(--ink);}
   table.triangle td.dollar-cell{color:var(--ink);font-weight:600;}
+  tr.skilled-expandable{cursor:pointer;}
+  tr.skilled-expandable:hover td, tr.skilled-expandable:hover th{background:var(--surface-2);}
+  .skilled-caret{display:inline-block;transition:.15s;color:var(--ink-faint);font-size:10px;}
+  .skilled-caret.open{transform:rotate(90deg);}
+  tr.skilled-child-row th{padding-left:30px;font-weight:400;color:var(--ink-soft);font-size:11.5px;}
+  tr.skilled-child-row td{color:var(--ink-soft);}
 
   /* Popout filter buttons (Month of Service / As Of Month) */
   .popout-filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px;}
@@ -507,7 +513,8 @@
 <div id="arCollectionsApp" style="display:none;">
 
 <div id="dropzone">
-  <div class="dz-wrap" style="text-align:center;">
+  <div class="dz-wrap" style="text-align:center;position:relative;">
+    <button class="stub-back" id="arBackFromEmptyBtn" type="button" style="position:static;margin-bottom:14px;display:inline-block;">← Back to Vantis</button>
     <div class="dz-icon" style="margin-left:auto;margin-right:auto;">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
     </div>
@@ -748,7 +755,8 @@
 <div id="censusTrendsApp" style="display:none;">
 
 <div id="censusDropzone">
-  <div class="dz-wrap" style="text-align:center;">
+  <div class="dz-wrap" style="text-align:center;position:relative;">
+    <button class="stub-back" id="censusBackFromEmptyBtn" type="button" style="position:static;margin-bottom:14px;display:inline-block;">← Back to Vantis</button>
     <div class="dz-icon" style="margin-left:auto;margin-right:auto;">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3 2.5-5.2 5.5-5.2s5.5 2.2 5.5 5.2"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15 14.4c2.2.2 4.5 1.9 4.5 5.1"/></svg>
     </div>
@@ -829,6 +837,14 @@
         </div>
       </div>
 
+      <div class="tabs">
+        <button class="census-tab-btn active" data-tab="los">Length of Stay</button>
+        <button class="census-tab-btn" data-tab="skilled">Skilled Analysis</button>
+        <button class="census-tab-btn" data-tab="days">Census Days by Month</button>
+        <button class="census-tab-btn" data-tab="pct">Census % by Month</button>
+      </div>
+
+      <div id="tab-los" class="census-tabpanel">
       <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head">
           <div>
@@ -857,6 +873,46 @@
           </div>
         </div>
         <div class="triangle-wrap"><table class="triangle" id="censusPayerTable"></table></div>
+      </div>
+      </div>
+
+      <div id="tab-skilled" class="census-tabpanel" style="display:none;">
+      <div class="kpis" id="skilledKpiStrip" style="margin-bottom:22px;"></div>
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Skilled Analysis — days, average daily rate &amp; PPD by payer</h2>
+            <div class="note">Uses the Facilities filter and the Year/Month pickers above — but its own payer categorization (shown in the rows below), not the Payer Type filter in the sidebar, which only applies to the Length of Stay tab. Click an HMO or Unmapped row to see the individual payors rolled into it — useful for figuring out exactly which payors need to be added to the Payer Mapping.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="skilledTable"></table></div>
+      </div>
+      </div>
+
+      <div id="tab-days" class="census-tabpanel" style="display:none;">
+      <div class="kpis" id="censusDaysKpis" style="margin-bottom:22px;"></div>
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Census days — facility × month</h2>
+            <div class="note">Total census (occupied-bed) days per facility per month, from the Census Report. Top row sums across all selected facilities.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="censusDaysTable"></table></div>
+      </div>
+      </div>
+
+      <div id="tab-pct" class="census-tabpanel" style="display:none;">
+      <div class="kpis" id="censusPctKpis" style="margin-bottom:22px;"></div>
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Census % (occupancy) — facility × month</h2>
+            <div class="note">% of available bed-capacity actually occupied that month, from the Census Report. Top row is a capacity-weighted blend across all selected facilities, not a simple average.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="censusPctTable"></table></div>
+      </div>
       </div>
     </div>
   </main>
@@ -2137,6 +2193,12 @@
     document.getElementById('censusGoToAdminBtn').addEventListener('click', function(){
       showScreen('admin');
     });
+    document.getElementById('arBackFromEmptyBtn').addEventListener('click', function(){
+      showScreen('home');
+    });
+    document.getElementById('censusBackFromEmptyBtn').addEventListener('click', function(){
+      showScreen('home');
+    });
     document.getElementById('adminBackFromLoginBtn').addEventListener('click', function(){
       showScreen('home');
     });
@@ -2341,6 +2403,8 @@
   ========================================================== */
   var CENSUS_SOURCES = [
     {key:'losReport', label:'Length of Stay Report'},
+    {key:'salesJournal', label:'Sales Journal'},
+    {key:'censusReport', label:'Census Report'},
     {key:'payerMap', label:'Payer Mapping'}
   ];
   var CENSUS_SOURCE_KEYS = CENSUS_SOURCES.map(function(s){return s.key;});
@@ -2360,14 +2424,38 @@
   }
   function censusNormPayor(s){ return String(s||'').trim().toUpperCase().replace(/\s+/g,' '); }
 
+  // Maps the Census/LOS/Sales data's long Company Name (e.g. "Emerald Care
+  // Center Columbus ALF") to the short facility name + code used throughout
+  // AR Collections, so the two apps read consistently. Falls back to the
+  // raw Company Name if a facility isn't in this list (e.g. a brand-new
+  // facility not yet added here).
+  var CENSUS_FACILITY_CROSSWALK = {"Emerald Care Center Claremore":["Claremore","OKCM"],"Emerald Care Center Columbus":["Columbus","NECL"],"Emerald Care Center Columbus ALF":["Columbus ALF","NECL ALF"],"Emerald Care Center Cozad":["Cozad","NECZ"],"Emerald Care Center Cozad ALF":["Cozad ALF","NECZ ALF"],"Emerald Care Center Lakeview":["Lakeview","NELV"],"Emerald Care Center Lakeview ALF":["Lakeview ALF","NELV ALF"],"Emerald Care Center Midwest":["Midwest","OKMW"],"Emerald Care Center Omaha":["Omaha","NEOM"],"Emerald Care Center Southwest":["Southwest","OKSW"],"Emerald Nursing & Rehab Brookside LLC":["Brookside","NEBS"],"Emerald Nursing & Rehab Lancaster LLC":["Lancaster","NELC"],"Emerald Nursing & Rehab Legacy Pointe LLC":["Legacy Pointe","NELP"],"Garden Manor Rehab and Nursing of Tulsa":["Tulsa","OKTU"],"Holmes Lake Rehabilitation & Care Center":["Holmes Lake","NEHL"],"Lexington Premier Nursing & Rehab LLC":["Lexington","KYLX"],"Memory Care Center at Emerald":["Memory Care","NEMC"],"Mercy Care Center LLC":["Mercy","NEME"],"Milford Meadows":["Milford Meadows","NEMM"],"Monument Alf":["Monument Alf","NEMT ALF"],"Monument Rehabilitation and Care Center":["Monument","NEMT"],"Pikeville Nursing and Rehab Center":["Pikeville","KYPI"]};
+  function censusFacilityShort(company){
+    var pair = CENSUS_FACILITY_CROSSWALK[company];
+    return pair ? pair[0] : company;
+  }
+  function censusFacilityCode(company){
+    var pair = CENSUS_FACILITY_CROSSWALK[company];
+    return pair ? pair[1] : '';
+  }
+  // HTML for a table row-header cell: "Short Name  CODE", matching AR
+  // Collections' facility formatting.
+  function censusFacilityDisplay(company){
+    var code = censusFacilityCode(company);
+    return censusFacilityShort(company) + (code ? '<span class="fc-code">'+code+'</span>' : '');
+  }
+
   // Built-in payer mapping (see comment block above) — replaces the old
   // uploadable "Payer Mapping" source entirely.
   var CENSUS_PAYER_TYPE_BY_COMPANY_CODE = {"Emerald Care Center Columbus||PHAETN":"COMMERCIAL","Emerald Care Center Columbus||PHAETM":"MANAGED MCR","Emerald Care Center Columbus||PHAMBE":"COMMERCIAL","Emerald Care Center Columbus||PHBCBS":"COMMERCIAL","Emerald Care Center Columbus||PHBCBM":"MANAGED MCR","Emerald Care Center Columbus||PHCHAM":"COMMERCIAL","Emerald Care Center Columbus||PHWELL":"MANAGED MCD","Emerald Care Center Columbus||PCHASE":"HOSPICE","Emerald Care Center Columbus||PCHCCH":"HOSPICE","Emerald Care Center Columbus||PCHSTC":"HOSPICE","Emerald Care Center Columbus||PCHTAB":"HOSPICE","Emerald Care Center Columbus||PCHHOR":"HOSPICE","Emerald Care Center Columbus||PHHUMC":"COMMERCIAL","Emerald Care Center Columbus||PHHUMM":"MANAGED MCR","Emerald Care Center Columbus||PHMEDH":"COMMERCIAL","Emerald Care Center Columbus||PMCA":"MEDICARE","Emerald Care Center Columbus||PHMOLI":"MANAGED MCD","Emerald Care Center Columbus||PMNE":"MEDICAID","Emerald Care Center Columbus||PHNETO":"MANAGED MCD","Emerald Care Center Columbus||PHPSWO":"COMMERCIAL","Emerald Care Center Columbus||PPRVPW":"PRIVATE","Emerald Care Center Columbus||PPRVH":"PRIVATE","Emerald Care Center Columbus||PPRV":"PRIVATE","Emerald Care Center Columbus||PHSWOR":"COMMERCIAL","Emerald Care Center Columbus||TRWOC":"COMMERCIAL","Emerald Care Center Columbus||PHTRIC":"COMMERCIAL","Emerald Care Center Columbus||PHUHCC":"COMMERCIAL","Emerald Care Center Columbus||PHUHP":"MANAGED MCD","Emerald Care Center Columbus||PHUHCD":"MANAGED MCD","Emerald Care Center Columbus||PHUHCB":"MANAGED MCR","Emerald Care Center Columbus||PHWELC":"COMMERCIAL","Emerald Care Center Columbus||PHUHCM":"MANAGED MCR","Emerald Care Center Columbus ALF||AHRBM":"HOSPICE","Emerald Care Center Columbus ALF||PMNE":"MEDICAID","Emerald Care Center Columbus ALF||PPRV":"PRIVATE","Emerald Care Center Cozad||PHAETC":"COMMERCIAL","Emerald Care Center Cozad||PHAETN":"MANAGED MCR","Emerald Care Center Cozad||PCHASE":"HOSPICE","Emerald Care Center Cozad||PHBCBC":"COMMERCIAL","Emerald Care Center Cozad||PCHCHI":"HOSPICE","Emerald Care Center Cozad||PHCIGN":"COMMERCIAL","Emerald Care Center Cozad||PCHCEN":"HOSPICE","Emerald Care Center Cozad||PHWELL":"MANAGED MCD","Emerald Care Center Cozad||PHMIDL":"COMMERCIAL","Emerald Care Center Cozad||PHMOLI":"MANAGED MCD","Emerald Care Center Cozad||PMNE":"MEDICAID","Emerald Care Center Cozad||PHNETO":"MANAGED MCD","Emerald Care Center Cozad||PPRVPW":"PRIVATE","Emerald Care Center Cozad||PPRVHS":"PRIVATE","Emerald Care Center Cozad||PPRV":"PRIVATE","Emerald Care Center Cozad||PCHRUR":"HOSPICE","Emerald Care Center Cozad||PHSILC":"COMMERCIAL","Emerald Care Center Cozad||PHUHCC":"COMMERCIAL","Emerald Care Center Cozad||PHUHCP":"MANAGED MCD","Emerald Care Center Cozad||PHUHCD":"MANAGED MCD","Emerald Care Center Cozad||PHUHCM":"MANAGED MCR","Emerald Care Center Cozad ALF||PHMOLI":"MANAGED MCD","Emerald Care Center Cozad ALF||PMNE":"MEDICAID","Emerald Care Center Cozad ALF||PHNETO":"MANAGED MCD","Emerald Care Center Cozad ALF||PPRV1":"PRIVATE","Emerald Care Center Cozad ALF||PPRV2":"PRIVATE","Emerald Care Center Cozad ALF||PPRV3":"PRIVATE","Emerald Care Center Cozad ALF||PPRV":"PRIVATE","Emerald Care Center Lakeview||PHAETN":"COMMERCIAL","Emerald Care Center Lakeview||PHAETM":"MANAGED MCR","Emerald Care Center Lakeview||PHAMCO":"COMMERCIAL","Emerald Care Center Lakeview||PHBCBS":"COMMERCIAL","Emerald Care Center Lakeview||PHBCBM":"MANAGED MCR","Emerald Care Center Lakeview||PHCHAM":"COMMERCIAL","Emerald Care Center Lakeview||PHEMCW":"COMMERCIAL","Emerald Care Center Lakeview||PHWELL":"MANAGED MCD","Emerald Care Center Lakeview||PCHASE":"HOSPICE","Emerald Care Center Lakeview||PCHMAR":"HOSPICE","Emerald Care Center Lakeview||PCHSTC":"HOSPICE","Emerald Care Center Lakeview||PCHTAB":"HOSPICE","Emerald Care Center Lakeview||PCHS":"HOSPICE","Emerald Care Center Lakeview||PHHUMC":"COMMERCIAL","Emerald Care Center Lakeview||PHHUCO":"COMMERCIAL","Emerald Care Center Lakeview||PHHUMR":"MANAGED MCR","Emerald Care Center Lakeview||PHHUMM":"MANAGED MCR","Emerald Care Center Lakeview||PHMEDI":"COMMERCIAL","Emerald Care Center Lakeview||PHMEDM":"MANAGED MCR","Emerald Care Center Lakeview||PMCACV":"MEDICARE","Emerald Care Center Lakeview||PMCA":"MEDICARE","Emerald Care Center Lakeview||PHMLMD":"MANAGED MCD","Emerald Care Center Lakeview||PMNE":"MEDICAID","Emerald Care Center Lakeview||PHNETO":"MANAGED MCD","Emerald Care Center Lakeview||PHNONC":"COMMERCIAL","Emerald Care Center Lakeview||PHNOND":"MANAGED MCD","Emerald Care Center Lakeview||PHNONR":"MANAGED MCR","Emerald Care Center Lakeview||PCHNON":"HOSPICE","Emerald Care Center Lakeview||PMNENO":"MEDICAID","Emerald Care Center Lakeview||NONMCR":"MEDICARE","Emerald Care Center Lakeview||PPRVNO":"PRIVATE","Emerald Care Center Lakeview||PPRVPW":"PRIVATE","Emerald Care Center Lakeview||PPRVH":"PRIVATE","Emerald Care Center Lakeview||PPRV":"PRIVATE","Emerald Care Center Lakeview||PHSPVA":"COMMERCIAL","Emerald Care Center Lakeview||PHTRIC":"COMMERCIAL","Emerald Care Center Lakeview||PHUHCC":"COMMERCIAL","Emerald Care Center Lakeview||PHUHPD":"MANAGED MCD","Emerald Care Center Lakeview||PHUHCM":"MANAGED MCD","Emerald Care Center Lakeview||PHUHCR":"MANAGED MCR","Emerald Care Center Lakeview||PHUMRC":"COMMERCIAL","Emerald Care Center Lakeview||PHUSAA":"COMMERCIAL","Emerald Care Center Lakeview||PHOPTU":"COMMERCIAL","Emerald Care Center Lakeview ALF||PMNE":"MEDICAID","Emerald Care Center Lakeview ALF||PPRV":"PRIVATE","Emerald Care Center Omaha||PHAETC":"COMMERCIAL","Emerald Care Center Omaha||PHAETN":"MANAGED MCR","Emerald Care Center Omaha||PHABCO":"COMMERCIAL","Emerald Care Center Omaha||PHBCBS":"COMMERCIAL","Emerald Care Center Omaha||PHBCBM":"MANAGED MCR","Emerald Care Center Omaha||PHBCBP":"MANAGED MCR","Emerald Care Center Omaha||PHCOVE":"MANAGED MCR","Emerald Care Center Omaha||PCHGEN":"HOSPICE","Emerald Care Center Omaha||PHMO1":"COMMERCIAL","Emerald Care Center Omaha||PHHARK":"MANAGED MCR","Emerald Care Center Omaha||PHWELL":"MANAGED MCD","Emerald Care Center Omaha||PCHASE":"HOSPICE","Emerald Care Center Omaha||PCHCHI":"HOSPICE","Emerald Care Center Omaha||PCHEND":"HOSPICE","Emerald Care Center Omaha||PCHHIL":"HOSPICE","Emerald Care Center Omaha||PCHKIN":"HOSPICE","Emerald Care Center Omaha||PCHSTC":"HOSPICE","Emerald Care Center Omaha||PCHSTJ":"HOSPICE","Emerald Care Center Omaha||PCHVNA":"HOSPICE","Emerald Care Center Omaha||PCHS":"HOSPICE","Emerald Care Center Omaha||PHHUML":"MANAGED MCR","Emerald Care Center Omaha||PHMEDC":"COMMERCIAL","Emerald Care Center Omaha||PHMERT":"COMMERCIAL","Emerald Care Center Omaha||PHMOMD":"MANAGED MCD","Emerald Care Center Omaha||PMNENO":"MEDICAID","Emerald Care Center Omaha||PMNE":"MEDICAID","Emerald Care Center Omaha||PHNETO":"MANAGED MCD","Emerald Care Center Omaha||PHNONC":"COMMERCIAL","Emerald Care Center Omaha||PHNOND":"MANAGED MCD","Emerald Care Center Omaha||PHNONR":"MANAGED MCR","Emerald Care Center Omaha||PCHNON":"HOSPICE","Emerald Care Center Omaha||PMNENN":"MEDICAID","Emerald Care Center Omaha||NONMCR":"MEDICARE","Emerald Care Center Omaha||PPRVNO":"PRIVATE","Emerald Care Center Omaha||PPRV":"PRIVATE","Emerald Care Center Omaha||PCHSUN":"HOSPICE","Emerald Care Center Omaha||PHUHCC":"COMMERCIAL","Emerald Care Center Omaha||PHGOLD":"COMMERCIAL","Emerald Care Center Omaha||PHUHCA":"MANAGED MCD","Emerald Care Center Omaha||PHUHCD":"MANAGED MCD","Emerald Care Center Omaha||PHUHCM":"MANAGED MCR","Emerald Care Center Omaha||PHUMRC":"COMMERCIAL","Emerald Care Center Omaha||PHUMR":"COMMERCIAL","Emerald Care Center Omaha||PHWELC":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHNTCC":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHAONF":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHBCBC":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHBCBS":"MANAGED MCR","Emerald Nursing & Rehab Brookside LLC||PHDPUD":"MANAGED MCD","Emerald Nursing & Rehab Brookside LLC||PHDPUH":"MANAGED MCR","Emerald Nursing & Rehab Brookside LLC||PMNEDP":"MEDICAID","Emerald Nursing & Rehab Brookside LLC||PCHEND":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHEVE":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHG":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PHMO1":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHHEAL":"MANAGED MCD","Emerald Nursing & Rehab Brookside LLC||PCHHC":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHASE":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHCHI":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHCOM":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHH":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHPEA":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHSTC":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHTAB":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHTRH":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PCHS":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PHHUMA":"MANAGED MCR","Emerald Nursing & Rehab Brookside LLC||PHMEDI":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHMOLI":"MANAGED MCD","Emerald Nursing & Rehab Brookside LLC||PMNE":"MEDICAID","Emerald Nursing & Rehab Brookside LLC||PHNETO":"MANAGED MCD","Emerald Nursing & Rehab Brookside LLC||PHNONC":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHNOND":"MANAGED MCD","Emerald Nursing & Rehab Brookside LLC||PHNONR":"MANAGED MCR","Emerald Nursing & Rehab Brookside LLC||PCHNON":"HOSPICE","Emerald Nursing & Rehab Brookside LLC||PMNENO":"MEDICAID","Emerald Nursing & Rehab Brookside LLC||PPRVNO":"PRIVATE","Emerald Nursing & Rehab Brookside LLC||PPRVPW":"PRIVATE","Emerald Nursing & Rehab Brookside LLC||PPRV":"PRIVATE","Emerald Nursing & Rehab Brookside LLC||PHTRI":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHUHCC":"COMMERCIAL","Emerald Nursing & Rehab Brookside LLC||PHUHCP":"MANAGED MCD","Emerald Nursing & Rehab Brookside LLC||PHUHCM":"MANAGED MCD","Emerald Nursing & Rehab Brookside LLC||PHUHCR":"MANAGED MCR","Emerald Nursing & Rehab Brookside LLC||PHUMR":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHAARP":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHAMBC":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHAUXI":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHBCBS":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHBANK":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHGSOU":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHHEAL":"MANAGED MCD","Emerald Nursing & Rehab Lancaster LLC||PCHASE":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHCHU":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHCHI":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHENJ":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHHIL":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHHOR":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHKIN":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||HSPP":"PRIVATE","Emerald Nursing & Rehab Lancaster LLC||PCHCRO":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHTAB":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHTRA":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PHHUMC":"MANAGED MCR","Emerald Nursing & Rehab Lancaster LLC||PHMANH":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHMEDC":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHMEMA":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHMEDM":"MANAGED MCR","Emerald Nursing & Rehab Lancaster LLC||PHMOLI":"MANAGED MCD","Emerald Nursing & Rehab Lancaster LLC||PHNALC":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||NEMENR":"MEDICAID","Emerald Nursing & Rehab Lancaster LLC||PMNEUN":"MEDICAID","Emerald Nursing & Rehab Lancaster LLC||PMNE":"MEDICAID","Emerald Nursing & Rehab Lancaster LLC||PHNETO":"MANAGED MCD","Emerald Nursing & Rehab Lancaster LLC||NRAEMC":"MANAGED MCR","Emerald Nursing & Rehab Lancaster LLC||NRHUMC":"MANAGED MCR","Emerald Nursing & Rehab Lancaster LLC||PHNAES":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHOSCA":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PPRVPW":"PRIVATE","Emerald Nursing & Rehab Lancaster LLC||PPRV":"PRIVATE","Emerald Nursing & Rehab Lancaster LLC||PHRES":"RSPITE","Emerald Nursing & Rehab Lancaster LLC||PHSILC":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHTHRI":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHUHCC":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHUHCP":"MANAGED MCD","Emerald Nursing & Rehab Lancaster LLC||PHUHMC":"MANAGED MCD","Emerald Nursing & Rehab Lancaster LLC||PHUHCM":"MANAGED MCR","Emerald Nursing & Rehab Lancaster LLC||PHUMRC":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PHUNIA":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PVVET":"COMMERCIAL","Emerald Nursing & Rehab Lancaster LLC||PCHAME":"HOSPICE","Emerald Nursing & Rehab Lancaster LLC||PCHHRZ":"HOSPICE","Emerald Nursing & Rehab Legacy Pointe LLC||PHAETC":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PHAENT":"MANAGED MCR","Emerald Nursing & Rehab Legacy Pointe LLC||PHBCFD":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PHBCB":"MANAGED MCR","Emerald Nursing & Rehab Legacy Pointe LLC||PHBCMR":"MANAGED MCR","Emerald Nursing & Rehab Legacy Pointe LLC||PHMO1":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PHHEAL":"MANAGED MCD","Emerald Nursing & Rehab Legacy Pointe LLC||PCHCHI":"HOSPICE","Emerald Nursing & Rehab Legacy Pointe LLC||PCHEND":"HOSPICE","Emerald Nursing & Rehab Legacy Pointe LLC||PCHHIL":"HOSPICE","Emerald Nursing & Rehab Legacy Pointe LLC||PCHKIN":"HOSPICE","Emerald Nursing & Rehab Legacy Pointe LLC||PCHHOU":"HOSPICE","Emerald Nursing & Rehab Legacy Pointe LLC||PHHUMA":"MANAGED MCR","Emerald Nursing & Rehab Legacy Pointe LLC||PHMEDI":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PHMLNM":"MANAGED MCD","Emerald Nursing & Rehab Legacy Pointe LLC||PMNE":"MEDICAID","Emerald Nursing & Rehab Legacy Pointe LLC||PHNETO":"MANAGED MCD","Emerald Nursing & Rehab Legacy Pointe LLC||PHNONC":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PHNOND":"MANAGED MCD","Emerald Nursing & Rehab Legacy Pointe LLC||PHNONR":"MANAGED MCR","Emerald Nursing & Rehab Legacy Pointe LLC||PMNENO":"MEDICAID","Emerald Nursing & Rehab Legacy Pointe LLC||PPRVNO":"PRIVATE","Emerald Nursing & Rehab Legacy Pointe LLC||PHOPHC":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PPRVPW":"PRIVATE","Emerald Nursing & Rehab Legacy Pointe LLC||PPRVHC":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PPRV":"PRIVATE","Emerald Nursing & Rehab Legacy Pointe LLC||PCHSTC":"HOSPICE","Emerald Nursing & Rehab Legacy Pointe LLC||PHUHCC":"COMMERCIAL","Emerald Nursing & Rehab Legacy Pointe LLC||PHUHP":"MANAGED MCD","Emerald Nursing & Rehab Legacy Pointe LLC||PHUHCM":"MANAGED MCD","Emerald Nursing & Rehab Legacy Pointe LLC||PHUHCR":"MANAGED MCR","Emerald Nursing & Rehab Legacy Pointe LLC||PHUMR":"COMMERCIAL","Holmes Lake Rehabilitation & Care Center||PHATEN":"MANAGED MCR","Holmes Lake Rehabilitation & Care Center||PCHCHI":"HOSPICE","Holmes Lake Rehabilitation & Care Center||PMNEDP":"MEDICAID","Holmes Lake Rehabilitation & Care Center||PCHHH":"HOSPICE","Holmes Lake Rehabilitation & Care Center||PCHH":"HOSPICE","Holmes Lake Rehabilitation & Care Center||PCHN":"HOSPICE","Holmes Lake Rehabilitation & Care Center||PHMED":"MANAGED MCR","Holmes Lake Rehabilitation & Care Center||PHMOLC":"MANAGED MCD","Holmes Lake Rehabilitation & Care Center||PMNE":"MEDICAID","Holmes Lake Rehabilitation & Care Center||PHNETC":"MANAGED MCD","Holmes Lake Rehabilitation & Care Center||PMNENO":"MEDICAID","Holmes Lake Rehabilitation & Care Center||PPRVNO":"PRIVATE","Holmes Lake Rehabilitation & Care Center||PPRVH":"PRIVATE","Holmes Lake Rehabilitation & Care Center||PPRVHC":"COMMERCIAL","Holmes Lake Rehabilitation & Care Center||PPRV":"PRIVATE","Holmes Lake Rehabilitation & Care Center||PCHR":"RSPITE","Holmes Lake Rehabilitation & Care Center||PCHSC":"HOSPICE","Holmes Lake Rehabilitation & Care Center||PCHTH":"HOSPICE","Holmes Lake Rehabilitation & Care Center||PCHTRH":"HOSPICE","Holmes Lake Rehabilitation & Care Center||PHUHCC":"COMMERCIAL","Holmes Lake Rehabilitation & Care Center||PHUHMD":"MANAGED MCD","Holmes Lake Rehabilitation & Care Center||PHUHCM":"MANAGED MCD","Holmes Lake Rehabilitation & Care Center||PHUHC":"MANAGED MCR","Mercy Care Center LLC||PHAETN":"MANAGED MCR","Mercy Care Center LLC||PHAMR":"MANAGED MCR","Mercy Care Center LLC||PHAFLC":"COMMERCIAL","Mercy Care Center LLC||PHAMCO":"COMMERCIAL","Mercy Care Center LLC||PHAMB":"MANAGED MCD","Mercy Care Center LLC||PCHADS":"HOSPICE","Mercy Care Center LLC||PCHANG":"HOSPICE","Mercy Care Center LLC||PHBCM":"MANAGED MCR","Mercy Care Center LLC||PCHCHI":"HOSPICE","Mercy Care Center LLC||PCHC":"HOSPICE","Mercy Care Center LLC||PPRVCR":"COMMERCIAL","Mercy Care Center LLC||PCHEDJ":"HOSPICE","Mercy Care Center LLC||PHGEHA":"COMMERCIAL","Mercy Care Center LLC||PCHGTA":"HOSPICE","Mercy Care Center LLC||PHMO1":"COMMERCIAL","Mercy Care Center LLC||PHHMMD":"MANAGED MCD","Mercy Care Center LLC||PCHHH":"HOSPICE","Mercy Care Center LLC||PHHBMD":"MANAGED MCD","Mercy Care Center LLC||PHBMD":"MANAGED MCD","Mercy Care Center LLC||PCHHCH":"HOSPICE","Mercy Care Center LLC||PCHMW":"HOSPICE","Mercy Care Center LLC||PCHS":"HOSPICE","Mercy Care Center LLC||PHHUMR":"MANAGED MCR","Mercy Care Center LLC||PHMOLM":"MANAGED MCD","Mercy Care Center LLC||PMNE":"MEDICAID","Mercy Care Center LLC||PHNETC":"MANAGED MCD","Mercy Care Center LLC||PHNTTC":"MANAGED MCD","Mercy Care Center LLC||PHNOND":"MANAGED MCD","Mercy Care Center LLC||PHNONR":"MANAGED MCR","Mercy Care Center LLC||PCHNON":"HOSPICE","Mercy Care Center LLC||PMNENO":"MEDICAID","Mercy Care Center LLC||PPRVNO":"PRIVATE","Mercy Care Center LLC||PCHPEA":"HOSPICE","Mercy Care Center LLC||PPRVHC":"COMMERCIAL","Mercy Care Center LLC||PPRVH":"PRIVATE","Mercy Care Center LLC||PPRV":"PRIVATE","Mercy Care Center LLC||PCHSCX":"HOSPICE","Mercy Care Center LLC||PCHSUN":"HOSPICE","Mercy Care Center LLC||PHUHP":"MANAGED MCD","Mercy Care Center LLC||PHUHMD":"MANAGED MCD","Mercy Care Center LLC||PHUHCN":"MANAGED MCR","Mercy Care Center LLC||PHUHMR":"MANAGED MCR","Mercy Care Center LLC||PHUHTC":"MANAGED MCD","Mercy Care Center LLC||PHUMRC":"COMMERCIAL","Mercy Care Center LLC||PHWEMR":"MANAGED MCR","Milford Meadows||PHAARP":"COMMERCIAL","Milford Meadows||PHAMBC":"COMMERCIAL","Milford Meadows||PHAUXI":"COMMERCIAL","Milford Meadows||PHBCBS":"COMMERCIAL","Milford Meadows||PHBANK":"COMMERCIAL","Milford Meadows||PHGSOU":"COMMERCIAL","Milford Meadows||PCHHIL":"HOSPICE","Milford Meadows||PCHHOR":"HOSPICE","Milford Meadows||PCHCRO":"HOSPICE","Milford Meadows||PCHTAB":"HOSPICE","Milford Meadows||PCHS":"HOSPICE","Milford Meadows||PHHUMC":"MANAGED MCR","Milford Meadows||PHMANH":"COMMERCIAL","Milford Meadows||PHMEDC":"COMMERCIAL","Milford Meadows||PHMEMA":"COMMERCIAL","Milford Meadows||PHMEDM":"MANAGED MCR","Milford Meadows||PHNALC":"COMMERCIAL","Milford Meadows||PMNE":"MEDICAID","Milford Meadows||PHNAES":"COMMERCIAL","Milford Meadows||PHOSCA":"COMMERCIAL","Milford Meadows||PPRVPW":"PRIVATE","Milford Meadows||PPRV":"PRIVATE","Milford Meadows||PHRES":"RSPITE","Milford Meadows||PHSILC":"COMMERCIAL","Milford Meadows||PHTHRI":"COMMERCIAL","Milford Meadows||PHUHCC":"COMMERCIAL","Milford Meadows||PHUHCM":"MANAGED MCR","Milford Meadows||PHUMRC":"COMMERCIAL","Milford Meadows||PHUNIA":"COMMERCIAL","Milford Meadows||PVVET":"COMMERCIAL","Emerald Care Center Claremore||PCHAV":"HOSPICE","Emerald Care Center Claremore||PHETNA":"MANAGED MCR","Emerald Care Center Claremore||PHAMBE":"COMMERCIAL","Emerald Care Center Claremore||PHBCBS":"COMMERCIAL","Emerald Care Center Claremore||PHBCBM":"MANAGED MCR","Emerald Care Center Claremore||PHCARE":"MANAGED MCR","Emerald Care Center Claremore||PCHCP":"HOSPICE","Emerald Care Center Claremore||PHDEVO":"MANAGED MCD","Emerald Care Center Claremore||PCHGH":"HOSPICE","Emerald Care Center Claremore||PHMO1":"COMMERCIAL","Emerald Care Center Claremore||PCHALL":"HOSPICE","Emerald Care Center Claremore||PCHCOM":"HOSPICE","Emerald Care Center Claremore||PCHELA":"HOSPICE","Emerald Care Center Claremore||PCHEM":"HOSPICE","Emerald Care Center Claremore||PCHEME":"HOSPICE","Emerald Care Center Claremore||PCHFH":"HOSPICE","Emerald Care Center Claremore||PCHHG":"HOSPICE","Emerald Care Center Claremore||PCHLEG":"HOSPICE","Emerald Care Center Claremore||PCHLP":"HOSPICE","Emerald Care Center Claremore||PCHRVR":"HOSPICE","Emerald Care Center Claremore||PCHROS":"HOSPICE","Emerald Care Center Claremore||PCHSEA":"HOSPICE","Emerald Care Center Claremore||PCHSTJ":"HOSPICE","Emerald Care Center Claremore||PCHSC":"HOSPICE","Emerald Care Center Claremore||PCHTRD":"HOSPICE","Emerald Care Center Claremore||PCHTRA":"HOSPICE","Emerald Care Center Claremore||PCHTH":"HOSPICE","Emerald Care Center Claremore||PCHHGR":"HOSPICE","Emerald Care Center Claremore||PCHS":"HOSPICE","Emerald Care Center Claremore||PHHUMM":"MANAGED MCR","Emerald Care Center Claremore||PHLIFE":"MANAGED MCR","Emerald Care Center Claremore||PHPRL":"COMMERCIAL","Emerald Care Center Claremore||PMCACV":"MEDICARE","Emerald Care Center Claremore||PMCADP":"MEDICARE","Emerald Care Center Claremore||PMCA":"MEDICARE","Emerald Care Center Claremore||PCHM":"HOSPICE","Emerald Care Center Claremore||PHNONC":"COMMERCIAL","Emerald Care Center Claremore||PHNOND":"MANAGED MCD","Emerald Care Center Claremore||PHNONR":"MANAGED MCR","Emerald Care Center Claremore||PCHNON":"HOSPICE","Emerald Care Center Claremore||PMOKNO":"MEDICAID","Emerald Care Center Claremore||PMCANO":"MEDICARE","Emerald Care Center Claremore||PPRVNO":"PRIVATE","Emerald Care Center Claremore||PMOK":"MEDICAID","Emerald Care Center Claremore||PHVACC":"COMMERCIAL","Emerald Care Center Claremore||PPRV":"PRIVATE","Emerald Care Center Claremore||PHUHCC":"COMMERCIAL","Emerald Care Center Claremore||PHUHCM":"MANAGED MCR","Emerald Care Center Claremore||PCHVL":"HOSPICE","Emerald Care Center Claremore||PHWELL":"MANAGED MCR","Emerald Care Center Midwest||PCHAPC":"HOSPICE","Emerald Care Center Midwest||PCHACG":"HOSPICE","Emerald Care Center Midwest||PHAETL":"MANAGED MCR","Emerald Care Center Midwest||PHAEMT":"COMMERCIAL","Emerald Care Center Midwest||PHAMCF":"COMMERCIAL","Emerald Care Center Midwest||PHAMHO":"MANAGED MCR","Emerald Care Center Midwest||PCHAPE":"HOSPICE","Emerald Care Center Midwest||PCHASP":"HOSPICE","Emerald Care Center Midwest||PHBCBS":"COMMERCIAL","Emerald Care Center Midwest||PHBCBM":"MANAGED MCR","Emerald Care Center Midwest||PCHBR":"HOSPICE","Emerald Care Center Midwest||PHBROA":"COMMERCIAL","Emerald Care Center Midwest||PCHCEN":"HOSPICE","Emerald Care Center Midwest||PCHOIC":"HOSPICE","Emerald Care Center Midwest||PHCIGM":"MANAGED MCR","Emerald Care Center Midwest||PHCHMC":"MANAGED MCR","Emerald Care Center Midwest||PCHEC":"HOSPICE","Emerald Care Center Midwest||PCHEMH":"HOSPICE","Emerald Care Center Midwest||PCHEXC":"HOSPICE","Emerald Care Center Midwest||PCHFRO":"HOSPICE","Emerald Care Center Midwest||PHGEHA":"COMMERCIAL","Emerald Care Center Midwest||PHGHCO":"COMMERCIAL","Emerald Care Center Midwest||PHGHMA":"MANAGED MCR","Emerald Care Center Midwest||PCHGSH":"HOSPICE","Emerald Care Center Midwest||PHHCCO":"COMMERCIAL","Emerald Care Center Midwest||PHHEAL":"COMMERCIAL","Emerald Care Center Midwest||PCHHEA":"HOSPICE","Emerald Care Center Midwest||PPRVP1":"PRIVATE","Emerald Care Center Midwest||PCHS":"HOSPICE","Emerald Care Center Midwest||PHHUMO":"COMMERCIAL","Emerald Care Center Midwest||PHHUML":"MANAGED MCR","Emerald Care Center Midwest||PHHUMC":"MANAGED MCR","Emerald Care Center Midwest||PHHUCO":"COMMERCIAL","Emerald Care Center Midwest||PHLONG":"MANAGED MCR","Emerald Care Center Midwest||PHMMMC":"MANAGED MCR","Emerald Care Center Midwest||PMCACV":"MEDICARE","Emerald Care Center Midwest||PMCA":"MEDICARE","Emerald Care Center Midwest||PHNALC":"COMMERCIAL","Emerald Care Center Midwest||PHNO F":"COMMERCIAL","Emerald Care Center Midwest||PHNONC":"COMMERCIAL","Emerald Care Center Midwest||PHNOND":"MANAGED MCD","Emerald Care Center Midwest||PHNONR":"MANAGED MCR","Emerald Care Center Midwest||PCHNON":"HOSPICE","Emerald Care Center Midwest||PMOKNO":"MEDICAID","Emerald Care Center Midwest||NONMCR":"MEDICARE","Emerald Care Center Midwest||PPRVNO":"PRIVATE","Emerald Care Center Midwest||PMOK":"MEDICAID","Emerald Care Center Midwest||PHVACC":"COMMERCIAL","Emerald Care Center Midwest||PHPCMC":"COMMERCIAL","Emerald Care Center Midwest||PPRV":"PRIVATE","Emerald Care Center Midwest||PHSTAT":"COMMERCIAL","Emerald Care Center Midwest||PCHSH":"HOSPICE","Emerald Care Center Midwest||PHTRIW":"COMMERCIAL","Emerald Care Center Midwest||PHUHCF":"COMMERCIAL","Emerald Care Center Midwest||PHUHMF":"MANAGED MCR","Emerald Care Center Midwest||PHUHCM":"MANAGED MCR","Emerald Care Center Midwest||PHUMRC":"COMMERCIAL","Emerald Care Center Midwest||PHUHCC":"COMMERCIAL","Emerald Care Center Midwest||PHWPA":"COMMERCIAL","Emerald Care Center Midwest||PHWCTX":"MANAGED MCR","Emerald Care Center Midwest||PHWORK":"COMMERCIAL","Emerald Care Center Southwest||PHAARP":"COMMERCIAL","Emerald Care Center Southwest||PHAETL":"MANAGED MCR","Emerald Care Center Southwest||PCHAC":"HOSPICE","Emerald Care Center Southwest||PCHAH":"HOSPICE","Emerald Care Center Southwest||PHBCBS":"COMMERCIAL","Emerald Care Center Southwest||PHBCBM":"MANAGED MCR","Emerald Care Center Southwest||PHBANK":"COMMERCIAL","Emerald Care Center Southwest||PCHCHH":"HOSPICE","Emerald Care Center Southwest||PCHCH":"HOSPICE","Emerald Care Center Southwest||PHCIGM":"MANAGED MCR","Emerald Care Center Southwest||PHCCCO":"COMMERCIAL","Emerald Care Center Southwest||PCHRHS":"HOSPICE","Emerald Care Center Southwest||PCHELA":"HOSPICE","Emerald Care Center Southwest||PCHEMH":"HOSPICE","Emerald Care Center Southwest||PCHEXC":"HOSPICE","Emerald Care Center Southwest||PHFRIN":"COMMERCIAL","Emerald Care Center Southwest||PCHFR":"HOSPICE","Emerald Care Center Southwest||PHGPML":"COMMERCIAL","Emerald Care Center Southwest||PHGHCO":"COMMERCIAL","Emerald Care Center Southwest||PHGHMA":"MANAGED MCR","Emerald Care Center Southwest||PCHG":"HOSPICE","Emerald Care Center Southwest||PHHCCO":"COMMERCIAL","Emerald Care Center Southwest||PHMSCO":"COMMERCIAL","Emerald Care Center Southwest||PCHHEA":"HOSPICE","Emerald Care Center Southwest||PCHS":"HOSPICE","Emerald Care Center Southwest||PHHUMO":"COMMERCIAL","Emerald Care Center Southwest||PHHUCO":"COMMERCIAL","Emerald Care Center Southwest||PHHUML":"MANAGED MCR","Emerald Care Center Southwest||PHHUMC":"MANAGED MCR","Emerald Care Center Southwest||PHHUMA":"COMMERCIAL","Emerald Care Center Southwest||PHIRON":"COMMERCIAL","Emerald Care Center Southwest||PCHIND":"HOSPICE","Emerald Care Center Southwest||PHLONG":"MANAGED MCR","Emerald Care Center Southwest||PMCACV":"MEDICARE","Emerald Care Center Southwest||PMCA":"MEDICARE","Emerald Care Center Southwest||PHNALC":"COMMERCIAL","Emerald Care Center Southwest||PHNONC":"COMMERCIAL","Emerald Care Center Southwest||PHNOND":"MANAGED MCD","Emerald Care Center Southwest||PHNONR":"MANAGED MCR","Emerald Care Center Southwest||PCHNON":"HOSPICE","Emerald Care Center Southwest||PMOKNO":"MEDICAID","Emerald Care Center Southwest||NONMCR":"MEDICARE","Emerald Care Center Southwest||PPRVNO":"PRIVATE","Emerald Care Center Southwest||PMOK":"MEDICAID","Emerald Care Center Southwest||PPRV":"PRIVATE","Emerald Care Center Southwest||PCHUAL":"HOSPICE","Emerald Care Center Southwest||PCHRIV":"HOSPICE","Emerald Care Center Southwest||PCHSC":"HOSPICE","Emerald Care Center Southwest||PCHSUN":"HOSPICE","Emerald Care Center Southwest||PCHEND":"HOSPICE","Emerald Care Center Southwest||PCHT":"HOSPICE","Emerald Care Center Southwest||PHUFCW":"COMMERCIAL","Emerald Care Center Southwest||PHUHCC":"COMMERCIAL","Emerald Care Center Southwest||PHUHCN":"MANAGED MCR","Emerald Care Center Southwest||PHUHCM":"MANAGED MCR","Emerald Care Center Southwest||PHUMR":"COMMERCIAL","Emerald Care Center Southwest||PHUAIC":"COMMERCIAL","Emerald Care Center Southwest||PHUNIV":"COMMERCIAL","Emerald Care Center Southwest||PHWPA":"COMMERCIAL","Emerald Care Center Southwest||PHWELL":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHAETM":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHAECM":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHAETC":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHAETN":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHATWB":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHBCBS":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHBCMC":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHCIGL":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHCIGN":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHCCCO":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHCCMC":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PCHCUS":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PHCHCH":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHCHMC":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PCHEMH":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PHFIRS":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHGHMC":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHGHCO":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHGHMA":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PCHGS":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PHHCCO":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHHCSO":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PCHELA":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PCHENH":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PCHGEN":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PCHGRE":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PCHLP":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PCHROS":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PCHS":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PHHUML":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHHUCC":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHHUMD":"MANAGED MCD","Garden Manor Rehab and Nursing of Tulsa||PHHUMM":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHHUMC":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHHUMA":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHLIFC":"MANAGED MCD","Garden Manor Rehab and Nursing of Tulsa||PPRVLP":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHLONG":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PMCACV":"MEDICARE","Garden Manor Rehab and Nursing of Tulsa||PMCA":"MEDICARE","Garden Manor Rehab and Nursing of Tulsa||PHNALC":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHNF":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHNONC":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHNONR":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHNOND":"MANAGED MCD","Garden Manor Rehab and Nursing of Tulsa||PCHNON":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PMOKNO":"MEDICAID","Garden Manor Rehab and Nursing of Tulsa||NONMCR":"MEDICARE","Garden Manor Rehab and Nursing of Tulsa||PPRVNO":"PRIVATE","Garden Manor Rehab and Nursing of Tulsa||PMOK":"MEDICAID","Garden Manor Rehab and Nursing of Tulsa||PHOBJS":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHOPVA":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PCHP":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PPRVPW":"PRIVATE","Garden Manor Rehab and Nursing of Tulsa||PHPCMC":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PPRV":"PRIVATE","Garden Manor Rehab and Nursing of Tulsa||PCHT":"HOSPICE","Garden Manor Rehab and Nursing of Tulsa||PHUHCF":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHUHMF":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHUHCM":"MANAGED MCR","Garden Manor Rehab and Nursing of Tulsa||PHUMRC":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHWPA":"COMMERCIAL","Garden Manor Rehab and Nursing of Tulsa||PHWCR":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHAETL":"MANAGED MCR","Lexington Premier Nursing & Rehab LLC||PHATM":"MANAGED MCD","Lexington Premier Nursing & Rehab LLC||PHBCBC":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHBCBS":"MANAGED MCR","Lexington Premier Nursing & Rehab LLC||PCHBLU":"HOSPICE","Lexington Premier Nursing & Rehab LLC||PHHUMC":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHHUML":"MANAGED MCR","Lexington Premier Nursing & Rehab LLC||PMKY":"MEDICAID","Lexington Premier Nursing & Rehab LLC||PHNIPP":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHNONC":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHNOND":"MANAGED MCD","Lexington Premier Nursing & Rehab LLC||PHNONR":"MANAGED MCR","Lexington Premier Nursing & Rehab LLC||PMKYNO":"MEDICAID","Lexington Premier Nursing & Rehab LLC||PMCANO":"MEDICARE","Lexington Premier Nursing & Rehab LLC||PPRVNO":"PRIVATE","Lexington Premier Nursing & Rehab LLC||PPRV":"PRIVATE","Lexington Premier Nursing & Rehab LLC||PHUHCC":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHUHCM":"MANAGED MCR","Lexington Premier Nursing & Rehab LLC||PHUMRC":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHWELC":"COMMERCIAL","Lexington Premier Nursing & Rehab LLC||PHWELL":"MANAGED MCR","Memory Care Center at Emerald||PHAETM":"MANAGED MCR","Memory Care Center at Emerald||PHCHER":"MANAGED MCR","Memory Care Center at Emerald||PHGLOB":"MANAGED MCR","Memory Care Center at Emerald||PHMO1":"COMMERCIAL","Memory Care Center at Emerald||PCHAVO":"HOSPICE","Memory Care Center at Emerald||PCHANG":"HOSPICE","Memory Care Center at Emerald||PCHHCM":"HOSPICE","Memory Care Center at Emerald||PCHGV":"HOSPICE","Memory Care Center at Emerald||PCHLP":"HOSPICE","Memory Care Center at Emerald||PCHHSP":"HOSPICE","Memory Care Center at Emerald||PCHTRA":"HOSPICE","Memory Care Center at Emerald||PCHLIF":"HOSPICE","Memory Care Center at Emerald||PCHVL":"HOSPICE","Memory Care Center at Emerald||PCHHSG":"HOSPICE","Memory Care Center at Emerald||PCHS":"HOSPICE","Memory Care Center at Emerald||PHPRL":"COMMERCIAL","Memory Care Center at Emerald||PMCACV":"MEDICARE","Memory Care Center at Emerald||PMCA":"MEDICARE","Memory Care Center at Emerald||PCHM":"HOSPICE","Memory Care Center at Emerald||PHNOND":"MANAGED MCD","Memory Care Center at Emerald||PHNONR":"MANAGED MCR","Memory Care Center at Emerald||PCHNON":"HOSPICE","Memory Care Center at Emerald||PMOKNO":"MEDICAID","Memory Care Center at Emerald||PMCANM":"MEDICARE","Memory Care Center at Emerald||PPRVNO":"PRIVATE","Memory Care Center at Emerald||PMOK":"MEDICAID","Memory Care Center at Emerald||PPRVPW":"PRIVATE","Memory Care Center at Emerald||PPRV":"PRIVATE","Memory Care Center at Emerald||PHRAVE":"COMMERCIAL","Memory Care Center at Emerald||PHUHCC":"COMMERCIAL","Memory Care Center at Emerald||PHUHCM":"MANAGED MCR","Memory Care Center at Emerald||PHUMRC":"COMMERCIAL","Memory Care Center at Emerald||PHUNIA":"COMMERCIAL","Pikeville Nursing and Rehab Center||PHBCMR":"MANAGED MCR","Pikeville Nursing and Rehab Center||PHBCBS":"COMMERCIAL","Pikeville Nursing and Rehab Center||PHMO1":"COMMERCIAL","Pikeville Nursing and Rehab Center||PCHBLU":"HOSPICE","Pikeville Nursing and Rehab Center||PHHUCL":"COMMERCIAL","Pikeville Nursing and Rehab Center||PHHUML":"MANAGED MCR","Pikeville Nursing and Rehab Center||PMKYC":"MEDICAID","Pikeville Nursing and Rehab Center||PMKY":"MEDICAID","Pikeville Nursing and Rehab Center||PHLPTC":"COMMERCIAL","Pikeville Nursing and Rehab Center||PHNONC":"COMMERCIAL","Pikeville Nursing and Rehab Center||PHNOND":"MANAGED MCD","Pikeville Nursing and Rehab Center||PHNONR":"MANAGED MCR","Pikeville Nursing and Rehab Center||PMKYNO":"MEDICAID","Pikeville Nursing and Rehab Center||PPRVNO":"PRIVATE","Pikeville Nursing and Rehab Center||PHPAMD":"MANAGED MCD","Pikeville Nursing and Rehab Center||PPRV":"PRIVATE","Pikeville Nursing and Rehab Center||PHUHCC":"COMMERCIAL","Pikeville Nursing and Rehab Center||PHUMC":"MANAGED MCR","Pikeville Nursing and Rehab Center||PHUMR":"COMMERCIAL","Pikeville Nursing and Rehab Center||PHWELM":"MANAGED MCR"};
   var CENSUS_PAYER_TYPE_BY_CODE_FALLBACK = {"PHAETN":"MANAGED MCR","PHAETM":"MANAGED MCR","PHAMBE":"COMMERCIAL","PHBCBS":"COMMERCIAL","PHBCBM":"MANAGED MCR","PHCHAM":"COMMERCIAL","PHWELL":"MANAGED MCR","PCHASE":"HOSPICE","PCHCCH":"HOSPICE","PCHSTC":"HOSPICE","PCHTAB":"HOSPICE","PCHHOR":"HOSPICE","PHHUMC":"MANAGED MCR","PHHUMM":"MANAGED MCR","PHMEDH":"COMMERCIAL","PMCA":"MEDICARE","PHMOLI":"MANAGED MCD","PMNE":"MEDICAID","PHNETO":"MANAGED MCD","PHPSWO":"COMMERCIAL","PPRVPW":"PRIVATE","PPRVH":"PRIVATE","PPRV":"PRIVATE","PHSWOR":"COMMERCIAL","TRWOC":"COMMERCIAL","PHTRIC":"COMMERCIAL","PHUHCC":"COMMERCIAL","PHUHP":"MANAGED MCD","PHUHCD":"MANAGED MCD","PHUHCB":"MANAGED MCR","PHWELC":"COMMERCIAL","PHUHCM":"MANAGED MCR","AHRBM":"HOSPICE","PHAETC":"COMMERCIAL","PHBCBC":"COMMERCIAL","PCHCHI":"HOSPICE","PHCIGN":"COMMERCIAL","PCHCEN":"HOSPICE","PHMIDL":"COMMERCIAL","PPRVHS":"PRIVATE","PCHRUR":"HOSPICE","PHSILC":"COMMERCIAL","PHUHCP":"MANAGED MCD","PPRV1":"PRIVATE","PPRV2":"PRIVATE","PPRV3":"PRIVATE","PHAMCO":"COMMERCIAL","PHEMCW":"COMMERCIAL","PCHMAR":"HOSPICE","PCHS":"HOSPICE","PHHUCO":"COMMERCIAL","PHHUMR":"MANAGED MCR","PHMEDI":"COMMERCIAL","PHMEDM":"MANAGED MCR","PMCACV":"MEDICARE","PHMLMD":"MANAGED MCD","PHNONC":"COMMERCIAL","PHNOND":"MANAGED MCD","PHNONR":"MANAGED MCR","PCHNON":"HOSPICE","PMNENO":"MEDICAID","NONMCR":"MEDICARE","PPRVNO":"PRIVATE","PHSPVA":"COMMERCIAL","PHUHPD":"MANAGED MCD","PHUHCR":"MANAGED MCR","PHUMRC":"COMMERCIAL","PHUSAA":"COMMERCIAL","PHOPTU":"COMMERCIAL","PHABCO":"COMMERCIAL","PHBCBP":"MANAGED MCR","PHCOVE":"MANAGED MCR","PCHGEN":"HOSPICE","PHMO1":"COMMERCIAL","PHHARK":"MANAGED MCR","PCHEND":"HOSPICE","PCHHIL":"HOSPICE","PCHKIN":"HOSPICE","PCHSTJ":"HOSPICE","PCHVNA":"HOSPICE","PHHUML":"COMMERCIAL","PHMEDC":"COMMERCIAL","PHMERT":"COMMERCIAL","PHMOMD":"MANAGED MCD","PMNENN":"MEDICAID","PCHSUN":"HOSPICE","PHGOLD":"COMMERCIAL","PHUHCA":"MANAGED MCD","PHUMR":"COMMERCIAL","PHNTCC":"COMMERCIAL","PHAONF":"COMMERCIAL","PHDPUD":"MANAGED MCD","PHDPUH":"MANAGED MCR","PMNEDP":"MEDICAID","PCHEVE":"HOSPICE","PCHG":"HOSPICE","PHHEAL":"MANAGED MCD","PCHHC":"HOSPICE","PCHCOM":"HOSPICE","PCHH":"HOSPICE","PCHPEA":"HOSPICE","PCHTRH":"HOSPICE","PHHUMA":"COMMERCIAL","PHTRI":"COMMERCIAL","PHAARP":"COMMERCIAL","PHAMBC":"COMMERCIAL","PHAUXI":"COMMERCIAL","PHBANK":"COMMERCIAL","PHGSOU":"COMMERCIAL","PCHCHU":"HOSPICE","PCHENJ":"HOSPICE","HSPP":"PRIVATE","PCHCRO":"HOSPICE","PCHTRA":"HOSPICE","PHMANH":"COMMERCIAL","PHMEMA":"COMMERCIAL","PHNALC":"COMMERCIAL","NEMENR":"MEDICAID","PMNEUN":"MEDICAID","NRAEMC":"MANAGED MCR","NRHUMC":"MANAGED MCR","PHNAES":"COMMERCIAL","PHOSCA":"COMMERCIAL","PHRES":"RSPITE","PHTHRI":"COMMERCIAL","PHUHMC":"MANAGED MCD","PHUNIA":"COMMERCIAL","PVVET":"COMMERCIAL","PCHAME":"HOSPICE","PCHHRZ":"HOSPICE","PHAENT":"MANAGED MCR","PHBCFD":"COMMERCIAL","PHBCB":"MANAGED MCR","PHBCMR":"MANAGED MCR","PCHHOU":"HOSPICE","PHMLNM":"MANAGED MCD","PHOPHC":"COMMERCIAL","PPRVHC":"COMMERCIAL","PHATEN":"MANAGED MCR","PCHHH":"HOSPICE","PCHN":"HOSPICE","PHMED":"MANAGED MCR","PHMOLC":"MANAGED MCD","PHNETC":"MANAGED MCD","PCHR":"RSPITE","PCHSC":"HOSPICE","PCHTH":"HOSPICE","PHUHMD":"MANAGED MCD","PHUHC":"MANAGED MCR","PHAMR":"MANAGED MCR","PHAFLC":"COMMERCIAL","PHAMB":"MANAGED MCD","PCHADS":"HOSPICE","PCHANG":"HOSPICE","PHBCM":"MANAGED MCR","PCHC":"HOSPICE","PPRVCR":"COMMERCIAL","PCHEDJ":"HOSPICE","PHGEHA":"COMMERCIAL","PCHGTA":"HOSPICE","PHHMMD":"MANAGED MCD","PHHBMD":"MANAGED MCD","PHBMD":"MANAGED MCD","PCHHCH":"HOSPICE","PCHMW":"HOSPICE","PHMOLM":"MANAGED MCD","PHNTTC":"MANAGED MCD","PCHSCX":"HOSPICE","PHUHCN":"MANAGED MCR","PHUHMR":"MANAGED MCR","PHUHTC":"MANAGED MCD","PHWEMR":"MANAGED MCR","PCHAV":"HOSPICE","PHETNA":"MANAGED MCR","PHCARE":"MANAGED MCR","PCHCP":"HOSPICE","PHDEVO":"MANAGED MCD","PCHGH":"HOSPICE","PCHALL":"HOSPICE","PCHELA":"HOSPICE","PCHEM":"HOSPICE","PCHEME":"HOSPICE","PCHFH":"HOSPICE","PCHHG":"HOSPICE","PCHLEG":"HOSPICE","PCHLP":"HOSPICE","PCHRVR":"HOSPICE","PCHROS":"HOSPICE","PCHSEA":"HOSPICE","PCHTRD":"HOSPICE","PCHHGR":"HOSPICE","PHLIFE":"MANAGED MCR","PHPRL":"COMMERCIAL","PMCADP":"MEDICARE","PCHM":"HOSPICE","PMOKNO":"MEDICAID","PMCANO":"MEDICARE","PMOK":"MEDICAID","PHVACC":"COMMERCIAL","PCHVL":"HOSPICE","PCHAPC":"HOSPICE","PCHACG":"HOSPICE","PHAETL":"MANAGED MCR","PHAEMT":"COMMERCIAL","PHAMCF":"COMMERCIAL","PHAMHO":"MANAGED MCR","PCHAPE":"HOSPICE","PCHASP":"HOSPICE","PCHBR":"HOSPICE","PHBROA":"COMMERCIAL","PCHOIC":"HOSPICE","PHCIGM":"MANAGED MCR","PHCHMC":"MANAGED MCR","PCHEC":"HOSPICE","PCHEMH":"HOSPICE","PCHEXC":"HOSPICE","PCHFRO":"HOSPICE","PHGHCO":"COMMERCIAL","PHGHMA":"MANAGED MCR","PCHGSH":"HOSPICE","PHHCCO":"COMMERCIAL","PCHHEA":"HOSPICE","PPRVP1":"PRIVATE","PHHUMO":"COMMERCIAL","PHLONG":"MANAGED MCR","PHMMMC":"MANAGED MCR","PHNO F":"COMMERCIAL","PHPCMC":"COMMERCIAL","PHSTAT":"COMMERCIAL","PCHSH":"HOSPICE","PHTRIW":"COMMERCIAL","PHUHCF":"COMMERCIAL","PHUHMF":"MANAGED MCR","PHWPA":"COMMERCIAL","PHWCTX":"MANAGED MCR","PHWORK":"COMMERCIAL","PCHAC":"HOSPICE","PCHAH":"HOSPICE","PCHCHH":"HOSPICE","PCHCH":"HOSPICE","PHCCCO":"COMMERCIAL","PCHRHS":"HOSPICE","PHFRIN":"COMMERCIAL","PCHFR":"HOSPICE","PHGPML":"COMMERCIAL","PHMSCO":"COMMERCIAL","PHIRON":"COMMERCIAL","PCHIND":"HOSPICE","PCHUAL":"HOSPICE","PCHRIV":"HOSPICE","PCHT":"HOSPICE","PHUFCW":"COMMERCIAL","PHUAIC":"COMMERCIAL","PHUNIV":"COMMERCIAL","PHAECM":"COMMERCIAL","PHATWB":"COMMERCIAL","PHBCMC":"MANAGED MCR","PHCIGL":"COMMERCIAL","PHCCMC":"MANAGED MCR","PCHCUS":"HOSPICE","PHCHCH":"COMMERCIAL","PHFIRS":"COMMERCIAL","PHGHMC":"MANAGED MCR","PCHGS":"HOSPICE","PHHCSO":"COMMERCIAL","PCHENH":"HOSPICE","PCHGRE":"HOSPICE","PHHUCC":"COMMERCIAL","PHHUMD":"MANAGED MCD","PHLIFC":"MANAGED MCD","PPRVLP":"COMMERCIAL","PHNF":"COMMERCIAL","PHOBJS":"COMMERCIAL","PHOPVA":"COMMERCIAL","PCHP":"HOSPICE","PHWCR":"COMMERCIAL","PHATM":"MANAGED MCD","PCHBLU":"HOSPICE","PMKY":"MEDICAID","PHNIPP":"COMMERCIAL","PMKYNO":"MEDICAID","PHCHER":"MANAGED MCR","PHGLOB":"MANAGED MCR","PCHAVO":"HOSPICE","PCHHCM":"HOSPICE","PCHGV":"HOSPICE","PCHHSP":"HOSPICE","PCHLIF":"HOSPICE","PCHHSG":"HOSPICE","PMCANM":"MEDICARE","PHRAVE":"COMMERCIAL","PHHUCL":"COMMERCIAL","PMKYC":"MEDICAID","PHLPTC":"COMMERCIAL","PHPAMD":"MANAGED MCD","PHUMC":"MANAGED MCR","PHWELM":"MANAGED MCR"};
 
   var censusState = {
-    sources: {},               // losReport -> {fileName, rowCount, uploadedAt, records}
+    sources: {},               // losReport/salesJournal/censusReport -> {fileName, rowCount, uploadedAt, records}
     rows: [],                  // flat computed rows: {facility, cohortKey, year, month, days, payorCode, payerType}
+    salesRows: [],              // flat computed sales rows for Skilled Analysis: {facility, cohortKey, year, month, family, label, units, gross, net, payorName}
+    daysRows: [],               // flat computed rows for Census Days by Month: {facility, cohortKey, year, month, payorType, payorName, days}
+    pctRows: [],                 // flat computed rows for Census % by Month: {facility, cohortKey, year, month, census, capacity, pctUsed}
     facilities: [],
     selectedFacilities: new Set(),
     payerTypes: [],
@@ -2378,6 +2466,7 @@
     selectedMonthsCal: new Set(),
     liveMode: false
   };
+  var censusSkilledOpenFamilies = {}; // family label -> bool, expand/collapse state for the Skilled Analysis table
 
   function censusShowToast(msg){
     var t = document.getElementById('censusToast');
@@ -2501,15 +2590,48 @@
     return fallback || 'Unmapped';
   }
 
-  // Rebuilds the flat `rows` array (LOS records × resolved payer type) and
-  // all the filter option lists, preserving existing selections where the
-  // option is still valid — same "don't silently reset the user's filters"
-  // pattern used throughout AR Collections.
+  // Skilled Analysis categorization — takes the same 8-category payer type
+  // (Medicare/Medicaid/Managed Medicare/etc.) used above and turns it into
+  // the "family" labels used on that tab (e.g. "HMO Medicare"), then tags
+  // on a billing-methodology suffix (PDPM / Levels / FFS / Flat) parsed out
+  // of the payor's name, when the file's naming makes that distinction —
+  // e.g. "Humana MCR PDPM" -> "HMO Medicare PDPM", "Aetna MCR LEVEL" ->
+  // "HMO Medicare Levels". Payors with no methodology hint in their name
+  // (increasingly common now that PDPM is the default) just get the base
+  // family label with no suffix.
+  var SKILLED_FAMILY_LABELS = {
+    'MEDICARE':'Medicare', 'MEDICAID':'Medicaid', 'MANAGED MCR':'HMO Medicare',
+    'MANAGED MCD':'HMO Medicaid', 'COMMERCIAL':'HMO Commercial', 'PRIVATE':'Private',
+    'HOSPICE':'Hospice', 'RSPITE':'Respite', 'Unmapped':'Unmapped'
+  };
+  var SKILLED_METHODOLOGY_FAMILIES = {'Medicare':1,'HMO Medicare':1,'HMO Commercial':1,'HMO Medicaid':1};
+  function censusSkilledMethodology(payorName){
+    var n = String(payorName||'').toUpperCase();
+    if(n.indexOf('PDPM') >= 0) return 'PDPM';
+    if(n.indexOf('LEVEL') >= 0 || n.indexOf('LVL') >= 0) return 'Levels';
+    if(n.indexOf('FFS') >= 0) return 'FFS';
+    if(n.indexOf('FLAT') >= 0) return 'Flat';
+    return null;
+  }
+  function censusSkilledClassify(uploaded, company, code, payorName){
+    var ptype = censusResolvePayerType(uploaded, company, code);
+    var family = SKILLED_FAMILY_LABELS[ptype] || 'Unmapped';
+    var methodology = censusSkilledMethodology(payorName);
+    var label = family + ((methodology && SKILLED_METHODOLOGY_FAMILIES[family]) ? ' '+methodology : '');
+    return {family: family, methodology: methodology, label: label};
+  }
+
+  // Rebuilds the flat `rows` (Length of Stay) and `salesRows` (Skilled
+  // Analysis) arrays, and all the shared filter option lists (facility,
+  // year, month — unioned across whichever of the two datasets are
+  // loaded, so the pickers work correctly even if only one is imported).
+  // Preserves existing selections where the option is still valid — same
+  // "don't silently reset the user's filters" pattern used throughout.
   function censusRebuild(){
-    var losSrc = censusState.sources.losReport;
-    if(!losSrc || !losSrc.records){ censusState.rows = []; return; }
     var uploadedMapping = censusBuildUploadedPayerMapping(); // built once, not per-row
-    censusState.rows = losSrc.records.map(function(rec){
+
+    var losSrc = censusState.sources.losReport;
+    censusState.rows = (losSrc && losSrc.records) ? losSrc.records.map(function(rec){
       var endDate = new Date(rec.endISO);
       var year = endDate.getFullYear(), month = endDate.getMonth();
       return {
@@ -2520,7 +2642,41 @@
         payorCode: rec.payorCode,
         payerType: censusResolvePayerType(uploadedMapping, rec.company, rec.payorCode)
       };
-    });
+    }) : [];
+
+    var salesSrc = censusState.sources.salesJournal;
+    censusState.salesRows = (salesSrc && salesSrc.records) ? salesSrc.records.map(function(rec){
+      var startDate = new Date(rec.startISO);
+      var year = startDate.getFullYear(), month = startDate.getMonth();
+      var cls = censusSkilledClassify(uploadedMapping, rec.company, rec.payorCode, rec.payorName);
+      return {
+        facility: rec.company,
+        cohortKey: year*12+month,
+        year: year, month: month,
+        family: cls.family, label: cls.label, payorName: rec.payorName,
+        units: rec.units, gross: rec.gross, net: rec.net
+      };
+    }) : [];
+
+    var censusSrc = censusState.sources.censusReport;
+    censusState.daysRows = (censusSrc && censusSrc.detailRecords) ? censusSrc.detailRecords.map(function(rec){
+      var monthIdx = MONTH_IDX[rec.monthAbbr];
+      return {
+        facility: rec.company,
+        cohortKey: rec.year*12+monthIdx,
+        year: rec.year, month: monthIdx,
+        payorType: rec.payorType, payorName: rec.payorName, days: rec.days
+      };
+    }) : [];
+    censusState.pctRows = (censusSrc && censusSrc.summaryRecords) ? censusSrc.summaryRecords.map(function(rec){
+      var monthIdx = MONTH_IDX[rec.monthAbbr];
+      return {
+        facility: rec.company,
+        cohortKey: rec.year*12+monthIdx,
+        year: rec.year, month: monthIdx,
+        census: rec.census, capacity: rec.capacity, pctUsed: rec.pctUsed
+      };
+    }) : [];
 
     function syncSelection(newOptions, selectedSet){
       var had = selectedSet.size > 0;
@@ -2528,7 +2684,11 @@
       else { newOptions.forEach(function(o){ if(!selectedSet.has(o)) selectedSet.add(o); }); }
     }
 
-    var facSet = {}; censusState.rows.forEach(function(r){ facSet[r.facility]=true; });
+    var facSet = {};
+    censusState.rows.forEach(function(r){ facSet[r.facility]=true; });
+    censusState.salesRows.forEach(function(r){ facSet[r.facility]=true; });
+    censusState.daysRows.forEach(function(r){ facSet[r.facility]=true; });
+    censusState.pctRows.forEach(function(r){ facSet[r.facility]=true; });
     censusState.facilities = Object.keys(facSet).sort();
     syncSelection(censusState.facilities, censusState.selectedFacilities);
 
@@ -2538,10 +2698,37 @@
 
     var yearSet = {}, monthSet = {};
     censusState.rows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
+    censusState.salesRows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
+    censusState.daysRows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
+    censusState.pctRows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
     censusState.years = Object.keys(yearSet).map(Number).sort(function(a,b){return a-b;});
     censusState.monthsPresent = Object.keys(monthSet).map(Number).sort(function(a,b){return a-b;});
     syncSelection(censusState.years, censusState.selectedYears);
     syncSelection(censusState.monthsPresent, censusState.selectedMonthsCal);
+  }
+
+  function censusFilteredDaysRows(){
+    return censusState.daysRows.filter(function(r){
+      return censusState.selectedFacilities.has(r.facility) &&
+        censusState.selectedYears.has(r.year) &&
+        censusState.selectedMonthsCal.has(r.month);
+    });
+  }
+
+  function censusFilteredPctRows(){
+    return censusState.pctRows.filter(function(r){
+      return censusState.selectedFacilities.has(r.facility) &&
+        censusState.selectedYears.has(r.year) &&
+        censusState.selectedMonthsCal.has(r.month);
+    });
+  }
+
+  function censusFilteredSalesRows(){
+    return censusState.salesRows.filter(function(r){
+      return censusState.selectedFacilities.has(r.facility) &&
+        censusState.selectedYears.has(r.year) &&
+        censusState.selectedMonthsCal.has(r.month);
+    });
   }
 
   function censusFilteredRows(){
@@ -2561,11 +2748,12 @@
     el.innerHTML = '';
     var ft = (filterText||'').toLowerCase();
     censusState.facilities.forEach(function(f){
-      if(ft && f.toLowerCase().indexOf(ft)===-1) return;
+      var hay = (censusFacilityShort(f)+' '+censusFacilityCode(f)+' '+f).toLowerCase();
+      if(ft && hay.indexOf(ft)===-1) return;
       var row = document.createElement('label');
       row.className = 'facility-row';
       var checked = censusState.selectedFacilities.has(f);
-      row.innerHTML = '<input type="checkbox"'+(checked?' checked':'')+'><span class="fname">'+f+'</span>';
+      row.innerHTML = '<input type="checkbox"'+(checked?' checked':'')+'><span class="fname">'+censusFacilityShort(f)+'</span><span class="fcode">'+censusFacilityCode(f)+'</span>';
       row.querySelector('input').addEventListener('change', function(e){
         if(e.target.checked) censusState.selectedFacilities.add(f);
         else censusState.selectedFacilities.delete(f);
@@ -2704,7 +2892,7 @@
         var c = g[ck];
         return c ? '<td class="dollar-cell">'+(c.sum/c.count).toFixed(1)+' d</td>' : '<td class="empty">—</td>';
       }).join('');
-      return '<tr><th>'+f+'</th>'+cells+'</tr>';
+      return '<tr><th>'+censusFacilityDisplay(f)+'</th>'+cells+'</tr>';
     }).join('');
 
     table.innerHTML = thead + '<tbody>' + blendedRow + bodyRows + '</tbody>';
@@ -2737,6 +2925,232 @@
   }
 
   /* ---------------------------------------------------------
+     RENDER: Skilled Analysis — days / avg daily rate / PPD by
+     payer family (Medicare, HMO Medicare PDPM, HMO Medicare
+     Levels, HMO Commercial, etc.), with HMO families expandable
+     to show the individual payors rolled into each one.
+  --------------------------------------------------------- */
+  function censusSkilledMetrics(rows){
+    var units=0, gross=0, net=0;
+    rows.forEach(function(r){ units += r.units; gross += (r.gross||0); net += (r.net||0); });
+    return {
+      days: units,
+      adr: units ? gross/units : null,
+      ppd: units ? net/units : null
+    };
+  }
+
+  function censusRenderSkilled(){
+    var kpiEl = document.getElementById('skilledKpiStrip');
+    var table = document.getElementById('skilledTable');
+    if(!kpiEl || !table) return;
+    var rows = censusFilteredSalesRows();
+
+    if(!censusState.sources.salesJournal){
+      kpiEl.innerHTML = '';
+      table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
+      return;
+    }
+    if(!rows.length){
+      kpiEl.innerHTML = '';
+      table.innerHTML = '<tr><td class="empty-note">No sales journal data matches the current filters.</td></tr>';
+      return;
+    }
+
+    var overall = censusSkilledMetrics(rows);
+    kpiEl.innerHTML = [
+      {lbl:'Facilities selected', val: censusState.selectedFacilities.size+' / '+censusState.facilities.length},
+      {lbl:'Total days', val: overall.days.toLocaleString()},
+      {lbl:'Blended average daily rate', val: overall.adr==null?'—':'$'+overall.adr.toFixed(2)},
+      {lbl:'Blended PPD', val: overall.ppd==null?'—':'$'+overall.ppd.toFixed(2)}
+    ].map(function(c){
+      return '<div class="kpi-card"><div class="lbl">'+c.lbl+'</div><div class="val mono">'+c.val+'</div></div>';
+    }).join('');
+
+    var byLabel = {};
+    rows.forEach(function(r){ (byLabel[r.label] = byLabel[r.label] || []).push(r); });
+    var labels = Object.keys(byLabel).sort(function(a,b){
+      return censusSkilledMetrics(byLabel[b]).days - censusSkilledMetrics(byLabel[a]).days;
+    });
+
+    var thead = '<thead><tr><th>Payer</th><th>Days</th><th>Avg Daily Rate</th><th>PPD</th></tr></thead>';
+
+    var bodyRows = labels.map(function(label){
+      var groupRows = byLabel[label];
+      var m = censusSkilledMetrics(groupRows);
+      var isHmo = label.indexOf('HMO ') === 0 || label === 'Unmapped';
+      var isOpen = !!censusSkilledOpenFamilies[label];
+
+      var headerRow =
+        '<tr class="'+(isHmo?'skilled-expandable':'')+'" data-label="'+label.replace(/"/g,'&quot;')+'">' +
+          '<th>'+(isHmo ? ('<span class="skilled-caret'+(isOpen?' open':'')+'">▸</span> ') : '')+label+'</th>' +
+          '<td class="dollar-cell">'+m.days.toLocaleString()+'</td>' +
+          '<td class="dollar-cell">'+(m.adr==null?'—':'$'+m.adr.toFixed(2))+'</td>' +
+          '<td class="dollar-cell">'+(m.ppd==null?'—':'$'+m.ppd.toFixed(2))+'</td>' +
+        '</tr>';
+
+      var childRowsHtml = '';
+      if(isHmo && isOpen){
+        var byPayor = {};
+        groupRows.forEach(function(r){
+          var pn = r.payorName || '(unnamed payor)';
+          (byPayor[pn] = byPayor[pn] || []).push(r);
+        });
+        var payorNames = Object.keys(byPayor).sort(function(a,b){
+          return censusSkilledMetrics(byPayor[b]).days - censusSkilledMetrics(byPayor[a]).days;
+        });
+        childRowsHtml = payorNames.map(function(pn){
+          var pm = censusSkilledMetrics(byPayor[pn]);
+          return '<tr class="skilled-child-row"><th>'+pn+'</th>' +
+            '<td class="dollar-cell">'+pm.days.toLocaleString()+'</td>' +
+            '<td class="dollar-cell">'+(pm.adr==null?'—':'$'+pm.adr.toFixed(2))+'</td>' +
+            '<td class="dollar-cell">'+(pm.ppd==null?'—':'$'+pm.ppd.toFixed(2))+'</td>' +
+          '</tr>';
+        }).join('');
+      }
+
+      return headerRow + childRowsHtml;
+    }).join('');
+
+    table.innerHTML = thead + '<tbody>' + bodyRows + '</tbody>';
+
+    Array.prototype.forEach.call(table.querySelectorAll('.skilled-expandable'), function(tr){
+      tr.addEventListener('click', function(){
+        var label = tr.getAttribute('data-label');
+        censusSkilledOpenFamilies[label] = !censusSkilledOpenFamilies[label];
+        censusRenderSkilled();
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: Census Days by Month — facility × month, summed
+     straight from the Census Report's Detail sheet (additive
+     dollar-like metric, so the top row is a plain sum, not a
+     weighted blend).
+  --------------------------------------------------------- */
+  function censusRenderDaysTable(){
+    var kpiEl = document.getElementById('censusDaysKpis');
+    var table = document.getElementById('censusDaysTable');
+    if(!kpiEl || !table) return;
+    var rows = censusFilteredDaysRows();
+
+    if(!censusState.sources.censusReport){
+      kpiEl.innerHTML = '';
+      table.innerHTML = '<tr><td class="empty-note">No Census Report has been imported yet — an admin can add one from the Admin tab.</td></tr>';
+      return;
+    }
+    if(!rows.length){
+      kpiEl.innerHTML = '';
+      table.innerHTML = '<tr><td class="empty-note">No census data matches the current filters.</td></tr>';
+      return;
+    }
+
+    var totalDays = 0; rows.forEach(function(r){ totalDays += r.days; });
+    kpiEl.innerHTML = [
+      {lbl:'Facilities selected', val: censusState.selectedFacilities.size+' / '+censusState.facilities.length},
+      {lbl:'Total census days', val: totalDays.toLocaleString()}
+    ].map(function(c){
+      return '<div class="kpi-card"><div class="lbl">'+c.lbl+'</div><div class="val mono">'+c.val+'</div></div>';
+    }).join('');
+
+    var facs = censusState.facilities.filter(function(f){ return censusState.selectedFacilities.has(f); });
+    var cohortSet = {}; rows.forEach(function(r){ cohortSet[r.cohortKey]=true; });
+    var cohorts = Object.keys(cohortSet).map(Number).sort(function(a,b){return a-b;});
+    if(!cohorts.length || !facs.length){ table.innerHTML = '<tr><td class="empty-note">No census data matches the current filters.</td></tr>'; return; }
+
+    var byFacCohort = {};
+    rows.forEach(function(r){
+      var k = r.facility+'||'+r.cohortKey;
+      byFacCohort[k] = (byFacCohort[k]||0) + r.days;
+    });
+
+    var thead = '<thead><tr><th>Facility</th>' + cohorts.map(function(ck){return '<th>'+censusKeyLabel(ck)+'</th>';}).join('') + '</tr></thead>';
+
+    var totalsRow = '<tr class="blended-row"><th>All selected (total)</th>' + cohorts.map(function(ck){
+      var sum = 0, any=false;
+      facs.forEach(function(f){ var v=byFacCohort[f+'||'+ck]; if(v!=null){ sum+=v; any=true; } });
+      return any ? '<td class="dollar-cell">'+sum.toLocaleString()+'</td>' : '<td class="empty">—</td>';
+    }).join('') + '</tr>';
+
+    var bodyRows = facs.map(function(f){
+      var cells = cohorts.map(function(ck){
+        var v = byFacCohort[f+'||'+ck];
+        return v!=null ? '<td class="dollar-cell">'+v.toLocaleString()+'</td>' : '<td class="empty">—</td>';
+      }).join('');
+      return '<tr><th>'+censusFacilityDisplay(f)+'</th>'+cells+'</tr>';
+    }).join('');
+
+    table.innerHTML = thead + '<tbody>' + totalsRow + bodyRows + '</tbody>';
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: Census % by Month — facility × month occupancy,
+     with a capacity-weighted blend for the "All selected" row
+     (sum of census days / sum of capacity), not a simple average
+     of percentages, so it stays mathematically consistent.
+  --------------------------------------------------------- */
+  function censusRenderPctTable(){
+    var kpiEl = document.getElementById('censusPctKpis');
+    var table = document.getElementById('censusPctTable');
+    if(!kpiEl || !table) return;
+    var rows = censusFilteredPctRows();
+
+    if(!censusState.sources.censusReport){
+      kpiEl.innerHTML = '';
+      table.innerHTML = '<tr><td class="empty-note">No Census Report has been imported yet — an admin can add one from the Admin tab.</td></tr>';
+      return;
+    }
+    if(!rows.length){
+      kpiEl.innerHTML = '';
+      table.innerHTML = '<tr><td class="empty-note">No census data matches the current filters.</td></tr>';
+      return;
+    }
+
+    var totalCensus=0, totalCapacity=0;
+    rows.forEach(function(r){ if(r.census!=null) totalCensus+=r.census; if(r.capacity!=null) totalCapacity+=r.capacity; });
+    var blendedPct = totalCapacity ? (totalCensus/totalCapacity*100) : null;
+    kpiEl.innerHTML = [
+      {lbl:'Facilities selected', val: censusState.selectedFacilities.size+' / '+censusState.facilities.length},
+      {lbl:'Blended occupancy', val: blendedPct==null?'—':blendedPct.toFixed(1)+'%'}
+    ].map(function(c){
+      return '<div class="kpi-card"><div class="lbl">'+c.lbl+'</div><div class="val mono">'+c.val+'</div></div>';
+    }).join('');
+
+    var facs = censusState.facilities.filter(function(f){ return censusState.selectedFacilities.has(f); });
+    var cohortSet = {}; rows.forEach(function(r){ cohortSet[r.cohortKey]=true; });
+    var cohorts = Object.keys(cohortSet).map(Number).sort(function(a,b){return a-b;});
+    if(!cohorts.length || !facs.length){ table.innerHTML = '<tr><td class="empty-note">No census data matches the current filters.</td></tr>'; return; }
+
+    var byFacCohort = {};
+    rows.forEach(function(r){ byFacCohort[r.facility+'||'+r.cohortKey] = r; });
+
+    var thead = '<thead><tr><th>Facility</th>' + cohorts.map(function(ck){return '<th>'+censusKeyLabel(ck)+'</th>';}).join('') + '</tr></thead>';
+
+    var totalsRow = '<tr class="blended-row"><th>All selected (blended)</th>' + cohorts.map(function(ck){
+      var census=0, capacity=0, any=false;
+      facs.forEach(function(f){
+        var r = byFacCohort[f+'||'+ck];
+        if(r && r.census!=null && r.capacity!=null){ census+=r.census; capacity+=r.capacity; any=true; }
+      });
+      if(!any || !capacity) return '<td class="empty">—</td>';
+      var pct = census/capacity*100;
+      return '<td class="cell" style="background:'+colorForPct(pct)+'">'+pct.toFixed(1)+'%</td>';
+    }).join('') + '</tr>';
+
+    var bodyRows = facs.map(function(f){
+      var cells = cohorts.map(function(ck){
+        var r = byFacCohort[f+'||'+ck];
+        if(!r || r.pctUsed==null) return '<td class="empty">—</td>';
+        return '<td class="cell" style="background:'+colorForPct(r.pctUsed)+'">'+r.pctUsed.toFixed(1)+'%</td>';
+      }).join('');
+      return '<tr><th>'+censusFacilityDisplay(f)+'</th>'+cells+'</tr>';
+    }).join('');
+
+    table.innerHTML = thead + '<tbody>' + totalsRow + bodyRows + '</tbody>';
+  }
+
+  /* ---------------------------------------------------------
      RENDER: Trend chart (one line per selected facility)
   --------------------------------------------------------- */
   function censusRenderChart(){
@@ -2758,7 +3172,7 @@
       var pts = cohorts.filter(function(ck){ return g[ck]; }).map(function(ck){
         return {x: ck, y: g[ck].sum/g[ck].count};
       });
-      return {label: f, color: palette[i%palette.length], pts: pts};
+      return {label: censusFacilityShort(f), color: palette[i%palette.length], pts: pts};
     }).filter(function(s){ return s.pts.length; });
 
     if(!series.length){ holder.innerHTML = '<div class="empty-note">No stays match the current filters.</div>'; return; }
@@ -2806,9 +3220,13 @@
   function censusRenderAll(){
     censusRenderKPIs();
     censusRenderYearMonthPickers();
+    censusRenderPayerList();
     censusRenderFacilityTable();
     censusRenderPayerTable();
     censusRenderChart();
+    censusRenderSkilled();
+    censusRenderDaysTable();
+    censusRenderPctTable();
   }
 
   /* ---------------------------------------------------------
@@ -2827,7 +3245,7 @@
   }
 
   function censusRefreshAfterSourceChange(){
-    if(censusState.sources.losReport){
+    if(censusState.sources.losReport || censusState.sources.salesJournal || censusState.sources.censusReport){
       document.getElementById('censusDropzone').classList.add('hidden');
       document.getElementById('censusApp').style.display = 'flex';
       var loadedCount = CENSUS_SOURCE_KEYS.filter(function(k){ return !!censusState.sources[k]; }).length;
@@ -2841,6 +3259,17 @@
   function censusHydrateServerLOS(payload){
     censusState.sources.losReport = {
       fileName: payload.fileName, rowCount: payload.rowCount, uploadedAt: payload.uploadedAt, records: payload.records
+    };
+  }
+  function censusHydrateServerSalesJournal(payload){
+    censusState.sources.salesJournal = {
+      fileName: payload.fileName, rowCount: payload.rowCount, uploadedAt: payload.uploadedAt, records: payload.records
+    };
+  }
+  function censusHydrateServerCensusReport(payload){
+    censusState.sources.censusReport = {
+      fileName: payload.fileName, rowCount: payload.rowCount, uploadedAt: payload.uploadedAt,
+      detailRecords: payload.detailRecords, summaryRecords: payload.summaryRecords
     };
   }
   function censusHydrateServerPayerMap(payload){
@@ -2859,6 +3288,12 @@
       var any = false;
       if(payload && payload.losReport && payload.losReport.records && payload.losReport.records.length){
         censusHydrateServerLOS(payload.losReport); any = true;
+      }
+      if(payload && payload.salesJournal && payload.salesJournal.records && payload.salesJournal.records.length){
+        censusHydrateServerSalesJournal(payload.salesJournal); any = true;
+      }
+      if(payload && payload.censusReport && payload.censusReport.detailRecords && payload.censusReport.detailRecords.length){
+        censusHydrateServerCensusReport(payload.censusReport); any = true;
       }
       if(payload && payload.payerMap){
         censusHydrateServerPayerMap(payload.payerMap);
@@ -2896,6 +3331,21 @@
   function censusInitPopouts(){
     registerPopout('censusYearTrigger', 'censusYearPanel');
     registerPopout('censusMonthTrigger', 'censusMonthPanel');
+  }
+
+  // Scoped to .census-tab-btn / .census-tabpanel specifically (not the
+  // shared .tab-btn/.tabpanel AR Collections uses) so switching tabs here
+  // never touches AR Collections' tab state, and vice versa.
+  function censusInitTabs(){
+    Array.prototype.forEach.call(document.querySelectorAll('.census-tab-btn'), function(btn){
+      btn.addEventListener('click', function(){
+        Array.prototype.forEach.call(document.querySelectorAll('.census-tab-btn'), function(b){b.classList.remove('active');});
+        btn.classList.add('active');
+        Array.prototype.forEach.call(document.querySelectorAll('.census-tabpanel'), function(p){p.style.display='none';});
+        document.getElementById('tab-'+btn.getAttribute('data-tab')).style.display='block';
+        if(btn.getAttribute('data-tab')==='skilled') censusRenderSkilled();
+      });
+    });
   }
 
   /* =========================================================
@@ -3057,6 +3507,7 @@
   initLiveMode();
 
   censusInitPopouts();
+  censusInitTabs();
   censusInitDropzone();
   censusInitSearch();
   censusInitLiveMode();
