@@ -306,6 +306,12 @@
     text-align:center;padding:40px 20px;
   }
   #dropzone.hidden{display:none;}
+  #censusDropzone{
+    position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;
+    text-align:center;padding:40px 20px;
+  }
+  #censusDropzone.hidden{display:none;}
   .dz-wrap{
     width:min(820px,94vw);border:2px dashed var(--line);border-radius:16px;
     background:var(--surface);padding:44px 36px;box-shadow:var(--shadow);
@@ -434,14 +440,13 @@
         <div class="home-card-cta">Open <span>→</span></div>
       </button>
 
-      <button class="home-card disabled" id="launchCensusTrends" type="button">
-        <div class="home-card-badge">Coming soon</div>
+      <button class="home-card" id="launchCensusTrends" type="button">
         <div class="home-card-icon census-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3 2.5-5.2 5.5-5.2s5.5 2.2 5.5 5.2"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15 14.4c2.2.2 4.5 1.9 4.5 5.1"/></svg>
         </div>
         <div class="home-card-title">Census Trends</div>
-        <div class="home-card-desc">Census and length‑of‑stay reporting across facilities — in progress.</div>
-        <div class="home-card-cta">Coming soon</div>
+        <div class="home-card-desc">Length-of-stay trends by facility and payer, with year/month filtering.</div>
+        <div class="home-card-cta">Open <span>→</span></div>
       </button>
     </div>
   </div>
@@ -714,15 +719,151 @@
 </div>
 
 <div id="censusTrendsApp" style="display:none;">
-  <div class="stub-wrap">
-    <button class="stub-back" id="censusBackBtn" type="button">← Back to Vantis</button>
-    <div class="stub-icon">
-      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3 2.5-5.2 5.5-5.2s5.5 2.2 5.5 5.2"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15 14.4c2.2.2 4.5 1.9 4.5 5.1"/></svg>
+
+<div id="censusDropzone">
+  <div class="dz-wrap">
+    <div class="dz-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
     </div>
     <h2>Census Trends</h2>
-    <p>Census and length‑of‑stay reporting is being built next. Once it's ready, it'll live here alongside AR Collections.</p>
+    <p>Upload the Length of Stay report and the Payer Mapping file below. The payer mapping is what turns raw payor codes into readable categories (Medicare, Medicaid, Commercial, etc.) — both are maintained separately, so update either one whenever it's ready.</p>
+    <div class="dz-source-grid" id="censusDzGrid"></div>
+    <div class="dz-hint">Parsing happens locally in your browser first — nothing is sent anywhere until you choose to publish it.</div>
+    <div class="dz-hint" id="censusDzLiveHint" style="display:none;color:var(--emerald);font-weight:600;">This link is connected to shared storage. Anything already published below is visible to everyone already — add or update a source any time.</div>
   </div>
 </div>
+
+<div id="censusApp" style="display:none;">
+  <aside class="sidebar">
+    <button class="brand" id="censusBackToHomeBtn" type="button" title="Back to Vantis home">
+      <div class="brand-mark">V</div>
+      <div class="brand-text">
+        <div class="t1">Census Trends</div>
+        <div class="t2">← Back to Vantis</div>
+      </div>
+    </button>
+
+    <div class="side-section">
+      <div class="side-label">Facilities <span class="count" id="censusFacCount"></span></div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="censusFacSearch" placeholder="Search facility…">
+      </div>
+      <div class="side-btn-row">
+        <button id="censusFacAll">Select all</button>
+        <button id="censusFacNone">Clear</button>
+      </div>
+      <div class="facility-list" id="censusFacilityList"></div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-label">Payer Type <span style="color:var(--sidebar-ink-soft);font-weight:400;text-transform:none;letter-spacing:0;">— pick one or more</span></div>
+      <div class="payer-grid" id="censusPayerList"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      Average length of stay is grouped by discharge month (End Date) and blended across your selected facilities and payer types. Payor codes not found in the payer mapping fall into "Unmapped" rather than being dropped.
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <h1>Census Trends</h1>
+        <div class="sub" id="censusTopSub">No data loaded yet</div>
+      </div>
+      <div class="file-status">
+        <div class="popout-group">
+          <button class="popout-trigger" id="censusDataSourcesTrigger" type="button">
+            <span class="popout-trigger-label">Data Sources</span>
+            <span class="popout-trigger-value" id="censusDataSourcesSummary">0 / 2 loaded</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="popout-panel align-right" id="censusDataSourcesPanel" style="display:none;">
+            <div class="popout-panel-head">Manage data sources</div>
+            <div id="censusDataSourcesRows"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="censusPublishBar" class="publish-bar" style="display:none;">
+      <div class="publish-text">
+        <b id="censusPublishBarTitle">Publish this file for everyone with this link?</b>
+        <span>Only you can see it until you publish it — this replaces the shared data for that source, for the whole team.</span>
+      </div>
+      <input type="password" id="censusAdminKeyInput" placeholder="Admin key" autocomplete="off">
+      <button class="btn-load" id="censusPublishBtn" style="background:var(--emerald);">Publish</button>
+      <button class="btn-ghost" id="censusDismissPublish">Not now</button>
+    </div>
+
+    <div class="content" id="censusMainContent">
+      <div class="kpis" id="censusKpiStrip"></div>
+
+      <div class="popout-filters">
+        <div class="popout-group">
+          <button class="popout-trigger" id="censusYearTrigger" type="button">
+            <span class="popout-trigger-label">Year</span>
+            <span class="popout-trigger-value" id="censusYearTriggerValue">—</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="popout-panel" id="censusYearPanel" style="display:none;">
+            <div class="popout-panel-head">Year <span class="hint">— pick one or more</span></div>
+            <div class="cohort-picker" id="censusYearPicker"></div>
+            <div class="popout-panel-actions"><button class="btn-load" id="censusYearDoneBtn" type="button">Done</button></div>
+          </div>
+        </div>
+        <div class="popout-group">
+          <button class="popout-trigger" id="censusMonthTrigger" type="button">
+            <span class="popout-trigger-label">Month</span>
+            <span class="popout-trigger-value" id="censusMonthTriggerValue">—</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="popout-panel" id="censusMonthPanel" style="display:none;">
+            <div class="popout-panel-head">Month <span class="hint">— pick one or more, any year (for seasonality)</span></div>
+            <div class="cohort-picker" id="censusMonthPicker"></div>
+            <div class="popout-panel-actions"><button class="btn-load" id="censusMonthDoneBtn" type="button">Done</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head">
+          <div>
+            <h2>Average length of stay — facility × month</h2>
+            <div class="note">Each cell is the average days-of-stay for patients discharged that month, using your facility and payer selections. Top row blends all selected facilities together.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="censusFacilityTable"></table></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head">
+          <div>
+            <h2>Length of stay trend</h2>
+            <div class="note">One line per selected facility, using the same filters as the table above.</div>
+          </div>
+        </div>
+        <div id="censusChartHolder"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Average length of stay — by payer type</h2>
+            <div class="note">Same filters and months, broken out by payer type instead of facility — this is where the "choose by payer" view lives.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="censusPayerTable"></table></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="censusToast"></div>
+
+</div>
+
 
 <script>
 (function(){
@@ -1935,7 +2076,7 @@
     document.getElementById('backToHomeBtn').addEventListener('click', function(){
       showScreen('home');
     });
-    document.getElementById('censusBackBtn').addEventListener('click', function(){
+    document.getElementById('censusBackToHomeBtn').addEventListener('click', function(){
       showScreen('home');
     });
   }
@@ -2267,6 +2408,717 @@
     });
   }
 
+  /* =========================================================
+     CENSUS TRENDS APP — independent dataset (Length of Stay +
+     Payer Mapping), sharing this scope so it can reuse showToast,
+     registerPopout/openPopouts, MONTH_IDX, MONTH_ABBR, and the
+     same CSS/UI patterns as AR Collections above, without any
+     naming collisions (everything here is census-prefixed).
+  ========================================================== */
+  var CENSUS_SOURCES = [
+    {key:'losReport', label:'Length of Stay Report'},
+    {key:'payerMap', label:'Payer Mapping'}
+  ];
+  var CENSUS_SOURCE_KEYS = CENSUS_SOURCES.map(function(s){return s.key;});
+  function censusSourceLabel(key){
+    var s = CENSUS_SOURCES.filter(function(x){return x.key===key;})[0];
+    return s ? s.label : key;
+  }
+  var CENSUS_PAYER_TYPE_LABELS = {
+    'MEDICARE':'Medicare', 'MEDICAID':'Medicaid', 'MANAGED MCR':'Managed Medicare',
+    'MANAGED MCD':'Managed Medicaid', 'COMMERCIAL':'Commercial', 'PRIVATE':'Private',
+    'HOSPICE':'Hospice', 'RSPITE':'Respite', 'Unmapped':'Unmapped (code not in payer mapping)'
+  };
+  function censusPayerTypeLabel(t){ return CENSUS_PAYER_TYPE_LABELS[t] || t; }
+  function censusKeyLabel(k){
+    var y = Math.floor(k/12), m = k - y*12;
+    return MONTH_ABBR[m] + ' ' + y;
+  }
+  function censusNormPayor(s){ return String(s||'').trim().toUpperCase().replace(/\s+/g,' '); }
+
+  var censusState = {
+    sources: {},               // losReport / payerMap -> {fileName, rowCount, uploadedAt, records|dataRows+typeRows}
+    rows: [],                  // flat computed rows: {facility, cohortKey, year, month, days, payorCode, payerType}
+    facilities: [],
+    selectedFacilities: new Set(),
+    payerTypes: [],
+    selectedPayerTypes: new Set(),
+    years: [],
+    selectedYears: new Set(),
+    monthsPresent: [],         // calendar months (0-11) that actually appear anywhere
+    selectedMonthsCal: new Set(),
+    liveMode: false
+  };
+  var censusPendingPublishFile = null;
+  var censusPendingPublishSource = null;
+
+  function censusShowToast(msg){
+    var t = document.getElementById('censusToast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 3200);
+  }
+
+  function censusFindHeaderRow(grid, firstColName){
+    var target = normHeader(firstColName);
+    for(var i=0;i<Math.min(grid.length,10);i++){
+      if(grid[i] && normHeader(grid[i][0])===target) return i;
+    }
+    return 0;
+  }
+  function censusParseDateFlexible(v){
+    if(v instanceof Date) return v;
+    if(typeof v === 'string'){
+      var m = v.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if(m) return new Date(Number(m[3]), Number(m[1])-1, Number(m[2]));
+    }
+    return null;
+  }
+
+  function censusParseLOSWorkbook(arrayBuffer, fileName){
+    var wb = XLSX.read(arrayBuffer, {type:'array', cellDates:true});
+    var sheetName = wb.SheetNames.indexOf('CAVGLENSTAYCENS Detail') >= 0 ? 'CAVGLENSTAYCENS Detail' : wb.SheetNames[0];
+    var ws = wb.Sheets[sheetName];
+    var grid = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
+    if(!grid.length) throw new Error('The selected sheet appears to be empty.');
+
+    var headerIdx = censusFindHeaderRow(grid, 'Company Name');
+    var headerRow = grid[headerIdx].map(normHeader);
+    function col(name){ return headerRow.indexOf(normHeader(name)); }
+    var idx = {
+      company: col('Company Name'), id: col('ID #'), name: col('Name'), days: col('Days'),
+      begin: col('Begin Date'), end: col('End Date'), dischargeTo: col('Discharge To'), payor: col('Payor')
+    };
+    if(idx.company<0 || idx.days<0 || idx.end<0 || idx.payor<0){
+      throw new Error('This file does not look like the expected Length of Stay layout.');
+    }
+
+    var records = [];
+    for(var r=headerIdx+1; r<grid.length; r++){
+      var row = grid[r];
+      if(!row || row[idx.company]==null || row[idx.company]==='') continue;
+      var endDate = censusParseDateFlexible(row[idx.end]);
+      var days = row[idx.days];
+      if(!endDate || typeof days !== 'number') continue;
+      records.push({
+        company: row[idx.company],
+        patientId: row[idx.id],
+        name: row[idx.name],
+        days: days,
+        endISO: endDate.toISOString(),
+        dischargeTo: row[idx.dischargeTo],
+        payorCode: row[idx.payor]
+      });
+    }
+    if(!records.length) throw new Error('No usable rows were found in this file.');
+
+    censusState.sources.losReport = {
+      fileName: fileName, rowCount: records.length, uploadedAt: new Date().toISOString(), records: records
+    };
+    censusRebuild();
+  }
+
+  function censusParsePayerMapWorkbook(arrayBuffer, fileName){
+    var wb = XLSX.read(arrayBuffer, {type:'array', cellDates:true});
+    var dataRows = [];
+    if(wb.SheetNames.indexOf('Data') >= 0){
+      var ws = wb.Sheets['Data'];
+      var grid = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
+      var headerIdx = censusFindHeaderRow(grid, 'Company Name');
+      var headerRow = grid[headerIdx].map(normHeader);
+      var iCompany = headerRow.indexOf(normHeader('Company Name'));
+      var iCode = headerRow.indexOf(normHeader('Code'));
+      var iPayor = headerRow.indexOf(normHeader('Payor'));
+      for(var r=headerIdx+1; r<grid.length; r++){
+        var row = grid[r];
+        if(!row || row[iCompany]==null) continue;
+        dataRows.push({company: row[iCompany], code: row[iCode], payorName: row[iPayor]});
+      }
+    }
+    var typeRows = [];
+    if(wb.SheetNames.indexOf('Sheet1') >= 0){
+      var ws2 = wb.Sheets['Sheet1'];
+      var grid2 = XLSX.utils.sheet_to_json(ws2, {header:1, raw:true, defval:null});
+      var headerIdx2 = censusFindHeaderRow(grid2, 'Payer Type');
+      var headerRow2 = grid2[headerIdx2].map(normHeader);
+      var iType = headerRow2.indexOf(normHeader('Payer Type'));
+      var iPayor2 = headerRow2.indexOf(normHeader('Payor'));
+      for(var r2=headerIdx2+1; r2<grid2.length; r2++){
+        var row2 = grid2[r2];
+        if(!row2 || row2[iType]==null) continue;
+        typeRows.push({payerType: row2[iType], payorName: row2[iPayor2]});
+      }
+    }
+    if(!dataRows.length && !typeRows.length) throw new Error('No usable rows were found in this file.');
+
+    censusState.sources.payerMap = {
+      fileName: fileName, rowCount: dataRows.length+typeRows.length, uploadedAt: new Date().toISOString(),
+      dataRows: dataRows, typeRows: typeRows
+    };
+    censusRebuild();
+  }
+
+  function censusBuildPayerMapping(){
+    var payload = censusState.sources.payerMap;
+    var exactMap = {}, codeVotes = {}, typeMap = {};
+    if(payload && payload.dataRows){
+      payload.dataRows.forEach(function(r){
+        exactMap[r.company+'||'+r.code] = r.payorName;
+        codeVotes[r.code] = codeVotes[r.code] || {};
+        codeVotes[r.code][r.payorName] = (codeVotes[r.code][r.payorName]||0)+1;
+      });
+    }
+    var codeFallback = {};
+    Object.keys(codeVotes).forEach(function(code){
+      var votes = codeVotes[code], best=null, bestCount=-1;
+      Object.keys(votes).forEach(function(name){ if(votes[name]>bestCount){best=name;bestCount=votes[name];} });
+      codeFallback[code] = best;
+    });
+    if(payload && payload.typeRows){
+      payload.typeRows.forEach(function(r){ typeMap[censusNormPayor(r.payorName)] = r.payerType; });
+    }
+    return {exactMap:exactMap, codeFallback:codeFallback, typeMap:typeMap};
+  }
+  function censusResolvePayerType(mapping, company, code){
+    var payorName = mapping.exactMap[company+'||'+code];
+    if(!payorName) payorName = mapping.codeFallback[code];
+    if(!payorName) return 'Unmapped';
+    var t = mapping.typeMap[censusNormPayor(payorName)];
+    return t || 'Unmapped';
+  }
+
+  // Rebuilds the flat `rows` array (LOS records × resolved payer type) and
+  // all the filter option lists, preserving existing selections where the
+  // option is still valid — same "don't silently reset the user's filters"
+  // pattern used throughout AR Collections.
+  function censusRebuild(){
+    var losSrc = censusState.sources.losReport;
+    if(!losSrc || !losSrc.records){ censusState.rows = []; return; }
+    var mapping = censusBuildPayerMapping();
+    censusState.rows = losSrc.records.map(function(rec){
+      var endDate = new Date(rec.endISO);
+      var year = endDate.getFullYear(), month = endDate.getMonth();
+      return {
+        facility: rec.company,
+        cohortKey: year*12+month,
+        year: year, month: month,
+        days: rec.days,
+        payorCode: rec.payorCode,
+        payerType: censusResolvePayerType(mapping, rec.company, rec.payorCode)
+      };
+    });
+
+    function syncSelection(newOptions, selectedSet){
+      var had = selectedSet.size > 0;
+      if(!had){ newOptions.forEach(function(o){ selectedSet.add(o); }); }
+      else { newOptions.forEach(function(o){ if(!selectedSet.has(o)) selectedSet.add(o); }); }
+    }
+
+    var facSet = {}; censusState.rows.forEach(function(r){ facSet[r.facility]=true; });
+    censusState.facilities = Object.keys(facSet).sort();
+    syncSelection(censusState.facilities, censusState.selectedFacilities);
+
+    var typeSet = {}; censusState.rows.forEach(function(r){ typeSet[r.payerType]=true; });
+    censusState.payerTypes = Object.keys(typeSet).sort();
+    syncSelection(censusState.payerTypes, censusState.selectedPayerTypes);
+
+    var yearSet = {}, monthSet = {};
+    censusState.rows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
+    censusState.years = Object.keys(yearSet).map(Number).sort(function(a,b){return a-b;});
+    censusState.monthsPresent = Object.keys(monthSet).map(Number).sort(function(a,b){return a-b;});
+    syncSelection(censusState.years, censusState.selectedYears);
+    syncSelection(censusState.monthsPresent, censusState.selectedMonthsCal);
+  }
+
+  function censusFilteredRows(){
+    return censusState.rows.filter(function(r){
+      return censusState.selectedFacilities.has(r.facility) &&
+        censusState.selectedPayerTypes.has(r.payerType) &&
+        censusState.selectedYears.has(r.year) &&
+        censusState.selectedMonthsCal.has(r.month);
+    });
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: sidebar (facilities + payer types)
+  --------------------------------------------------------- */
+  function censusRenderFacilityList(filterText){
+    var el = document.getElementById('censusFacilityList');
+    el.innerHTML = '';
+    var ft = (filterText||'').toLowerCase();
+    censusState.facilities.forEach(function(f){
+      if(ft && f.toLowerCase().indexOf(ft)===-1) return;
+      var row = document.createElement('label');
+      row.className = 'facility-row';
+      var checked = censusState.selectedFacilities.has(f);
+      row.innerHTML = '<input type="checkbox"'+(checked?' checked':'')+'><span class="fname">'+f+'</span>';
+      row.querySelector('input').addEventListener('change', function(e){
+        if(e.target.checked) censusState.selectedFacilities.add(f);
+        else censusState.selectedFacilities.delete(f);
+        document.getElementById('censusFacCount').textContent = '('+censusState.selectedFacilities.size+'/'+censusState.facilities.length+')';
+        censusRenderAll();
+      });
+      el.appendChild(row);
+    });
+    document.getElementById('censusFacCount').textContent = '('+censusState.selectedFacilities.size+'/'+censusState.facilities.length+')';
+  }
+
+  function censusRenderPayerList(){
+    var el = document.getElementById('censusPayerList');
+    el.innerHTML = '';
+    censusState.payerTypes.forEach(function(t){
+      var d = document.createElement('label');
+      var checked = censusState.selectedPayerTypes.has(t);
+      d.className = 'payer-option' + (checked?' active':'');
+      d.innerHTML = '<input type="checkbox" value="'+t+'"'+(checked?' checked':'')+'><span>'+censusPayerTypeLabel(t)+'</span>';
+      d.querySelector('input').addEventListener('change', function(e){
+        if(e.target.checked){ censusState.selectedPayerTypes.add(t); }
+        else if(censusState.selectedPayerTypes.size>1){ censusState.selectedPayerTypes.delete(t); }
+        else { e.target.checked = true; censusShowToast('At least one payer type must stay selected.'); return; }
+        censusRenderAll();
+      });
+      el.appendChild(d);
+    });
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: Year / Month popout pickers
+  --------------------------------------------------------- */
+  function censusRenderYearMonthPickers(){
+    var yearEl = document.getElementById('censusYearPicker');
+    yearEl.innerHTML = censusState.years.map(function(y){
+      var on = censusState.selectedYears.has(y);
+      return '<button class="cohort-chip'+(on?' on':'')+'" data-y="'+y+'">'+y+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(yearEl.querySelectorAll('.cohort-chip'), function(btn){
+      btn.addEventListener('click', function(){
+        var y = Number(btn.getAttribute('data-y'));
+        if(censusState.selectedYears.has(y) && censusState.selectedYears.size>1) censusState.selectedYears.delete(y);
+        else if(!censusState.selectedYears.has(y)) censusState.selectedYears.add(y);
+        else { censusShowToast('At least one year must stay selected.'); return; }
+        censusRenderAll();
+      });
+    });
+    var yearsArr = Array.from(censusState.selectedYears).sort(function(a,b){return a-b;});
+    document.getElementById('censusYearTriggerValue').textContent =
+      yearsArr.length===0 ? '—' : (yearsArr.length<=3 ? yearsArr.join(', ') : yearsArr.length+' selected');
+
+    var monthEl = document.getElementById('censusMonthPicker');
+    monthEl.innerHTML = censusState.monthsPresent.map(function(m){
+      var on = censusState.selectedMonthsCal.has(m);
+      return '<button class="cohort-chip'+(on?' on':'')+'" data-m="'+m+'">'+MONTH_ABBR[m]+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(monthEl.querySelectorAll('.cohort-chip'), function(btn){
+      btn.addEventListener('click', function(){
+        var m = Number(btn.getAttribute('data-m'));
+        if(censusState.selectedMonthsCal.has(m) && censusState.selectedMonthsCal.size>1) censusState.selectedMonthsCal.delete(m);
+        else if(!censusState.selectedMonthsCal.has(m)) censusState.selectedMonthsCal.add(m);
+        else { censusShowToast('At least one month must stay selected.'); return; }
+        censusRenderAll();
+      });
+    });
+    var monthsArr = Array.from(censusState.selectedMonthsCal).sort(function(a,b){return a-b;});
+    document.getElementById('censusMonthTriggerValue').textContent =
+      monthsArr.length===0 ? '—' : (monthsArr.length===censusState.monthsPresent.length ? 'All' : (monthsArr.length<=3 ? monthsArr.map(function(m){return MONTH_ABBR[m];}).join(', ') : monthsArr.length+' selected'));
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: KPI strip
+  --------------------------------------------------------- */
+  function censusRenderKPIs(){
+    var el = document.getElementById('censusKpiStrip');
+    var rows = censusFilteredRows();
+    var allYears = censusState.years, allCohorts = [];
+    var cohortSet = {}; censusState.rows.forEach(function(r){ cohortSet[r.cohortKey]=true; });
+    allCohorts = Object.keys(cohortSet).map(Number).sort(function(a,b){return a-b;});
+
+    var avgDays = rows.length ? (rows.reduce(function(a,r){return a+r.days;},0)/rows.length) : null;
+
+    var cards = [
+      {lbl:'Facilities selected', val: censusState.selectedFacilities.size+' / '+censusState.facilities.length},
+      {lbl:'Stays in selection', val: rows.length.toLocaleString()},
+      {lbl:'Average length of stay', val: avgDays==null?'—':avgDays.toFixed(1)+' days'},
+      {lbl:'Data covers', val: allCohorts.length? (censusKeyLabel(allCohorts[0])+' – '+censusKeyLabel(allCohorts[allCohorts.length-1])) : '—'}
+    ];
+    el.innerHTML = cards.map(function(c){
+      return '<div class="kpi-card"><div class="lbl">'+c.lbl+'</div><div class="val mono">'+c.val+'</div></div>';
+    }).join('');
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: Facility × Month table
+  --------------------------------------------------------- */
+  function censusGroupBy(rows, keyFn){
+    var map = {};
+    rows.forEach(function(r){
+      var k = keyFn(r);
+      var g = map[k] || (map[k] = {});
+      var ck = r.cohortKey;
+      var c = g[ck] || (g[ck] = {sum:0,count:0});
+      c.sum += r.days; c.count++;
+    });
+    return map;
+  }
+
+  function censusRenderFacilityTable(){
+    var table = document.getElementById('censusFacilityTable');
+    var rows = censusFilteredRows();
+    var cohortSet = {}; rows.forEach(function(r){ cohortSet[r.cohortKey]=true; });
+    var cohorts = Object.keys(cohortSet).map(Number).sort(function(a,b){return a-b;});
+    var facs = censusState.facilities.filter(function(f){ return censusState.selectedFacilities.has(f); });
+
+    if(!cohorts.length){ table.innerHTML = '<tr><td class="empty-note">No stays match the current filters.</td></tr>'; return; }
+    if(!facs.length){ table.innerHTML = '<tr><td class="empty-note">Select at least one facility in the sidebar.</td></tr>'; return; }
+
+    var grouped = censusGroupBy(rows, function(r){ return r.facility; });
+    var allGrouped = {};
+    cohorts.forEach(function(ck){
+      var subset = rows.filter(function(r){ return r.cohortKey===ck; });
+      if(subset.length) allGrouped[ck] = {sum: subset.reduce(function(a,r){return a+r.days;},0), count: subset.length};
+    });
+
+    var thead = '<thead><tr><th>Facility</th>' + cohorts.map(function(ck){return '<th>'+censusKeyLabel(ck)+'</th>';}).join('') + '</tr></thead>';
+
+    var blendedRow = '<tr class="blended-row"><th>All selected (avg)</th>' + cohorts.map(function(ck){
+      var g = allGrouped[ck];
+      return g ? '<td class="dollar-cell">'+(g.sum/g.count).toFixed(1)+' d</td>' : '<td class="empty">—</td>';
+    }).join('') + '</tr>';
+
+    var bodyRows = facs.map(function(f){
+      var g = grouped[f] || {};
+      var cells = cohorts.map(function(ck){
+        var c = g[ck];
+        return c ? '<td class="dollar-cell">'+(c.sum/c.count).toFixed(1)+' d</td>' : '<td class="empty">—</td>';
+      }).join('');
+      return '<tr><th>'+f+'</th>'+cells+'</tr>';
+    }).join('');
+
+    table.innerHTML = thead + '<tbody>' + blendedRow + bodyRows + '</tbody>';
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: Payer type table
+  --------------------------------------------------------- */
+  function censusRenderPayerTable(){
+    var table = document.getElementById('censusPayerTable');
+    var rows = censusFilteredRows();
+    var cohortSet = {}; rows.forEach(function(r){ cohortSet[r.cohortKey]=true; });
+    var cohorts = Object.keys(cohortSet).map(Number).sort(function(a,b){return a-b;});
+    var types = censusState.payerTypes.filter(function(t){ return censusState.selectedPayerTypes.has(t); });
+
+    if(!cohorts.length || !types.length){ table.innerHTML = '<tr><td class="empty-note">No stays match the current filters.</td></tr>'; return; }
+
+    var grouped = censusGroupBy(rows, function(r){ return r.payerType; });
+    var thead = '<thead><tr><th>Payer Type</th>' + cohorts.map(function(ck){return '<th>'+censusKeyLabel(ck)+'</th>';}).join('') + '</tr></thead>';
+    var bodyRows = types.map(function(t){
+      var g = grouped[t] || {};
+      var cells = cohorts.map(function(ck){
+        var c = g[ck];
+        return c ? '<td class="dollar-cell">'+(c.sum/c.count).toFixed(1)+' d</td>' : '<td class="empty">—</td>';
+      }).join('');
+      return '<tr><th>'+censusPayerTypeLabel(t)+'</th>'+cells+'</tr>';
+    }).join('');
+
+    table.innerHTML = thead + '<tbody>' + bodyRows + '</tbody>';
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: Trend chart (one line per selected facility)
+  --------------------------------------------------------- */
+  function censusRenderChart(){
+    var holder = document.getElementById('censusChartHolder');
+    var rows = censusFilteredRows();
+    var facs = censusState.facilities.filter(function(f){ return censusState.selectedFacilities.has(f); });
+    var cohortSet = {}; rows.forEach(function(r){ cohortSet[r.cohortKey]=true; });
+    var cohorts = Object.keys(cohortSet).map(Number).sort(function(a,b){return a-b;});
+
+    if(!cohorts.length || !facs.length){
+      holder.innerHTML = '<div class="empty-note">No stays match the current filters.</div>';
+      return;
+    }
+
+    var grouped = censusGroupBy(rows, function(r){ return r.facility; });
+    var palette = ['#0F6B4C','#17A673','#D99B2B','#C1503B','#5B6B62','#2E86AB','#8E5FB0','#B98B4E','#4C8C6B','#A34E9E'];
+    var series = facs.map(function(f, i){
+      var g = grouped[f] || {};
+      var pts = cohorts.filter(function(ck){ return g[ck]; }).map(function(ck){
+        return {x: ck, y: g[ck].sum/g[ck].count};
+      });
+      return {label: f, color: palette[i%palette.length], pts: pts};
+    }).filter(function(s){ return s.pts.length; });
+
+    if(!series.length){ holder.innerHTML = '<div class="empty-note">No stays match the current filters.</div>'; return; }
+
+    var maxY = 0;
+    series.forEach(function(s){ s.pts.forEach(function(p){ if(p.y>maxY) maxY=p.y; }); });
+    maxY = Math.max(maxY, 1) * 1.08;
+
+    var W = Math.max(680, holder.clientWidth||760), H=380, padL=54, padR=20, padT=16, padB=56;
+    var plotW = W-padL-padR, plotH = H-padT-padB;
+    var minCk = cohorts[0], maxCk = cohorts[cohorts.length-1];
+    var span = Math.max(1, maxCk-minCk);
+    function xPix(ck){ return padL + ((ck-minCk)/span)*plotW; }
+    function yPix(y){ return padT + (1-(y/maxY))*plotH; }
+
+    var svg = '<svg class="chart" width="100%" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">';
+    var steps = 4;
+    for(var s=0;s<=steps;s++){
+      var v = maxY*s/steps, y=yPix(v);
+      svg += '<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="#DEE5DA" stroke-width="1"/>';
+      svg += '<text x="'+(padL-8)+'" y="'+(y+4)+'" font-size="10" text-anchor="end">'+v.toFixed(0)+'d</text>';
+    }
+    cohorts.forEach(function(ck){
+      svg += '<text x="'+xPix(ck)+'" y="'+(H-padB+18)+'" font-size="10" text-anchor="end" transform="rotate(-35 '+xPix(ck)+' '+(H-padB+18)+')">'+censusKeyLabel(ck)+'</text>';
+    });
+    series.forEach(function(sr){
+      var d = sr.pts.map(function(p,i){ return (i===0?'M':'L')+xPix(p.x).toFixed(1)+','+yPix(p.y).toFixed(1); }).join(' ');
+      svg += '<path d="'+d+'" fill="none" stroke="'+sr.color+'" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"/>';
+      sr.pts.forEach(function(p){
+        svg += '<circle cx="'+xPix(p.x).toFixed(1)+'" cy="'+yPix(p.y).toFixed(1)+'" r="2.6" fill="'+sr.color+'"><title>'+sr.label+' · '+censusKeyLabel(p.x)+' · '+p.y.toFixed(1)+' days</title></circle>';
+      });
+    });
+    svg += '</svg>';
+
+    var legend = '<div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;">' + series.map(function(sr){
+      return '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);"><span style="width:10px;height:10px;border-radius:2px;background:'+sr.color+';display:inline-block;"></span>'+sr.label+'</div>';
+    }).join('') + '</div>';
+
+    holder.innerHTML = svg + legend;
+  }
+
+  /* ---------------------------------------------------------
+     MASTER RENDER
+  --------------------------------------------------------- */
+  function censusRenderAll(){
+    censusRenderKPIs();
+    censusRenderYearMonthPickers();
+    censusRenderFacilityTable();
+    censusRenderPayerTable();
+    censusRenderChart();
+  }
+
+  /* ---------------------------------------------------------
+     Data sources — empty-state grid + topbar "Data Sources" panel,
+     same two-view pattern as AR Collections (mirrored, not shared,
+     since the source lists differ).
+  --------------------------------------------------------- */
+  function censusSourceStatusText(sourceKey){
+    var src = censusState.sources[sourceKey];
+    if(!src) return 'Not loaded yet';
+    var when = src.uploadedAt ? new Date(src.uploadedAt).toLocaleString() : '';
+    return src.rowCount.toLocaleString() + ' rows' + (when ? ' · updated '+when : '');
+  }
+  function censusAnySourceLoaded(){
+    return CENSUS_SOURCE_KEYS.some(function(k){ return !!censusState.sources[k]; });
+  }
+
+  function censusRefreshAfterSourceChange(){
+    if(censusState.sources.losReport){
+      document.getElementById('censusDropzone').classList.add('hidden');
+      document.getElementById('censusApp').style.display = 'flex';
+      var loadedCount = CENSUS_SOURCE_KEYS.filter(function(k){ return !!censusState.sources[k]; }).length;
+      document.getElementById('censusTopSub').textContent = censusState.facilities.length + ' facilities · ' + loadedCount + ' / ' + CENSUS_SOURCE_KEYS.length + ' sources loaded';
+    }
+    censusRenderFacilityList(document.getElementById('censusFacSearch') ? document.getElementById('censusFacSearch').value : '');
+    censusRenderPayerList();
+    censusRenderDzGrid();
+    censusRenderDataSourcesPanel();
+    censusRenderAll();
+  }
+
+  function censusHandleFileForSource(file, sourceKey){
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        if(sourceKey === 'losReport') censusParseLOSWorkbook(e.target.result, file.name);
+        else censusParsePayerMapWorkbook(e.target.result, file.name);
+        censusRefreshAfterSourceChange();
+        censusShowToast('Loaded ' + censusState.sources[sourceKey].rowCount.toLocaleString() + ' rows for ' + censusSourceLabel(sourceKey) + '.');
+        censusMaybeOfferPublish(file, sourceKey);
+      }catch(err){
+        alert('Could not read this file for ' + censusSourceLabel(sourceKey) + ': ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function censusHydrateServerLOS(payload){
+    censusState.sources.losReport = {
+      fileName: payload.fileName, rowCount: payload.rowCount, uploadedAt: payload.uploadedAt, records: payload.records
+    };
+  }
+  function censusHydrateServerPayerMap(payload){
+    censusState.sources.payerMap = {
+      fileName: payload.fileName, rowCount: payload.rowCount, uploadedAt: payload.uploadedAt,
+      dataRows: payload.dataRows, typeRows: payload.typeRows
+    };
+  }
+
+  function censusInitLiveMode(){
+    fetch('/api/census-dataset').then(function(res){
+      if(!res.ok) throw new Error('no api');
+      return res.json();
+    }).then(function(payload){
+      censusState.liveMode = true;
+      var any = false;
+      if(payload && payload.losReport && payload.losReport.records && payload.losReport.records.length){
+        censusHydrateServerLOS(payload.losReport); any = true;
+      }
+      if(payload && payload.payerMap){
+        censusHydrateServerPayerMap(payload.payerMap);
+      }
+      if(any){
+        censusRebuild();
+        censusRefreshAfterSourceChange();
+      } else {
+        var hint = document.getElementById('censusDzLiveHint');
+        if(hint) hint.style.display = 'block';
+        censusRenderDzGrid();
+        censusRenderDataSourcesPanel();
+      }
+    }).catch(function(){
+      censusState.liveMode = false;
+      censusRenderDzGrid();
+      censusRenderDataSourcesPanel();
+    });
+  }
+
+  function censusMaybeOfferPublish(file, sourceKey){
+    if(!censusState.liveMode) return;
+    censusPendingPublishFile = file;
+    censusPendingPublishSource = sourceKey;
+    document.getElementById('censusPublishBarTitle').textContent = 'Publish ' + censusSourceLabel(sourceKey) + ' for everyone with this link?';
+    document.getElementById('censusPublishBar').style.display = 'flex';
+  }
+
+  function censusInitPublishBar(){
+    document.getElementById('censusPublishBtn').addEventListener('click', function(){
+      if(!censusPendingPublishFile || !censusPendingPublishSource) return;
+      var key = document.getElementById('censusAdminKeyInput').value;
+      var fd = new FormData();
+      fd.append('file', censusPendingPublishFile);
+      var btn = document.getElementById('censusPublishBtn');
+      btn.disabled = true; btn.textContent = 'Publishing…';
+      fetch('/api/census-upload/' + censusPendingPublishSource, { method:'POST', headers:{'x-admin-key':key}, body: fd })
+        .then(function(res){ return res.json().then(function(body){ return {ok:res.ok, body:body}; }); })
+        .then(function(r){
+          btn.disabled = false; btn.textContent = 'Publish';
+          if(r.ok){
+            censusShowToast('Published ' + censusSourceLabel(censusPendingPublishSource) + ' — everyone with this link now sees it.');
+            document.getElementById('censusPublishBar').style.display = 'none';
+            document.getElementById('censusAdminKeyInput').value = '';
+            censusPendingPublishFile = null; censusPendingPublishSource = null;
+            censusRenderDataSourcesPanel();
+            censusRenderDzGrid();
+          } else {
+            alert('Could not publish: ' + (r.body && r.body.error ? r.body.error : 'unknown error'));
+          }
+        })
+        .catch(function(){
+          btn.disabled = false; btn.textContent = 'Publish';
+          alert('Could not reach the server to publish.');
+        });
+    });
+    document.getElementById('censusDismissPublish').addEventListener('click', function(){
+      document.getElementById('censusPublishBar').style.display = 'none';
+      censusPendingPublishFile = null; censusPendingPublishSource = null;
+    });
+  }
+
+  function censusRenderDzGrid(){
+    var el = document.getElementById('censusDzGrid');
+    if(!el) return;
+    el.innerHTML = CENSUS_SOURCES.map(function(s){
+      var has = !!censusState.sources[s.key];
+      return '<div class="dz-source-card'+(has?' has-data':'')+'" data-source="'+s.key+'">' +
+        '<div class="dz-source-title">'+s.label+'</div>' +
+        '<div class="dz-source-status">'+censusSourceStatusText(s.key)+'</div>' +
+        '<input type="file" accept=".xlsx,.xls" hidden id="censusFileInput-'+s.key+'">' +
+        '<button class="dz-source-btn" type="button" data-source="'+s.key+'">'+(has?'Update file…':'Choose file…')+'</button>' +
+      '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call(el.querySelectorAll('.dz-source-btn'), function(btn){
+      btn.addEventListener('click', function(){
+        var input = document.getElementById('censusFileInput-'+btn.getAttribute('data-source'));
+        if(input) input.click();
+      });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('input[type=file]'), function(input){
+      input.addEventListener('change', function(){
+        if(input.files[0]) censusHandleFileForSource(input.files[0], input.id.replace('censusFileInput-',''));
+        input.value = '';
+      });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('.dz-source-card'), function(card){
+      var srcKey = card.getAttribute('data-source');
+      ['dragenter','dragover'].forEach(function(ev){
+        card.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); card.classList.add('drag'); });
+      });
+      ['dragleave','drop'].forEach(function(ev){
+        card.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); card.classList.remove('drag'); });
+      });
+      card.addEventListener('drop', function(e){
+        var f = e.dataTransfer.files && e.dataTransfer.files[0];
+        if(f) censusHandleFileForSource(f, srcKey);
+      });
+    });
+  }
+
+  function censusRenderDataSourcesPanel(){
+    var el = document.getElementById('censusDataSourcesRows');
+    if(!el) return;
+    var loadedCount = CENSUS_SOURCE_KEYS.filter(function(k){ return !!censusState.sources[k]; }).length;
+    var summaryEl = document.getElementById('censusDataSourcesSummary');
+    if(summaryEl) summaryEl.textContent = loadedCount + ' / ' + CENSUS_SOURCE_KEYS.length + ' loaded';
+
+    el.innerHTML = CENSUS_SOURCES.map(function(s){
+      return '<div class="ds-row">' +
+        '<div>' +
+          '<div class="ds-row-label">'+s.label+'</div>' +
+          '<div class="ds-row-status">'+censusSourceStatusText(s.key)+'</div>' +
+        '</div>' +
+        '<button class="ds-row-btn" type="button" data-source="'+s.key+'">'+(censusState.sources[s.key]?'Update…':'Choose file…')+'</button>' +
+      '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call(el.querySelectorAll('.ds-row-btn'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var input = document.getElementById('censusFileInput-'+btn.getAttribute('data-source'));
+        if(input) input.click();
+      });
+    });
+  }
+
+  function censusInitDropzone(){
+    censusRenderDzGrid();
+    censusRenderDataSourcesPanel();
+  }
+
+  function censusInitSearch(){
+    document.getElementById('censusFacSearch').addEventListener('input', function(e){
+      censusRenderFacilityList(e.target.value);
+    });
+    document.getElementById('censusFacAll').addEventListener('click', function(){
+      censusState.selectedFacilities = new Set(censusState.facilities);
+      censusRenderFacilityList(document.getElementById('censusFacSearch').value);
+      censusRenderAll();
+    });
+    document.getElementById('censusFacNone').addEventListener('click', function(){
+      censusState.selectedFacilities = new Set();
+      censusRenderFacilityList(document.getElementById('censusFacSearch').value);
+      censusRenderAll();
+    });
+  }
+
+  function censusInitPopouts(){
+    registerPopout('censusYearTrigger', 'censusYearPanel');
+    registerPopout('censusMonthTrigger', 'censusMonthPanel');
+    registerPopout('censusDataSourcesTrigger', 'censusDataSourcesPanel');
+  }
+
   initNavigation();
   showScreen('home');
   initTabs();
@@ -2275,6 +3127,12 @@
   initSearch();
   initPublishBar();
   initLiveMode();
+
+  censusInitPopouts();
+  censusInitDropzone();
+  censusInitSearch();
+  censusInitPublishBar();
+  censusInitLiveMode();
 })();
 </script>
 </body>
