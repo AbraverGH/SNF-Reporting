@@ -1123,6 +1123,16 @@
       <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head">
           <div>
+            <h2>Days by level — by month</h2>
+            <div class="note">Same rows as above (Skilled payers only, NE Medicaid excluded), broken out by month instead of totaled together.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="skilledLevelByMonthTable"></table></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head">
+          <div>
             <h2>NE Medicaid — days by level</h2>
             <div class="note">NE Medicaid pays on its own rate structure — the only Medicaid payer that does, so it gets its own grid here rather than being mixed into the combined one above.</div>
           </div>
@@ -3080,6 +3090,7 @@
       var year = startDate.getFullYear(), month = startDate.getMonth();
       var cls = censusSkilledClassify(uploadedMapping, rec.company, rec.payorCode, rec.payorName);
       var levelDetail = censusResolveRateDetail(uploadedMapping, uploadedRateKeyMap, rec.company, rec.payorCode, rec.rateCode);
+      var rateKeyType = (uploadedRateKeyMap && uploadedRateKeyMap[rec.rateCode]) || CENSUS_RATE_KEY_BY_CODE[rec.rateCode];
       return {
         facility: rec.company,
         cohortKey: year*12+month,
@@ -3089,8 +3100,12 @@
         // NE Medicaid bills on its own rate structure, distinct enough from
         // every other Medicaid payer that it gets its own dedicated grid on
         // the Level Detail tab rather than being folded into the combined
-        // one — this flag is what that grid filters on.
-        isNEMedicaid: censusNormPayor(rec.rawPayorType) === 'NE MEDICAID',
+        // one. Catches this two ways: the payor itself is NE Medicaid, OR
+        // — since some HMO/Managed plans bill using NE Medicaid's own rate
+        // codes — the specific rate code billed is one of NE Medicaid's,
+        // per the Rate Key. Either one routes the row into that grid.
+        isNEMedicaid: censusNormPayor(rec.rawPayorType) === 'NE MEDICAID' ||
+          (rateKeyType && rateKeyType.toUpperCase() === 'NE MCD'),
         units: rec.units, gross: rec.gross, net: rec.net
       };
     }) : [];
@@ -3745,6 +3760,55 @@
     return {rows: rows, byLabelCohort: byLabelCohort, labels: labels, cohorts: cohorts};
   }
 
+  // Same idea as skilledByMonthGroups above, but grouped by resolved level
+  // (Level 1, PDPM, Bariatric, etc.) instead of payer — feeds the Level
+  // Detail tab's "by month" table. Takes the row set as a parameter since
+  // callers filter differently (e.g. excluding NE Medicaid for the
+  // "Skilled payers only" view).
+  function skilledLevelByMonthGroups(rows){
+    var byLevelCohort = {};
+    rows.forEach(function(r){
+      var k = r.levelDetail+'||'+r.cohortKey;
+      var g = byLevelCohort[k] || (byLevelCohort[k] = {units:0, gross:0, net:0});
+      g.units += r.units; g.gross += (r.gross||0); g.net += (r.net||0);
+    });
+    var levelTotals = {};
+    rows.forEach(function(r){ levelTotals[r.levelDetail] = (levelTotals[r.levelDetail]||0) + r.units; });
+    var levels = Object.keys(levelTotals).sort(function(a,b){
+      if(a==='(No rate detail)') return 1;
+      if(b==='(No rate detail)') return -1;
+      return levelTotals[b]-levelTotals[a];
+    });
+    var cohortSet = {}; rows.forEach(function(r){ cohortSet[r.cohortKey]=true; });
+    var cohorts = Object.keys(cohortSet).map(Number).sort(function(a,b){return a-b;});
+    return {byLevelCohort: byLevelCohort, levels: levels, cohorts: cohorts};
+  }
+
+  function skilledRenderLevelByMonthTable(){
+    var table = document.getElementById('skilledLevelByMonthTable');
+    if(!table) return;
+    if(!skilledState.sources.salesJournal){
+      table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
+      return;
+    }
+    var rows = skilledFilteredRows().filter(function(r){ return !r.isNEMedicaid; });
+    var g = skilledLevelByMonthGroups(rows);
+    if(!g.levels.length || !g.cohorts.length){
+      table.innerHTML = '<tr><td class="empty-note">No sales journal data matches the current filters.</td></tr>';
+      return;
+    }
+    var thead = '<thead><tr><th>Level</th>' + g.cohorts.map(function(ck){return '<th>'+censusKeyLabel(ck)+'</th>';}).join('') + '</tr></thead>';
+    var bodyRows = g.levels.map(function(ln){
+      var cells = g.cohorts.map(function(ck){
+        var cell = g.byLevelCohort[ln+'||'+ck];
+        if(!cell) return '<td class="empty">—</td>';
+        return '<td class="dollar-cell">'+cell.units.toLocaleString()+'</td>';
+      }).join('');
+      return '<tr><th>'+ln+'</th>'+cells+'</tr>';
+    }).join('');
+    table.innerHTML = thead + '<tbody>' + bodyRows + '</tbody>';
+  }
+
   // Generic renderer for the three "by month" tables (Days/ADR/PPD) — they
   // only differ in which value they pull out of each cell's {units,gross,net}.
   function skilledRenderByMonthTable(tableId, valueFn){
@@ -4272,6 +4336,7 @@
     skilledRenderAdrByMonth();
     skilledRenderPpdByMonth();
     skilledRenderLevelTotalsTable();
+    skilledRenderLevelByMonthTable();
     skilledRenderNEMedicaidLevelTable();
     skilledRenderLevelTable();
     skilledRenderLevelByFacilityTable();
