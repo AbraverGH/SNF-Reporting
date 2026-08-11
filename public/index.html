@@ -3075,11 +3075,23 @@
     censusState.facilities = Object.keys(facSet).sort();
     syncSelection(censusState.facilities, censusState.selectedFacilities);
 
-    var typeSet = {};
-    censusState.rows.forEach(function(r){ typeSet[r.payerType]=true; });
-    censusState.daysRows.forEach(function(r){ typeSet[r.payerType]=true; });
-    censusState.payerTypes = Object.keys(typeSet).sort();
+    // Sum days per type rather than just checking existence — see the
+    // matching comment in skilledRebuild(). Only "Unmapped" gets dropped
+    // once its net volume is zero; every other payer type stays listed
+    // even at zero for the current view.
+    var typeUnits = {};
+    censusState.rows.forEach(function(r){ typeUnits[r.payerType] = (typeUnits[r.payerType]||0) + r.days; });
+    censusState.daysRows.forEach(function(r){ typeUnits[r.payerType] = (typeUnits[r.payerType]||0) + r.days; });
+    censusState.payerTypes = Object.keys(typeUnits).filter(function(t){
+      return t !== 'Unmapped' || typeUnits[t] !== 0;
+    }).sort();
     syncSelection(censusState.payerTypes, censusState.selectedPayerTypes);
+    Array.from(censusState.selectedPayerTypes).forEach(function(t){
+      if(censusState.payerTypes.indexOf(t) === -1) censusState.selectedPayerTypes.delete(t);
+    });
+    if(censusState.selectedPayerTypes.size === 0){
+      censusState.payerTypes.forEach(function(t){ censusState.selectedPayerTypes.add(t); });
+    }
 
     var yearSet = {}, monthSet = {};
     censusState.rows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
@@ -3164,9 +3176,29 @@
     skilledState.facilities = Object.keys(facSet).sort();
     syncSelection(skilledState.facilities, skilledState.selectedFacilities);
 
-    var typeSet = {}; skilledState.rows.forEach(function(r){ typeSet[r.payerType]=true; });
-    skilledState.payerTypes = Object.keys(typeSet).sort();
+    // Sum units per type rather than just checking existence — a payor
+    // code can fail to resolve (payerType='Unmapped') on a handful of rows
+    // that net to zero days (e.g. offsetting entries), which shouldn't
+    // keep "Unmapped" sitting in the filter forever after it's genuinely
+    // been cleaned up. Real payer types stay listed even at zero for the
+    // current view, since those are ongoing categories — this only
+    // applies to the diagnostic "Unmapped" bucket specifically.
+    var typeUnits = {};
+    skilledState.rows.forEach(function(r){ typeUnits[r.payerType] = (typeUnits[r.payerType]||0) + r.units; });
+    skilledState.payerTypes = Object.keys(typeUnits).filter(function(t){
+      return t !== 'Unmapped' || typeUnits[t] !== 0;
+    }).sort();
     syncSelection(skilledState.payerTypes, skilledState.selectedPayerTypes);
+    // If something previously selected (e.g. "Unmapped") isn't offered
+    // anymore, drop it from the selection too — otherwise a stale
+    // selection can silently filter everything else out, showing an
+    // empty/zeroed view with nothing visibly checked in the sidebar.
+    Array.from(skilledState.selectedPayerTypes).forEach(function(t){
+      if(skilledState.payerTypes.indexOf(t) === -1) skilledState.selectedPayerTypes.delete(t);
+    });
+    if(skilledState.selectedPayerTypes.size === 0){
+      skilledState.payerTypes.forEach(function(t){ skilledState.selectedPayerTypes.add(t); });
+    }
 
     var yearSet = {}, monthSet = {};
     skilledState.rows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
