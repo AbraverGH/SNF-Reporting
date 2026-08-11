@@ -1110,6 +1110,26 @@
       </div>
 
       <div id="skilledtab-level" class="skilled-tabpanel" style="display:none;">
+      <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head">
+          <div>
+            <h2>Days by level</h2>
+            <div class="note">Every selected payer combined — total days, average daily rate, and PPD per level (Level 1, Level 2, Bariatric, Trach, etc.), regardless of which payer billed it. NE Medicaid bills on its own separate rate structure — see its own grid below rather than reading its numbers out of this combined one.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="skilledLevelTotalsTable"></table></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head">
+          <div>
+            <h2>NE Medicaid — days by level</h2>
+            <div class="note">NE Medicaid pays on its own rate structure — the only Medicaid payer that does, so it gets its own grid here rather than being mixed into the combined one above.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="skilledNEMedicaidLevelTable"></table></div>
+      </div>
+
       <div class="panel">
         <div class="panel-head">
           <div>
@@ -3034,6 +3054,11 @@
         year: year, month: month,
         family: cls.family, label: cls.label, payorName: rec.payorName, payerType: cls.payerType,
         rateCode: rec.rateCode, levelDetail: levelDetail || '(No rate detail)',
+        // NE Medicaid bills on its own rate structure, distinct enough from
+        // every other Medicaid payer that it gets its own dedicated grid on
+        // the Level Detail tab rather than being folded into the combined
+        // one — this flag is what that grid filters on.
+        isNEMedicaid: censusNormPayor(rec.rawPayorType) === 'NE MEDICAID',
         units: rec.units, gross: rec.gross, net: rec.net
       };
     }) : [];
@@ -3502,6 +3527,63 @@
         skilledRenderTable();
       });
     });
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: Days by level — flat, combined across every payer
+     currently in view (not grouped by payer first), e.g.
+     "Level 1 — 1,500 days, Level 2 — 956 days, Bariatric — 58
+     days". Same underlying rows as the payer-grouped table below,
+     just aggregated along the other dimension.
+  --------------------------------------------------------- */
+  // Shared by the combined and NE-Medicaid-specific "days by level" tables
+  // below — groups whichever row set is passed in by levelDetail and
+  // renders the same Level/Days/Avg Daily Rate/PPD shape.
+  function skilledRenderLevelByRows(table, rows, emptyMsg){
+    if(!rows.length){
+      table.innerHTML = '<tr><td class="empty-note">'+emptyMsg+'</td></tr>';
+      return;
+    }
+    var byLevel = {};
+    rows.forEach(function(r){ (byLevel[r.levelDetail] = byLevel[r.levelDetail] || []).push(r); });
+    var levelNames = Object.keys(byLevel).sort(function(a,b){
+      if(a==='(No rate detail)') return 1;   // keep the unresolved bucket last
+      if(b==='(No rate detail)') return -1;
+      return skilledMetrics(byLevel[b]).days - skilledMetrics(byLevel[a]).days;
+    });
+
+    var thead = '<thead><tr><th>Level</th><th>Days</th><th>Avg Daily Rate</th><th>PPD</th></tr></thead>';
+    var bodyRows = levelNames.map(function(ln){
+      var m = skilledMetrics(byLevel[ln]);
+      return '<tr><th>'+ln+'</th>' +
+        '<td class="dollar-cell">'+m.days.toLocaleString()+'</td>' +
+        '<td class="dollar-cell">'+(m.adr==null?'—':'$'+m.adr.toFixed(2))+'</td>' +
+        '<td class="dollar-cell">'+(m.ppd==null?'—':'$'+m.ppd.toFixed(2))+'</td>' +
+      '</tr>';
+    }).join('');
+
+    table.innerHTML = thead + '<tbody>' + bodyRows + '</tbody>';
+  }
+
+  function skilledRenderLevelTotalsTable(){
+    var table = document.getElementById('skilledLevelTotalsTable');
+    if(!table) return;
+    if(!skilledState.sources.salesJournal){
+      table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
+      return;
+    }
+    skilledRenderLevelByRows(table, skilledFilteredRows(), 'No sales journal data matches the current filters.');
+  }
+
+  function skilledRenderNEMedicaidLevelTable(){
+    var table = document.getElementById('skilledNEMedicaidLevelTable');
+    if(!table) return;
+    if(!skilledState.sources.salesJournal){
+      table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
+      return;
+    }
+    var rows = skilledFilteredRows().filter(function(r){ return r.isNEMedicaid; });
+    skilledRenderLevelByRows(table, rows, 'No NE Medicaid data matches the current filters.');
   }
 
   /* ---------------------------------------------------------
@@ -4127,6 +4209,8 @@
     skilledRenderDaysByMonth();
     skilledRenderAdrByMonth();
     skilledRenderPpdByMonth();
+    skilledRenderLevelTotalsTable();
+    skilledRenderNEMedicaidLevelTable();
     skilledRenderLevelTable();
   }
 
