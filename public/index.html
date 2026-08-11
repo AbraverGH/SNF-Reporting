@@ -2984,18 +2984,30 @@
     'HOSPICE':'Hospice', 'RSPITE':'Respite', 'Unmapped':'Unmapped'
   };
   var SKILLED_METHODOLOGY_FAMILIES = {'Medicare':1,'HMO Medicare':1,'HMO Commercial':1,'HMO Medicaid':1};
-  function censusSkilledMethodology(payorName){
+  function censusSkilledMethodology(payorName, rateCode, uploadedRateKeyMap){
     var n = String(payorName||'').toUpperCase();
     if(n.indexOf('PDPM') >= 0) return 'PDPM';
     if(n.indexOf('LEVEL') >= 0 || n.indexOf('LVL') >= 0) return 'Levels';
     if(n.indexOf('FFS') >= 0) return 'FFS';
     if(n.indexOf('FLAT') >= 0) return 'Flat';
+    // The payor's name often doesn't say — e.g. plenty of rows are just
+    // "Medicare" — so fall back to what the Rate Key says about the
+    // specific rate code actually billed on that transaction, which is a
+    // more reliable signal than the payor's naming convention.
+    if(rateCode){
+      var rk = (uploadedRateKeyMap && uploadedRateKeyMap[rateCode]) || CENSUS_RATE_KEY_BY_CODE[rateCode];
+      if(rk){
+        var rkUpper = rk.toUpperCase();
+        if(rkUpper === 'PDPM') return 'PDPM';
+        if(rkUpper === 'LEVELS') return 'Levels';
+      }
+    }
     return null;
   }
-  function censusSkilledClassify(uploaded, company, code, payorName){
+  function censusSkilledClassify(uploaded, uploadedRateKeyMap, company, code, payorName, rateCode){
     var ptype = censusResolvePayerType(uploaded, company, code);
     var family = SKILLED_FAMILY_LABELS[ptype] || 'Unmapped';
-    var methodology = censusSkilledMethodology(payorName);
+    var methodology = censusSkilledMethodology(payorName, rateCode, uploadedRateKeyMap);
     var label = family + ((methodology && SKILLED_METHODOLOGY_FAMILIES[family]) ? ' '+methodology : '');
     return {family: family, methodology: methodology, label: label, payerType: ptype};
   }
@@ -3088,27 +3100,53 @@
     skilledState.rows = (salesSrc && salesSrc.records) ? salesSrc.records.map(function(rec){
       var startDate = new Date(rec.startISO);
       var year = startDate.getFullYear(), month = startDate.getMonth();
-      var cls = censusSkilledClassify(uploadedMapping, rec.company, rec.payorCode, rec.payorName);
+      var cls = censusSkilledClassify(uploadedMapping, uploadedRateKeyMap, rec.company, rec.payorCode, rec.payorName, rec.rateCode);
       var levelDetail = censusResolveRateDetail(uploadedMapping, uploadedRateKeyMap, rec.company, rec.payorCode, rec.rateCode);
-      var rateKeyType = (uploadedRateKeyMap && uploadedRateKeyMap[rec.rateCode]) || CENSUS_RATE_KEY_BY_CODE[rec.rateCode];
       return {
         facility: rec.company,
         cohortKey: year*12+month,
         year: year, month: month,
         family: cls.family, label: cls.label, payorName: rec.payorName, payerType: cls.payerType,
         rateCode: rec.rateCode, levelDetail: levelDetail || '(No rate detail)',
-        // NE Medicaid bills on its own rate structure, distinct enough from
-        // every other Medicaid payer that it gets its own dedicated grid on
-        // the Level Detail tab rather than being folded into the combined
-        // one. Catches this two ways: the payor itself is NE Medicaid, OR
-        // — since some HMO/Managed plans bill using NE Medicaid's own rate
-        // codes — the specific rate code billed is one of NE Medicaid's,
-        // per the Rate Key. Either one routes the row into that grid.
-        isNEMedicaid: censusNormPayor(rec.rawPayorType) === 'NE MEDICAID' ||
-          (rateKeyType && rateKeyType.toUpperCase() === 'NE MCD'),
+        // NE Medicaid (the state Medicaid payor itself) bills on its own
+        // rate structure and gets its own dedicated grid on the Level
+        // Detail tab. This is based on the payor, not the rate code — some
+        // HMO/Managed payors happen to bill using NE Medicaid's own rate
+        // codes too, but those are still genuine skilled stays reimbursed
+        // like any other payor, so they stay in the combined "Skilled
+        // payers only" view rather than being pulled into the NE Medicaid
+        // grid just because of which rate code they used.
+        isNEMedicaid: censusNormPayor(rec.rawPayorType) === 'NE MEDICAID',
         units: rec.units, gross: rec.gross, net: rec.net
       };
     }) : [];
+
+    // The Payer Mapping's rate/level descriptions come from a spreadsheet
+    // people type into by hand, so the same level shows up with different
+    // capitalization across rows ("Level 1" / "LEVEL 1" / "level 1") —
+    // left as-is, that reads as separate levels everywhere the Level
+    // Detail tab groups by levelDetail. Collapse those into one canonical
+    // form per normalized (trimmed, case-insensitive) key, picking
+    // whichever exact casing shows up most often, so every table downstream
+    // groups them together without each needing its own dedup logic.
+    (function normalizeLevelLabels(){
+      var votes = {};
+      skilledState.rows.forEach(function(r){
+        var key = r.levelDetail.trim().toUpperCase().replace(/\s+/g,' ');
+        var v = votes[key] || (votes[key] = {});
+        v[r.levelDetail] = (v[r.levelDetail]||0) + 1;
+      });
+      var canonical = {};
+      Object.keys(votes).forEach(function(key){
+        var v = votes[key], best=null, bestCount=-1;
+        Object.keys(v).forEach(function(label){ if(v[label]>bestCount){best=label;bestCount=v[label];} });
+        canonical[key] = best;
+      });
+      skilledState.rows.forEach(function(r){
+        var key = r.levelDetail.trim().toUpperCase().replace(/\s+/g,' ');
+        r.levelDetail = canonical[key];
+      });
+    })();
 
     function syncSelection(newOptions, selectedSet){
       var had = selectedSet.size > 0;
