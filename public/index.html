@@ -333,6 +333,9 @@
     transition:.12s;
   }
   .cohort-chip.on{background:var(--emerald);border-color:var(--emerald);color:#fff;}
+  .cohort-chip.no-data{opacity:.4;}
+  .cohort-chip.on.no-data{opacity:.55;}
+  .popout-panel-head .hint.warn{color:var(--clay);}
 
   /* Summary table */
   table.summary{width:100%;border-collapse:collapse;font-size:12.5px;}
@@ -360,6 +363,12 @@
     text-align:center;padding:40px 20px;
   }
   #censusDropzone.hidden{display:none;}
+  #skilledDropzone{
+    position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;
+    text-align:center;padding:40px 20px;
+  }
+  #skilledDropzone.hidden{display:none;}
   .dz-wrap{
     width:min(820px,94vw);border:2px dashed var(--line);border-radius:16px;
     background:var(--surface);padding:44px 36px;box-shadow:var(--shadow);
@@ -434,6 +443,7 @@
   .home-card-icon.ar-icon{background:linear-gradient(140deg,var(--emerald-bright),var(--emerald) 70%);}
   .home-card-icon.census-icon{background:linear-gradient(140deg,#B98B4E,#8A6234 70%);}
   .home-card-icon.admin-icon{background:linear-gradient(140deg,#5B6B7A,#2E3A46 70%);}
+  .home-card-icon.skilled-icon{background:linear-gradient(140deg,#6C63D6,#3D3684 70%);}
   .home-card-title{font-family:'Space Grotesk';font-weight:600;font-size:17px;color:var(--ink);}
   .home-card-desc{font-size:12.5px;color:var(--ink-soft);line-height:1.5;flex:1;}
   .home-card-cta{font-size:12.5px;font-weight:600;color:var(--emerald);display:flex;align-items:center;gap:5px;}
@@ -494,7 +504,16 @@
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3 2.5-5.2 5.5-5.2s5.5 2.2 5.5 5.2"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15 14.4c2.2.2 4.5 1.9 4.5 5.1"/></svg>
         </div>
         <div class="home-card-title">Census Trends</div>
-        <div class="home-card-desc">Length-of-stay trends by facility and payer, with year/month filtering.</div>
+        <div class="home-card-desc">Length-of-stay trends and occupancy by facility and payer, with year/month filtering.</div>
+        <div class="home-card-cta">Open <span>→</span></div>
+      </button>
+
+      <button class="home-card" id="launchSkilledAnalysis" type="button">
+        <div class="home-card-icon skilled-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+        </div>
+        <div class="home-card-title">Skilled Analysis</div>
+        <div class="home-card-desc">Days, average daily rate, and PPD by payer — with rate/level detail and month-over-month trends.</div>
         <div class="home-card-cta">Open <span>→</span></div>
       </button>
 
@@ -791,6 +810,10 @@
 
     <div class="side-section">
       <div class="side-label">Payer Type <span style="color:var(--sidebar-ink-soft);font-weight:400;text-transform:none;letter-spacing:0;">— pick one or more</span></div>
+      <div class="side-btn-row">
+        <button id="censusPayerAll">Select all</button>
+        <button id="censusPayerNone">Clear</button>
+      </div>
       <div class="payer-grid" id="censusPayerList"></div>
     </div>
 
@@ -818,7 +841,7 @@
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="popout-panel" id="censusYearPanel" style="display:none;">
-            <div class="popout-panel-head">Year <span class="hint">— pick one or more</span></div>
+            <div class="popout-panel-head">Year <span class="hint" id="censusYearHint">— pick one or more</span></div>
             <div class="cohort-picker" id="censusYearPicker"></div>
             <div class="popout-panel-actions"><button class="btn-load" id="censusYearDoneBtn" type="button">Done</button></div>
           </div>
@@ -839,7 +862,6 @@
 
       <div class="tabs">
         <button class="census-tab-btn active" data-tab="los">Length of Stay</button>
-        <button class="census-tab-btn" data-tab="skilled">Skilled Analysis</button>
         <button class="census-tab-btn" data-tab="days">Census Days by Month</button>
         <button class="census-tab-btn" data-tab="pct">Census % by Month</button>
       </div>
@@ -873,39 +895,6 @@
           </div>
         </div>
         <div class="triangle-wrap"><table class="triangle" id="censusPayerTable"></table></div>
-      </div>
-      </div>
-
-      <div id="tab-skilled" class="census-tabpanel" style="display:none;">
-      <div class="kpis" id="skilledKpiStrip" style="margin-bottom:22px;"></div>
-      <div class="panel" style="margin-bottom:22px;">
-        <div class="panel-head">
-          <div>
-            <h2>Skilled Analysis — days, average daily rate &amp; PPD by payer</h2>
-            <div class="note">Uses the Facilities, Payer Type, and Year/Month filters above. Click an HMO or Unmapped row to see the individual payors rolled into it — useful for figuring out exactly which payors need to be added to the Payer Mapping.</div>
-          </div>
-        </div>
-        <div class="triangle-wrap"><table class="triangle" id="skilledTable"></table></div>
-      </div>
-
-      <div class="panel" style="margin-bottom:22px;">
-        <div class="panel-head">
-          <div>
-            <h2>Days by month — by payer</h2>
-            <div class="note">Same payer rows as above, broken out by month instead of totaled together.</div>
-          </div>
-        </div>
-        <div class="triangle-wrap"><table class="triangle" id="skilledDaysByMonthTable"></table></div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <div>
-            <h2>PPD by month — by payer</h2>
-            <div class="note">Net revenue per patient day, by payer, broken out by month.</div>
-          </div>
-        </div>
-        <div class="triangle-wrap"><table class="triangle" id="skilledPpdByMonthTable"></table></div>
       </div>
       </div>
 
@@ -948,7 +937,7 @@
         <div class="panel-head">
           <div>
             <h2>Payer mix — % of census days by payer type</h2>
-            <div class="note">Of the selected payer types' combined census days that month, what share belongs to each — this one does use the Payer Type filter above.</div>
+            <div class="note">Each payer's true share of that month's total census days across all facilities selected — deselecting other payers narrows which rows show, but doesn't change any payer's percentage.</div>
           </div>
         </div>
         <div class="triangle-wrap"><table class="triangle" id="censusPayerMixTable"></table></div>
@@ -959,6 +948,152 @@
 </div>
 
 <div class="toast" id="censusToast"></div>
+
+</div>
+
+<div id="skilledAnalysisApp" style="display:none;">
+
+<div id="skilledDropzone">
+  <div class="dz-wrap" style="text-align:center;position:relative;">
+    <button class="stub-back" id="skilledBackFromEmptyBtn" type="button" style="position:static;margin-bottom:14px;display:inline-block;">← Back to Vantis</button>
+    <div class="dz-icon" style="margin-left:auto;margin-right:auto;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+    </div>
+    <h2>No data published yet</h2>
+    <p>An admin needs to import the Sales Journal from the Admin tab before there's anything to show here.</p>
+    <button class="dz-source-btn" id="skilledGoToAdminBtn" type="button" style="width:auto;padding:9px 22px;">Go to Admin →</button>
+  </div>
+</div>
+
+<div id="skilledApp" style="display:none;">
+  <aside class="sidebar">
+    <button class="brand" id="skilledBackToHomeBtn" type="button" title="Back to Vantis home">
+      <div class="brand-mark">V</div>
+      <div class="brand-text">
+        <div class="t1">Skilled Analysis</div>
+        <div class="t2">← Back to Vantis</div>
+      </div>
+    </button>
+
+    <div class="side-section">
+      <div class="side-label">Facilities <span class="count" id="skilledFacCount"></span></div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="skilledFacSearch" placeholder="Search facility…">
+      </div>
+      <div class="side-btn-row">
+        <button id="skilledFacAll">Select all</button>
+        <button id="skilledFacNone">Clear</button>
+      </div>
+      <div class="facility-list" id="skilledFacilityList"></div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-label">Payer Type <span style="color:var(--sidebar-ink-soft);font-weight:400;text-transform:none;letter-spacing:0;">— pick one or more</span></div>
+      <div class="side-btn-row">
+        <button id="skilledPayerAll">Select all</button>
+        <button id="skilledPayerNone">Clear</button>
+      </div>
+      <div class="payer-grid" id="skilledPayerList"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      Days are grouped by service start month and blended across your selected facilities and payer types. Payer categories come from a mapping built into the app; payor codes it doesn't recognize fall into "Unmapped" rather than being dropped.
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <h1>Skilled Analysis</h1>
+        <div class="sub" id="skilledTopSub">No data loaded yet</div>
+      </div>
+    </div>
+
+    <div class="content" id="skilledMainContent">
+      <div class="kpis" id="skilledKpiStrip"></div>
+
+      <div class="popout-filters">
+        <div class="popout-group">
+          <button class="popout-trigger" id="skilledYearTrigger" type="button">
+            <span class="popout-trigger-label">Year</span>
+            <span class="popout-trigger-value" id="skilledYearTriggerValue">—</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="popout-panel" id="skilledYearPanel" style="display:none;">
+            <div class="popout-panel-head">Year <span class="hint">— pick one or more</span></div>
+            <div class="cohort-picker" id="skilledYearPicker"></div>
+            <div class="popout-panel-actions"><button class="btn-load" id="skilledYearDoneBtn" type="button">Done</button></div>
+          </div>
+        </div>
+        <div class="popout-group">
+          <button class="popout-trigger" id="skilledMonthTrigger" type="button">
+            <span class="popout-trigger-label">Month</span>
+            <span class="popout-trigger-value" id="skilledMonthTriggerValue">—</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="popout-panel" id="skilledMonthPanel" style="display:none;">
+            <div class="popout-panel-head">Month <span class="hint">— pick one or more, any year (for seasonality)</span></div>
+            <div class="cohort-picker" id="skilledMonthPicker"></div>
+            <div class="popout-panel-actions"><button class="btn-load" id="skilledMonthDoneBtn" type="button">Done</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head">
+          <div>
+            <h2>Days, average daily rate &amp; PPD by payer</h2>
+            <div class="note">Uses the Facilities, Payer Type, and Year/Month filters above. Click an HMO or Unmapped row to see the individual payors rolled into it, with their own rate and level detail — useful for figuring out exactly which payors need to be added to the Payer Mapping.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="skilledTable"></table></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head">
+          <div>
+            <h2>PPD trend — month over month</h2>
+            <div class="note">One line per payer (the rows currently shown in the table above), so you can compare how rates are trending across months.</div>
+          </div>
+        </div>
+        <div id="skilledChartHolder"></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head">
+          <div>
+            <h2>Days by month — by payer</h2>
+            <div class="note">Same payer rows as above, broken out by month instead of totaled together.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="skilledDaysByMonthTable"></table></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head">
+          <div>
+            <h2>Average Daily Rate by month — by payer</h2>
+            <div class="note">Gross rate per day (before deductions), by payer, broken out by month.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="skilledAdrByMonthTable"></table></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>PPD by month — by payer</h2>
+            <div class="note">Net revenue per patient day, by payer, broken out by month.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="skilledPpdByMonthTable"></table></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="skilledToast"></div>
 
 </div>
 
@@ -999,9 +1134,14 @@
         <div id="adminArRows"></div>
       </div>
 
-      <div class="panel">
-        <div class="panel-head"><div><h2>Census Trends</h2><div class="note">The Length of Stay report is imported monthly; the Payer Mapping only needs updating when payor contracts/rates change.</div></div></div>
+      <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head"><div><h2>Census Trends</h2><div class="note">The Length of Stay report and Census Report are imported monthly.</div></div></div>
         <div id="adminCensusRows"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div><h2>Skilled Analysis</h2><div class="note">The Sales Journal is imported monthly; the Payer Mapping (also used by Census Trends) only needs updating when payor contracts/rates change.</div></div></div>
+        <div id="adminSkilledRows"></div>
       </div>
     </div>
   </div>
@@ -1054,7 +1194,6 @@
   // combined key is used — nothing from the source columns is dropped.
   var MEDICAID_COMBO_KEYS = ['neMedicaid','kyMedicaid','okMedicaid'];
   var PAYER_OPTIONS = [
-    {key:'allGroups', label:'All Groups'},
     {key:'medicare', label:'Medicare'},
     {key:'medicaidCombined', label:'Medicaid (NE + KY + OK)'},
     {key:'privatePay', label:'Private Pay'},
@@ -1091,7 +1230,7 @@
   }
 
   // Namespaced payer options for one source's popout, e.g. for 'partA':
-  // [{key:'partA::allGroups', label:'All Groups'}, {key:'partA::medicare', ...}, ...]
+  // [{key:'partA::medicare', label:'Medicare'}, {key:'partA::hmo', ...}, ...]
   // — filtered down to only the payers that actually have at least one
   // non-null value in that source's uploaded file (e.g. Part A Coinsurance's
   // workbook has no Budget/Hospice/Veterans/Respite columns at all, so those
@@ -1139,7 +1278,7 @@
         var opts = payerOptionsForSource(SOURCES[i].key);
         if(opts.length) fallback = opts[0].key;
       }
-      state.selectedPayers.add(fallback || 'partA::allGroups');
+      state.selectedPayers.add(fallback || 'partA::medicare');
     }
   }
   var MONTH_IDX = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
@@ -1156,7 +1295,7 @@
     sources: {},            // sourceKey -> {rows, fileName, rowCount, uploadedAt, isLive} | undefined if never loaded
     facilities: [],        // [{code,facility,company}] — union across all loaded sources
     selectedFacilities: new Set(),
-    selectedPayers: new Set(['partA::allGroups']),   // namespaced multi-select — e.g. partA::medicare + partB::hmo together
+    selectedPayers: new Set(PAYER_OPTIONS.map(function(o){ return 'partA::'+o.key; })),   // namespaced multi-select — defaults to every Part A payer selected (blends to the same total "All Groups" used to show); e.g. partA::medicare + partB::hmo together once the user picks their own mix
     selectedMonths: new Set(),   // shared "months of service" tile selection (multi), used by every tab
     selectedAsOf: null,          // shared "as-of date" tile selection (single), used by every tab
     byAsOfMonth: null,           // "Collections by As-Of-Date" tab: single month of service selection
@@ -2205,8 +2344,9 @@
     document.getElementById('homeScreen').style.display = (name==='home') ? 'flex' : 'none';
     document.getElementById('arCollectionsApp').style.display = (name==='ar') ? 'block' : 'none';
     document.getElementById('censusTrendsApp').style.display = (name==='census') ? 'block' : 'none';
+    document.getElementById('skilledAnalysisApp').style.display = (name==='skilled') ? 'block' : 'none';
     document.getElementById('adminApp').style.display = (name==='admin') ? 'block' : 'none';
-    document.title = (name==='home') ? 'Vantis - SNF Reporting' : (name==='ar' ? 'Vantis — AR Collections' : (name==='census' ? 'Vantis — Census Trends' : 'Vantis — Admin'));
+    document.title = (name==='home') ? 'Vantis - SNF Reporting' : (name==='ar' ? 'Vantis — AR Collections' : (name==='census' ? 'Vantis — Census Trends' : (name==='skilled' ? 'Vantis — Skilled Analysis' : 'Vantis — Admin')));
     window.scrollTo(0,0);
     if(name==='admin') adminShowCorrectView();
   }
@@ -2218,6 +2358,9 @@
     document.getElementById('launchCensusTrends').addEventListener('click', function(){
       showScreen('census');
     });
+    document.getElementById('launchSkilledAnalysis').addEventListener('click', function(){
+      showScreen('skilled');
+    });
     document.getElementById('launchAdmin').addEventListener('click', function(){
       showScreen('admin');
     });
@@ -2227,16 +2370,25 @@
     document.getElementById('censusBackToHomeBtn').addEventListener('click', function(){
       showScreen('home');
     });
+    document.getElementById('skilledBackToHomeBtn').addEventListener('click', function(){
+      showScreen('home');
+    });
     document.getElementById('arGoToAdminBtn').addEventListener('click', function(){
       showScreen('admin');
     });
     document.getElementById('censusGoToAdminBtn').addEventListener('click', function(){
       showScreen('admin');
     });
+    document.getElementById('skilledGoToAdminBtn').addEventListener('click', function(){
+      showScreen('admin');
+    });
     document.getElementById('arBackFromEmptyBtn').addEventListener('click', function(){
       showScreen('home');
     });
     document.getElementById('censusBackFromEmptyBtn').addEventListener('click', function(){
+      showScreen('home');
+    });
+    document.getElementById('skilledBackFromEmptyBtn').addEventListener('click', function(){
       showScreen('home');
     });
     document.getElementById('adminBackFromLoginBtn').addEventListener('click', function(){
@@ -2518,9 +2670,8 @@
   var CENSUS_PAYER_TYPE_BY_CODE_FALLBACK = {"PHAETN":"MANAGED MCR","PHAETM":"MANAGED MCR","PHAMBE":"COMMERCIAL","PHBCBS":"COMMERCIAL","PHBCBM":"MANAGED MCR","PHCHAM":"COMMERCIAL","PHWELL":"MANAGED MCR","PCHASE":"HOSPICE","PCHCCH":"HOSPICE","PCHSTC":"HOSPICE","PCHTAB":"HOSPICE","PCHHOR":"HOSPICE","PHHUMC":"MANAGED MCR","PHHUMM":"MANAGED MCR","PHMEDH":"COMMERCIAL","PMCA":"MEDICARE","PHMOLI":"MANAGED MCD","PMNE":"MEDICAID","PHNETO":"MANAGED MCD","PHPSWO":"COMMERCIAL","PPRVPW":"PRIVATE","PPRVH":"PRIVATE","PPRV":"PRIVATE","PHSWOR":"COMMERCIAL","TRWOC":"COMMERCIAL","PHTRIC":"COMMERCIAL","PHUHCC":"COMMERCIAL","PHUHP":"MANAGED MCD","PHUHCD":"MANAGED MCD","PHUHCB":"MANAGED MCR","PHWELC":"COMMERCIAL","PHUHCM":"MANAGED MCR","AHRBM":"HOSPICE","PHAETC":"COMMERCIAL","PHBCBC":"COMMERCIAL","PCHCHI":"HOSPICE","PHCIGN":"COMMERCIAL","PCHCEN":"HOSPICE","PHMIDL":"COMMERCIAL","PPRVHS":"PRIVATE","PCHRUR":"HOSPICE","PHSILC":"COMMERCIAL","PHUHCP":"MANAGED MCD","PPRV1":"PRIVATE","PPRV2":"PRIVATE","PPRV3":"PRIVATE","PHAMCO":"COMMERCIAL","PHEMCW":"COMMERCIAL","PCHMAR":"HOSPICE","PCHS":"HOSPICE","PHHUCO":"COMMERCIAL","PHHUMR":"MANAGED MCR","PHMEDI":"COMMERCIAL","PHMEDM":"MANAGED MCR","PMCACV":"MEDICARE","PHMLMD":"MANAGED MCD","PHNONC":"COMMERCIAL","PHNOND":"MANAGED MCD","PHNONR":"MANAGED MCR","PCHNON":"HOSPICE","PMNENO":"MEDICAID","NONMCR":"MEDICARE","PPRVNO":"PRIVATE","PHSPVA":"COMMERCIAL","PHUHPD":"MANAGED MCD","PHUHCR":"MANAGED MCR","PHUMRC":"COMMERCIAL","PHUSAA":"COMMERCIAL","PHOPTU":"COMMERCIAL","PHABCO":"COMMERCIAL","PHBCBP":"MANAGED MCR","PHCOVE":"MANAGED MCR","PCHGEN":"HOSPICE","PHMO1":"COMMERCIAL","PHHARK":"MANAGED MCR","PCHEND":"HOSPICE","PCHHIL":"HOSPICE","PCHKIN":"HOSPICE","PCHSTJ":"HOSPICE","PCHVNA":"HOSPICE","PHHUML":"COMMERCIAL","PHMEDC":"COMMERCIAL","PHMERT":"COMMERCIAL","PHMOMD":"MANAGED MCD","PMNENN":"MEDICAID","PCHSUN":"HOSPICE","PHGOLD":"COMMERCIAL","PHUHCA":"MANAGED MCD","PHUMR":"COMMERCIAL","PHNTCC":"COMMERCIAL","PHAONF":"COMMERCIAL","PHDPUD":"MANAGED MCD","PHDPUH":"MANAGED MCR","PMNEDP":"MEDICAID","PCHEVE":"HOSPICE","PCHG":"HOSPICE","PHHEAL":"MANAGED MCD","PCHHC":"HOSPICE","PCHCOM":"HOSPICE","PCHH":"HOSPICE","PCHPEA":"HOSPICE","PCHTRH":"HOSPICE","PHHUMA":"COMMERCIAL","PHTRI":"COMMERCIAL","PHAARP":"COMMERCIAL","PHAMBC":"COMMERCIAL","PHAUXI":"COMMERCIAL","PHBANK":"COMMERCIAL","PHGSOU":"COMMERCIAL","PCHCHU":"HOSPICE","PCHENJ":"HOSPICE","HSPP":"PRIVATE","PCHCRO":"HOSPICE","PCHTRA":"HOSPICE","PHMANH":"COMMERCIAL","PHMEMA":"COMMERCIAL","PHNALC":"COMMERCIAL","NEMENR":"MEDICAID","PMNEUN":"MEDICAID","NRAEMC":"MANAGED MCR","NRHUMC":"MANAGED MCR","PHNAES":"COMMERCIAL","PHOSCA":"COMMERCIAL","PHRES":"RSPITE","PHTHRI":"COMMERCIAL","PHUHMC":"MANAGED MCD","PHUNIA":"COMMERCIAL","PVVET":"COMMERCIAL","PCHAME":"HOSPICE","PCHHRZ":"HOSPICE","PHAENT":"MANAGED MCR","PHBCFD":"COMMERCIAL","PHBCB":"MANAGED MCR","PHBCMR":"MANAGED MCR","PCHHOU":"HOSPICE","PHMLNM":"MANAGED MCD","PHOPHC":"COMMERCIAL","PPRVHC":"COMMERCIAL","PHATEN":"MANAGED MCR","PCHHH":"HOSPICE","PCHN":"HOSPICE","PHMED":"MANAGED MCR","PHMOLC":"MANAGED MCD","PHNETC":"MANAGED MCD","PCHR":"RSPITE","PCHSC":"HOSPICE","PCHTH":"HOSPICE","PHUHMD":"MANAGED MCD","PHUHC":"MANAGED MCR","PHAMR":"MANAGED MCR","PHAFLC":"COMMERCIAL","PHAMB":"MANAGED MCD","PCHADS":"HOSPICE","PCHANG":"HOSPICE","PHBCM":"MANAGED MCR","PCHC":"HOSPICE","PPRVCR":"COMMERCIAL","PCHEDJ":"HOSPICE","PHGEHA":"COMMERCIAL","PCHGTA":"HOSPICE","PHHMMD":"MANAGED MCD","PHHBMD":"MANAGED MCD","PHBMD":"MANAGED MCD","PCHHCH":"HOSPICE","PCHMW":"HOSPICE","PHMOLM":"MANAGED MCD","PHNTTC":"MANAGED MCD","PCHSCX":"HOSPICE","PHUHCN":"MANAGED MCR","PHUHMR":"MANAGED MCR","PHUHTC":"MANAGED MCD","PHWEMR":"MANAGED MCR","PCHAV":"HOSPICE","PHETNA":"MANAGED MCR","PHCARE":"MANAGED MCR","PCHCP":"HOSPICE","PHDEVO":"MANAGED MCD","PCHGH":"HOSPICE","PCHALL":"HOSPICE","PCHELA":"HOSPICE","PCHEM":"HOSPICE","PCHEME":"HOSPICE","PCHFH":"HOSPICE","PCHHG":"HOSPICE","PCHLEG":"HOSPICE","PCHLP":"HOSPICE","PCHRVR":"HOSPICE","PCHROS":"HOSPICE","PCHSEA":"HOSPICE","PCHTRD":"HOSPICE","PCHHGR":"HOSPICE","PHLIFE":"MANAGED MCR","PHPRL":"COMMERCIAL","PMCADP":"MEDICARE","PCHM":"HOSPICE","PMOKNO":"MEDICAID","PMCANO":"MEDICARE","PMOK":"MEDICAID","PHVACC":"COMMERCIAL","PCHVL":"HOSPICE","PCHAPC":"HOSPICE","PCHACG":"HOSPICE","PHAETL":"MANAGED MCR","PHAEMT":"COMMERCIAL","PHAMCF":"COMMERCIAL","PHAMHO":"MANAGED MCR","PCHAPE":"HOSPICE","PCHASP":"HOSPICE","PCHBR":"HOSPICE","PHBROA":"COMMERCIAL","PCHOIC":"HOSPICE","PHCIGM":"MANAGED MCR","PHCHMC":"MANAGED MCR","PCHEC":"HOSPICE","PCHEMH":"HOSPICE","PCHEXC":"HOSPICE","PCHFRO":"HOSPICE","PHGHCO":"COMMERCIAL","PHGHMA":"MANAGED MCR","PCHGSH":"HOSPICE","PHHCCO":"COMMERCIAL","PCHHEA":"HOSPICE","PPRVP1":"PRIVATE","PHHUMO":"COMMERCIAL","PHLONG":"MANAGED MCR","PHMMMC":"MANAGED MCR","PHNO F":"COMMERCIAL","PHPCMC":"COMMERCIAL","PHSTAT":"COMMERCIAL","PCHSH":"HOSPICE","PHTRIW":"COMMERCIAL","PHUHCF":"COMMERCIAL","PHUHMF":"MANAGED MCR","PHWPA":"COMMERCIAL","PHWCTX":"MANAGED MCR","PHWORK":"COMMERCIAL","PCHAC":"HOSPICE","PCHAH":"HOSPICE","PCHCHH":"HOSPICE","PCHCH":"HOSPICE","PHCCCO":"COMMERCIAL","PCHRHS":"HOSPICE","PHFRIN":"COMMERCIAL","PCHFR":"HOSPICE","PHGPML":"COMMERCIAL","PHMSCO":"COMMERCIAL","PHIRON":"COMMERCIAL","PCHIND":"HOSPICE","PCHUAL":"HOSPICE","PCHRIV":"HOSPICE","PCHT":"HOSPICE","PHUFCW":"COMMERCIAL","PHUAIC":"COMMERCIAL","PHUNIV":"COMMERCIAL","PHAECM":"COMMERCIAL","PHATWB":"COMMERCIAL","PHBCMC":"MANAGED MCR","PHCIGL":"COMMERCIAL","PHCCMC":"MANAGED MCR","PCHCUS":"HOSPICE","PHCHCH":"COMMERCIAL","PHFIRS":"COMMERCIAL","PHGHMC":"MANAGED MCR","PCHGS":"HOSPICE","PHHCSO":"COMMERCIAL","PCHENH":"HOSPICE","PCHGRE":"HOSPICE","PHHUCC":"COMMERCIAL","PHHUMD":"MANAGED MCD","PHLIFC":"MANAGED MCD","PPRVLP":"COMMERCIAL","PHNF":"COMMERCIAL","PHOBJS":"COMMERCIAL","PHOPVA":"COMMERCIAL","PCHP":"HOSPICE","PHWCR":"COMMERCIAL","PHATM":"MANAGED MCD","PCHBLU":"HOSPICE","PMKY":"MEDICAID","PHNIPP":"COMMERCIAL","PMKYNO":"MEDICAID","PHCHER":"MANAGED MCR","PHGLOB":"MANAGED MCR","PCHAVO":"HOSPICE","PCHHCM":"HOSPICE","PCHGV":"HOSPICE","PCHHSP":"HOSPICE","PCHLIF":"HOSPICE","PCHHSG":"HOSPICE","PMCANM":"MEDICARE","PHRAVE":"COMMERCIAL","PHHUCL":"COMMERCIAL","PMKYC":"MEDICAID","PHLPTC":"COMMERCIAL","PHPAMD":"MANAGED MCD","PHUMC":"MANAGED MCR","PHWELM":"MANAGED MCR"};
 
   var censusState = {
-    sources: {},               // losReport/salesJournal/censusReport -> {fileName, rowCount, uploadedAt, records}
+    sources: {},               // losReport/censusReport -> {fileName, rowCount, uploadedAt, records}
     rows: [],                  // flat computed rows: {facility, cohortKey, year, month, days, payorCode, payerType}
-    salesRows: [],              // flat computed sales rows for Skilled Analysis: {facility, cohortKey, year, month, family, label, units, gross, net, payorName}
     daysRows: [],               // flat computed rows for Census Days by Month: {facility, cohortKey, year, month, payorType, payorName, days}
     pctRows: [],                 // flat computed rows for Census % by Month: {facility, cohortKey, year, month, census, capacity, pctUsed}
     facilities: [],
@@ -2533,10 +2684,35 @@
     selectedMonthsCal: new Set(),
     liveMode: false
   };
-  var censusSkilledOpenFamilies = {}; // family label -> bool, expand/collapse state for the Skilled Analysis table
+
+  // Skilled Analysis is its own standalone app (separate home screen tile),
+  // but reads the same salesJournal/payerMap data from /api/census-dataset —
+  // it just keeps independent frontend state from Census Trends, same as
+  // any other two apps in Vantis.
+  var skilledState = {
+    sources: {},               // salesJournal/payerMap -> {fileName, rowCount, uploadedAt, records|dataRows+typeRows}
+    rows: [],                  // flat computed rows: {facility, cohortKey, year, month, family, label, payerType, payorName, units, gross, net}
+    facilities: [],
+    selectedFacilities: new Set(),
+    payerTypes: [],
+    selectedPayerTypes: new Set(),
+    years: [],
+    selectedYears: new Set(),
+    monthsPresent: [],
+    selectedMonthsCal: new Set(),
+    liveMode: false
+  };
+  var skilledOpenFamilies = {}; // family label -> bool, expand/collapse state for the Skilled Analysis table
 
   function censusShowToast(msg){
     var t = document.getElementById('censusToast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 3200);
+  }
+
+  function skilledShowToast(msg){
+    var t = document.getElementById('skilledToast');
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(function(){ t.classList.remove('show'); }, 3200);
@@ -2605,8 +2781,10 @@
   // any has been published) — same shape as the embedded defaults, so
   // censusResolvePayerType can check "was something imported that overrides
   // this?" before falling back to what ships with the app.
-  function censusBuildUploadedPayerMapping(){
-    var payload = censusState.sources.payerMap;
+  // Generic — accepts any source's payerMap payload (Census Trends and
+  // Skilled Analysis each keep their own independent copy of it, fetched
+  // from the same backend endpoint, so both pass their own in here).
+  function buildUploadedPayerMapping(payload){
     if(!payload || !payload.dataRows) return null;
     var exactMap = {}, codeVotes = {};
     payload.dataRows.forEach(function(r){
@@ -2633,6 +2811,9 @@
       if(t) byCodeFallback[code] = t;
     });
     return {byCompanyCode: byCompanyCode, byCodeFallback: byCodeFallback, typeMap: typeMap};
+  }
+  function censusBuildUploadedPayerMapping(){
+    return buildUploadedPayerMapping(censusState.sources.payerMap);
   }
 
   // Resolves a (company, payor code) pair to a payer type. An imported Payer
@@ -2711,20 +2892,6 @@
       };
     }) : [];
 
-    var salesSrc = censusState.sources.salesJournal;
-    censusState.salesRows = (salesSrc && salesSrc.records) ? salesSrc.records.map(function(rec){
-      var startDate = new Date(rec.startISO);
-      var year = startDate.getFullYear(), month = startDate.getMonth();
-      var cls = censusSkilledClassify(uploadedMapping, rec.company, rec.payorCode, rec.payorName);
-      return {
-        facility: rec.company,
-        cohortKey: year*12+month,
-        year: year, month: month,
-        family: cls.family, label: cls.label, payorName: rec.payorName, payerType: cls.payerType,
-        units: rec.units, gross: rec.gross, net: rec.net
-      };
-    }) : [];
-
     var censusSrc = censusState.sources.censusReport;
     censusState.daysRows = (censusSrc && censusSrc.detailRecords) ? censusSrc.detailRecords.map(function(rec){
       var monthIdx = MONTH_IDX[rec.monthAbbr];
@@ -2754,7 +2921,6 @@
 
     var facSet = {};
     censusState.rows.forEach(function(r){ facSet[r.facility]=true; });
-    censusState.salesRows.forEach(function(r){ facSet[r.facility]=true; });
     censusState.daysRows.forEach(function(r){ facSet[r.facility]=true; });
     censusState.pctRows.forEach(function(r){ facSet[r.facility]=true; });
     censusState.facilities = Object.keys(facSet).sort();
@@ -2762,14 +2928,12 @@
 
     var typeSet = {};
     censusState.rows.forEach(function(r){ typeSet[r.payerType]=true; });
-    censusState.salesRows.forEach(function(r){ typeSet[r.payerType]=true; });
     censusState.daysRows.forEach(function(r){ typeSet[r.payerType]=true; });
     censusState.payerTypes = Object.keys(typeSet).sort();
     syncSelection(censusState.payerTypes, censusState.selectedPayerTypes);
 
     var yearSet = {}, monthSet = {};
     censusState.rows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
-    censusState.salesRows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
     censusState.daysRows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
     censusState.pctRows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
     censusState.years = Object.keys(yearSet).map(Number).sort(function(a,b){return a-b;});
@@ -2778,10 +2942,75 @@
     syncSelection(censusState.monthsPresent, censusState.selectedMonthsCal);
   }
 
+  // Rebuilds skilledState.rows from the Sales Journal, same shape/logic as
+  // Census Trends' censusRebuild(), just targeting skilledState's own
+  // independent filter option sets and selections.
+  function skilledRebuild(){
+    var uploadedMapping = buildUploadedPayerMapping(skilledState.sources.payerMap);
+
+    var salesSrc = skilledState.sources.salesJournal;
+    skilledState.rows = (salesSrc && salesSrc.records) ? salesSrc.records.map(function(rec){
+      var startDate = new Date(rec.startISO);
+      var year = startDate.getFullYear(), month = startDate.getMonth();
+      var cls = censusSkilledClassify(uploadedMapping, rec.company, rec.payorCode, rec.payorName);
+      return {
+        facility: rec.company,
+        cohortKey: year*12+month,
+        year: year, month: month,
+        family: cls.family, label: cls.label, payorName: rec.payorName, payerType: cls.payerType,
+        units: rec.units, gross: rec.gross, net: rec.net
+      };
+    }) : [];
+
+    function syncSelection(newOptions, selectedSet){
+      var had = selectedSet.size > 0;
+      if(!had){ newOptions.forEach(function(o){ selectedSet.add(o); }); }
+      else { newOptions.forEach(function(o){ if(!selectedSet.has(o)) selectedSet.add(o); }); }
+    }
+
+    var facSet = {}; skilledState.rows.forEach(function(r){ facSet[r.facility]=true; });
+    skilledState.facilities = Object.keys(facSet).sort();
+    syncSelection(skilledState.facilities, skilledState.selectedFacilities);
+
+    var typeSet = {}; skilledState.rows.forEach(function(r){ typeSet[r.payerType]=true; });
+    skilledState.payerTypes = Object.keys(typeSet).sort();
+    syncSelection(skilledState.payerTypes, skilledState.selectedPayerTypes);
+
+    var yearSet = {}, monthSet = {};
+    skilledState.rows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
+    skilledState.years = Object.keys(yearSet).map(Number).sort(function(a,b){return a-b;});
+    skilledState.monthsPresent = Object.keys(monthSet).map(Number).sort(function(a,b){return a-b;});
+    syncSelection(skilledState.years, skilledState.selectedYears);
+    syncSelection(skilledState.monthsPresent, skilledState.selectedMonthsCal);
+  }
+
+  function skilledFilteredRows(){
+    return skilledState.rows.filter(function(r){
+      return skilledState.selectedFacilities.has(r.facility) &&
+        skilledState.selectedPayerTypes.has(r.payerType) &&
+        skilledState.selectedYears.has(r.year) &&
+        skilledState.selectedMonthsCal.has(r.month);
+    });
+  }
+
   function censusFilteredDaysRows(){
     return censusState.daysRows.filter(function(r){
       return censusState.selectedFacilities.has(r.facility) &&
         censusState.selectedPayerTypes.has(r.payerType) &&
+        censusState.selectedYears.has(r.year) &&
+        censusState.selectedMonthsCal.has(r.month);
+    });
+  }
+
+  // Same as above but ignoring the Payer Type filter — used as the
+  // denominator for the payer-mix % table, so each payer's percentage
+  // reflects its true share of ALL census days for the selected
+  // facilities/months, not just its share among whichever payers happen
+  // to be checked in the sidebar (which would make one selected payer
+  // trivially show 100%).
+  function censusFilteredDaysRowsAnyPayer(){
+    return censusState.daysRows.filter(function(r){
+      return censusState.selectedFacilities.has(r.facility) &&
         censusState.selectedYears.has(r.year) &&
         censusState.selectedMonthsCal.has(r.month);
     });
@@ -2794,15 +3023,6 @@
   function censusFilteredPctRows(){
     return censusState.pctRows.filter(function(r){
       return censusState.selectedFacilities.has(r.facility) &&
-        censusState.selectedYears.has(r.year) &&
-        censusState.selectedMonthsCal.has(r.month);
-    });
-  }
-
-  function censusFilteredSalesRows(){
-    return censusState.salesRows.filter(function(r){
-      return censusState.selectedFacilities.has(r.facility) &&
-        censusState.selectedPayerTypes.has(r.payerType) &&
         censusState.selectedYears.has(r.year) &&
         censusState.selectedMonthsCal.has(r.month);
     });
@@ -2863,11 +3083,31 @@
   /* ---------------------------------------------------------
      RENDER: Year / Month popout pickers
   --------------------------------------------------------- */
+  // Which row set backs the currently active tab — used to figure out
+  // which years/months in the shared picker actually have data for
+  // whatever the person is looking at right now (the Length of Stay
+  // report and the Census Report don't cover the same date range).
+  function censusActiveTabRows(){
+    if(censusActiveTab==='days') return censusState.daysRows;
+    if(censusActiveTab==='pct') return censusState.pctRows;
+    return censusState.rows;
+  }
+  function censusActiveTabLabel(){
+    if(censusActiveTab==='days' || censusActiveTab==='pct') return 'the Census Report';
+    return 'the Length of Stay report';
+  }
+
   function censusRenderYearMonthPickers(){
+    var activeRows = censusActiveTabRows();
+    var yearsWithData = {}, monthsWithData = {};
+    activeRows.forEach(function(r){ yearsWithData[r.year]=true; monthsWithData[r.month]=true; });
+    var anyYearMissing = censusState.years.some(function(y){ return !yearsWithData[y]; });
+
     var yearEl = document.getElementById('censusYearPicker');
     yearEl.innerHTML = censusState.years.map(function(y){
       var on = censusState.selectedYears.has(y);
-      return '<button class="cohort-chip'+(on?' on':'')+'" data-y="'+y+'">'+y+'</button>';
+      var noData = !yearsWithData[y];
+      return '<button class="cohort-chip'+(on?' on':'')+(noData?' no-data':'')+'" data-y="'+y+'"'+(noData?' title="No data for '+censusActiveTabLabel()+' in '+y+'"':'')+'>'+y+'</button>';
     }).join('');
     Array.prototype.forEach.call(yearEl.querySelectorAll('.cohort-chip'), function(btn){
       btn.addEventListener('click', function(){
@@ -2881,11 +3121,17 @@
     var yearsArr = Array.from(censusState.selectedYears).sort(function(a,b){return a-b;});
     document.getElementById('censusYearTriggerValue').textContent =
       yearsArr.length===0 ? '—' : (yearsArr.length<=3 ? yearsArr.join(', ') : yearsArr.length+' selected');
+    var yearHintEl = document.getElementById('censusYearHint');
+    if(yearHintEl){
+      yearHintEl.textContent = anyYearMissing ? ('— dimmed years have no data for '+censusActiveTabLabel()) : '— pick one or more';
+      yearHintEl.classList.toggle('warn', anyYearMissing);
+    }
 
     var monthEl = document.getElementById('censusMonthPicker');
     monthEl.innerHTML = censusState.monthsPresent.map(function(m){
       var on = censusState.selectedMonthsCal.has(m);
-      return '<button class="cohort-chip'+(on?' on':'')+'" data-m="'+m+'">'+MONTH_ABBR[m]+'</button>';
+      var noData = !monthsWithData[m];
+      return '<button class="cohort-chip'+(on?' on':'')+(noData?' no-data':'')+'" data-m="'+m+'"'+(noData?' title="No data for '+censusActiveTabLabel()+' in '+MONTH_ABBR[m]+'"':'')+'>'+MONTH_ABBR[m]+'</button>';
     }).join('');
     Array.prototype.forEach.call(monthEl.querySelectorAll('.cohort-chip'), function(btn){
       btn.addEventListener('click', function(){
@@ -2899,6 +3145,88 @@
     var monthsArr = Array.from(censusState.selectedMonthsCal).sort(function(a,b){return a-b;});
     document.getElementById('censusMonthTriggerValue').textContent =
       monthsArr.length===0 ? '—' : (monthsArr.length===censusState.monthsPresent.length ? 'All' : (monthsArr.length<=3 ? monthsArr.map(function(m){return MONTH_ABBR[m];}).join(', ') : monthsArr.length+' selected'));
+  }
+
+  /* =========================================================
+     SKILLED ANALYSIS — sidebar + Year/Month pickers, same
+     pattern as Census Trends' above, just targeting skilledState.
+  ========================================================== */
+  function skilledRenderFacilityList(filterText){
+    var el = document.getElementById('skilledFacilityList');
+    el.innerHTML = '';
+    var ft = (filterText||'').toLowerCase();
+    skilledState.facilities.forEach(function(f){
+      var hay = (censusFacilityShort(f)+' '+censusFacilityCode(f)+' '+f).toLowerCase();
+      if(ft && hay.indexOf(ft)===-1) return;
+      var row = document.createElement('label');
+      row.className = 'facility-row';
+      var checked = skilledState.selectedFacilities.has(f);
+      row.innerHTML = '<input type="checkbox"'+(checked?' checked':'')+'><span class="fname">'+censusFacilityShort(f)+'</span><span class="fcode">'+censusFacilityCode(f)+'</span>';
+      row.querySelector('input').addEventListener('change', function(e){
+        if(e.target.checked) skilledState.selectedFacilities.add(f);
+        else skilledState.selectedFacilities.delete(f);
+        document.getElementById('skilledFacCount').textContent = '('+skilledState.selectedFacilities.size+'/'+skilledState.facilities.length+')';
+        skilledRenderAll();
+      });
+      el.appendChild(row);
+    });
+    document.getElementById('skilledFacCount').textContent = '('+skilledState.selectedFacilities.size+'/'+skilledState.facilities.length+')';
+  }
+
+  function skilledRenderPayerList(){
+    var el = document.getElementById('skilledPayerList');
+    el.innerHTML = '';
+    skilledState.payerTypes.forEach(function(t){
+      var d = document.createElement('label');
+      var checked = skilledState.selectedPayerTypes.has(t);
+      d.className = 'payer-option' + (checked?' active':'');
+      d.innerHTML = '<input type="checkbox" value="'+t+'"'+(checked?' checked':'')+'><span>'+censusPayerTypeLabel(t)+'</span>';
+      d.querySelector('input').addEventListener('change', function(e){
+        if(e.target.checked){ skilledState.selectedPayerTypes.add(t); }
+        else if(skilledState.selectedPayerTypes.size>1){ skilledState.selectedPayerTypes.delete(t); }
+        else { e.target.checked = true; skilledShowToast('At least one payer type must stay selected.'); return; }
+        skilledRenderAll();
+      });
+      el.appendChild(d);
+    });
+  }
+
+  function skilledRenderYearMonthPickers(){
+    var yearEl = document.getElementById('skilledYearPicker');
+    yearEl.innerHTML = skilledState.years.map(function(y){
+      var on = skilledState.selectedYears.has(y);
+      return '<button class="cohort-chip'+(on?' on':'')+'" data-y="'+y+'">'+y+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(yearEl.querySelectorAll('.cohort-chip'), function(btn){
+      btn.addEventListener('click', function(){
+        var y = Number(btn.getAttribute('data-y'));
+        if(skilledState.selectedYears.has(y) && skilledState.selectedYears.size>1) skilledState.selectedYears.delete(y);
+        else if(!skilledState.selectedYears.has(y)) skilledState.selectedYears.add(y);
+        else { skilledShowToast('At least one year must stay selected.'); return; }
+        skilledRenderAll();
+      });
+    });
+    var yearsArr = Array.from(skilledState.selectedYears).sort(function(a,b){return a-b;});
+    document.getElementById('skilledYearTriggerValue').textContent =
+      yearsArr.length===0 ? '—' : (yearsArr.length<=3 ? yearsArr.join(', ') : yearsArr.length+' selected');
+
+    var monthEl = document.getElementById('skilledMonthPicker');
+    monthEl.innerHTML = skilledState.monthsPresent.map(function(m){
+      var on = skilledState.selectedMonthsCal.has(m);
+      return '<button class="cohort-chip'+(on?' on':'')+'" data-m="'+m+'">'+MONTH_ABBR[m]+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(monthEl.querySelectorAll('.cohort-chip'), function(btn){
+      btn.addEventListener('click', function(){
+        var m = Number(btn.getAttribute('data-m'));
+        if(skilledState.selectedMonthsCal.has(m) && skilledState.selectedMonthsCal.size>1) skilledState.selectedMonthsCal.delete(m);
+        else if(!skilledState.selectedMonthsCal.has(m)) skilledState.selectedMonthsCal.add(m);
+        else { skilledShowToast('At least one month must stay selected.'); return; }
+        skilledRenderAll();
+      });
+    });
+    var monthsArr = Array.from(skilledState.selectedMonthsCal).sort(function(a,b){return a-b;});
+    document.getElementById('skilledMonthTriggerValue').textContent =
+      monthsArr.length===0 ? '—' : (monthsArr.length===skilledState.monthsPresent.length ? 'All' : (monthsArr.length<=3 ? monthsArr.map(function(m){return MONTH_ABBR[m];}).join(', ') : monthsArr.length+' selected'));
   }
 
   /* ---------------------------------------------------------
@@ -2917,7 +3245,7 @@
       {lbl:'Facilities selected', val: censusState.selectedFacilities.size+' / '+censusState.facilities.length},
       {lbl:'Stays in selection', val: rows.length.toLocaleString()},
       {lbl:'Average length of stay', val: avgDays==null?'—':avgDays.toFixed(1)+' days'},
-      {lbl:'Data covers', val: allCohorts.length? (censusKeyLabel(allCohorts[0])+' – '+censusKeyLabel(allCohorts[allCohorts.length-1])) : '—'}
+      {lbl:'Length of Stay covers', val: allCohorts.length? (censusKeyLabel(allCohorts[0])+' – '+censusKeyLabel(allCohorts[allCohorts.length-1])) : '—'}
     ];
     el.innerHTML = cards.map(function(c){
       return '<div class="kpi-card"><div class="lbl">'+c.lbl+'</div><div class="val mono">'+c.val+'</div></div>';
@@ -3004,10 +3332,10 @@
   /* ---------------------------------------------------------
      RENDER: Skilled Analysis — days / avg daily rate / PPD by
      payer family (Medicare, HMO Medicare PDPM, HMO Medicare
-     Levels, HMO Commercial, etc.), with HMO families expandable
-     to show the individual payors rolled into each one.
+     Levels, HMO Commercial, etc.), with HMO/Unmapped families
+     expandable to show the individual payors rolled into each.
   --------------------------------------------------------- */
-  function censusSkilledMetrics(rows){
+  function skilledMetrics(rows){
     var units=0, gross=0, net=0;
     rows.forEach(function(r){ units += r.units; gross += (r.gross||0); net += (r.net||0); });
     return {
@@ -3017,13 +3345,13 @@
     };
   }
 
-  function censusRenderSkilled(){
+  function skilledRenderTable(){
     var kpiEl = document.getElementById('skilledKpiStrip');
     var table = document.getElementById('skilledTable');
     if(!kpiEl || !table) return;
-    var rows = censusFilteredSalesRows();
+    var rows = skilledFilteredRows();
 
-    if(!censusState.sources.salesJournal){
+    if(!skilledState.sources.salesJournal){
       kpiEl.innerHTML = '';
       table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
       return;
@@ -3034,9 +3362,9 @@
       return;
     }
 
-    var overall = censusSkilledMetrics(rows);
+    var overall = skilledMetrics(rows);
     kpiEl.innerHTML = [
-      {lbl:'Facilities selected', val: censusState.selectedFacilities.size+' / '+censusState.facilities.length},
+      {lbl:'Facilities selected', val: skilledState.selectedFacilities.size+' / '+skilledState.facilities.length},
       {lbl:'Total days', val: overall.days.toLocaleString()},
       {lbl:'Blended average daily rate', val: overall.adr==null?'—':'$'+overall.adr.toFixed(2)},
       {lbl:'Blended PPD', val: overall.ppd==null?'—':'$'+overall.ppd.toFixed(2)}
@@ -3047,16 +3375,16 @@
     var byLabel = {};
     rows.forEach(function(r){ (byLabel[r.label] = byLabel[r.label] || []).push(r); });
     var labels = Object.keys(byLabel).sort(function(a,b){
-      return censusSkilledMetrics(byLabel[b]).days - censusSkilledMetrics(byLabel[a]).days;
+      return skilledMetrics(byLabel[b]).days - skilledMetrics(byLabel[a]).days;
     });
 
     var thead = '<thead><tr><th>Payer</th><th>Days</th><th>Avg Daily Rate</th><th>PPD</th></tr></thead>';
 
     var bodyRows = labels.map(function(label){
       var groupRows = byLabel[label];
-      var m = censusSkilledMetrics(groupRows);
+      var m = skilledMetrics(groupRows);
       var isHmo = label.indexOf('HMO ') === 0 || label === 'Unmapped';
-      var isOpen = !!censusSkilledOpenFamilies[label];
+      var isOpen = !!skilledOpenFamilies[label];
 
       var headerRow =
         '<tr class="'+(isHmo?'skilled-expandable':'')+'" data-label="'+label.replace(/"/g,'&quot;')+'">' +
@@ -3074,10 +3402,10 @@
           (byPayor[pn] = byPayor[pn] || []).push(r);
         });
         var payorNames = Object.keys(byPayor).sort(function(a,b){
-          return censusSkilledMetrics(byPayor[b]).days - censusSkilledMetrics(byPayor[a]).days;
+          return skilledMetrics(byPayor[b]).days - skilledMetrics(byPayor[a]).days;
         });
         childRowsHtml = payorNames.map(function(pn){
-          var pm = censusSkilledMetrics(byPayor[pn]);
+          var pm = skilledMetrics(byPayor[pn]);
           return '<tr class="skilled-child-row"><th>'+pn+'</th>' +
             '<td class="dollar-cell">'+pm.days.toLocaleString()+'</td>' +
             '<td class="dollar-cell">'+(pm.adr==null?'—':'$'+pm.adr.toFixed(2))+'</td>' +
@@ -3094,17 +3422,17 @@
     Array.prototype.forEach.call(table.querySelectorAll('.skilled-expandable'), function(tr){
       tr.addEventListener('click', function(){
         var label = tr.getAttribute('data-label');
-        censusSkilledOpenFamilies[label] = !censusSkilledOpenFamilies[label];
-        censusRenderSkilled();
+        skilledOpenFamilies[label] = !skilledOpenFamilies[label];
+        skilledRenderTable();
       });
     });
   }
 
-  // Shared by both Skilled "by month" tables below — groups the currently
-  // filtered sales rows by [label][cohortKey] once, so neither table has
-  // to re-scan the row list per cell.
-  function censusSkilledByMonthGroups(){
-    var rows = censusFilteredSalesRows();
+  // Shared by the three Skilled "by month" tables below — groups the
+  // currently filtered sales rows by [label][cohortKey] once, so none of
+  // them has to re-scan the row list per cell.
+  function skilledByMonthGroups(){
+    var rows = skilledFilteredRows();
     var byLabelCohort = {};
     rows.forEach(function(r){
       var k = r.label+'||'+r.cohortKey;
@@ -3119,20 +3447,16 @@
     return {rows: rows, byLabelCohort: byLabelCohort, labels: labels, cohorts: cohorts};
   }
 
-  /* ---------------------------------------------------------
-     RENDER: Skilled Analysis — Days by month, one row per payer
-     label (same labels as the summary table above, just not
-     expandable to individual payors here, to keep the grid
-     readable).
-  --------------------------------------------------------- */
-  function censusRenderSkilledDaysByMonth(){
-    var table = document.getElementById('skilledDaysByMonthTable');
+  // Generic renderer for the three "by month" tables (Days/ADR/PPD) — they
+  // only differ in which value they pull out of each cell's {units,gross,net}.
+  function skilledRenderByMonthTable(tableId, valueFn){
+    var table = document.getElementById(tableId);
     if(!table) return;
-    if(!censusState.sources.salesJournal){
+    if(!skilledState.sources.salesJournal){
       table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet.</td></tr>';
       return;
     }
-    var g = censusSkilledByMonthGroups();
+    var g = skilledByMonthGroups();
     if(!g.labels.length || !g.cohorts.length){
       table.innerHTML = '<tr><td class="empty-note">No sales journal data matches the current filters.</td></tr>';
       return;
@@ -3141,39 +3465,99 @@
     var bodyRows = g.labels.map(function(label){
       var cells = g.cohorts.map(function(ck){
         var cell = g.byLabelCohort[label+'||'+ck];
-        return cell ? '<td class="dollar-cell">'+cell.units.toLocaleString()+'</td>' : '<td class="empty">—</td>';
+        var v = cell ? valueFn(cell) : null;
+        return v==null ? '<td class="empty">—</td>' : '<td class="dollar-cell">'+v+'</td>';
       }).join('');
       return '<tr><th>'+label+'</th>'+cells+'</tr>';
     }).join('');
     table.innerHTML = thead + '<tbody>' + bodyRows + '</tbody>';
   }
 
+  function skilledRenderDaysByMonth(){
+    skilledRenderByMonthTable('skilledDaysByMonthTable', function(cell){
+      return cell.units ? cell.units.toLocaleString() : (cell.units===0 ? '0' : null);
+    });
+  }
+  function skilledRenderAdrByMonth(){
+    skilledRenderByMonthTable('skilledAdrByMonthTable', function(cell){
+      return cell.units ? '$'+(cell.gross/cell.units).toFixed(2) : null;
+    });
+  }
+  function skilledRenderPpdByMonth(){
+    skilledRenderByMonthTable('skilledPpdByMonthTable', function(cell){
+      return cell.units ? '$'+(cell.net/cell.units).toFixed(2) : null;
+    });
+  }
+
   /* ---------------------------------------------------------
-     RENDER: Skilled Analysis — PPD by month, same shape as the
-     Days-by-month table above.
+     RENDER: PPD trend chart — one line per payer label (the
+     same rows currently shown in the summary table), so rate
+     trends are visible at a glance, not just in the tables.
   --------------------------------------------------------- */
-  function censusRenderSkilledPpdByMonth(){
-    var table = document.getElementById('skilledPpdByMonthTable');
-    if(!table) return;
-    if(!censusState.sources.salesJournal){
-      table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet.</td></tr>';
+  function skilledRenderChart(){
+    var holder = document.getElementById('skilledChartHolder');
+    if(!holder) return;
+    if(!skilledState.sources.salesJournal){
+      holder.innerHTML = '<div class="empty-note">No Sales Journal has been imported yet.</div>';
       return;
     }
-    var g = censusSkilledByMonthGroups();
-    if(!g.labels.length || !g.cohorts.length){
-      table.innerHTML = '<tr><td class="empty-note">No sales journal data matches the current filters.</td></tr>';
+    var g = skilledByMonthGroups();
+    if(!g.labels.length || g.cohorts.length < 2){
+      holder.innerHTML = '<div class="empty-note">Need at least two months in the current selection to draw a trend.</div>';
       return;
     }
-    var thead = '<thead><tr><th>Payer</th>' + g.cohorts.map(function(ck){return '<th>'+censusKeyLabel(ck)+'</th>';}).join('') + '</tr></thead>';
-    var bodyRows = g.labels.map(function(label){
-      var cells = g.cohorts.map(function(ck){
+
+    var palette = ['#0F6B4C','#17A673','#D99B2B','#C1503B','#5B6B62','#2E86AB','#8E5FB0','#B98B4E','#4472C4','#70AD47'];
+    var topLabels = g.labels.slice(0, 8); // keep the chart readable — biggest payers by volume
+    var series = topLabels.map(function(label, i){
+      var pts = g.cohorts.map(function(ck){
         var cell = g.byLabelCohort[label+'||'+ck];
-        if(!cell || !cell.units) return '<td class="empty">—</td>';
-        return '<td class="dollar-cell">$'+(cell.net/cell.units).toFixed(2)+'</td>';
-      }).join('');
-      return '<tr><th>'+label+'</th>'+cells+'</tr>';
-    }).join('');
-    table.innerHTML = thead + '<tbody>' + bodyRows + '</tbody>';
+        return (cell && cell.units) ? {x: ck, y: cell.net/cell.units} : null;
+      }).filter(function(p){ return p; });
+      return {label: label, color: palette[i%palette.length], pts: pts};
+    }).filter(function(s){ return s.pts.length>=2; });
+
+    if(!series.length){
+      holder.innerHTML = '<div class="empty-note">Not enough data points to draw a trend for the current selection.</div>';
+      return;
+    }
+
+    var allY = []; series.forEach(function(s){ s.pts.forEach(function(p){ allY.push(p.y); }); });
+    var maxY = Math.max.apply(null, allY), minY = Math.min(0, Math.min.apply(null, allY));
+
+    var W=Math.max(640, holder.clientWidth||760), H=340, padL=56,padR=20,padT=16,padB=36;
+    var plotW = W-padL-padR, plotH = H-padT-padB;
+    function xPix(ck){ return padL + ((ck-g.cohorts[0])/(g.cohorts[g.cohorts.length-1]-g.cohorts[0]))*plotW; }
+    function yPix(y){ return padT + (1-(y-minY)/(maxY-minY||1))*plotH; }
+
+    var svg = '<svg class="chart" width="100%" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">';
+    var steps = 4;
+    for(var i=0;i<=steps;i++){
+      var gv = minY + (maxY-minY)*(i/steps);
+      var gy = yPix(gv);
+      svg += '<line x1="'+padL+'" y1="'+gy+'" x2="'+(W-padR)+'" y2="'+gy+'" stroke="#DEE5DA" stroke-width="1"/>';
+      svg += '<text x="'+(padL-8)+'" y="'+(gy+4)+'" font-size="10" text-anchor="end">$'+gv.toFixed(0)+'</text>';
+    }
+    g.cohorts.forEach(function(ck){
+      svg += '<text x="'+xPix(ck)+'" y="'+(H-padB+16)+'" font-size="10" text-anchor="middle">'+censusKeyLabel(ck)+'</text>';
+    });
+    series.forEach(function(s){
+      var d = s.pts.map(function(p,i){ return (i===0?'M':'L')+xPix(p.x).toFixed(1)+','+yPix(p.y).toFixed(1); }).join(' ');
+      svg += '<path d="'+d+'" fill="none" stroke="'+s.color+'" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"/>';
+      s.pts.forEach(function(p){
+        svg += '<circle cx="'+xPix(p.x).toFixed(1)+'" cy="'+yPix(p.y).toFixed(1)+'" r="2.6" fill="'+s.color+'"><title>'+s.label+' · '+censusKeyLabel(p.x)+' · $'+p.y.toFixed(2)+'</title></circle>';
+      });
+    });
+    svg += '</svg>';
+
+    var legend = '<div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;">' + series.map(function(s){
+      return '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);"><span style="width:10px;height:10px;border-radius:2px;background:'+s.color+';display:inline-block;"></span>'+s.label+'</div>';
+    }).join('') + '</div>';
+    if(g.labels.length > topLabels.length){
+      legend += '<div style="font-size:11px;color:var(--ink-faint);margin-top:8px;">Showing the '+topLabels.length+' largest payers by volume — narrow your Payer Type filter to see others.</div>';
+    }
+
+    holder.innerHTML = svg + legend;
   }
 
   /* ---------------------------------------------------------
@@ -3200,9 +3584,12 @@
     }
 
     var totalDays = 0; rows.forEach(function(r){ totalDays += r.days; });
+    var allCohortSet = {}; censusState.daysRows.forEach(function(r){ allCohortSet[r.cohortKey]=true; });
+    var allCohorts = Object.keys(allCohortSet).map(Number).sort(function(a,b){return a-b;});
     kpiEl.innerHTML = [
       {lbl:'Facilities selected', val: censusState.selectedFacilities.size+' / '+censusState.facilities.length},
-      {lbl:'Total census days', val: totalDays.toLocaleString()}
+      {lbl:'Total census days', val: totalDays.toLocaleString()},
+      {lbl:'Census Report covers', val: allCohorts.length? (censusKeyLabel(allCohorts[0])+' – '+censusKeyLabel(allCohorts[allCohorts.length-1])) : '—'}
     ].map(function(c){
       return '<div class="kpi-card"><div class="lbl">'+c.lbl+'</div><div class="val mono">'+c.val+'</div></div>';
     }).join('');
@@ -3300,9 +3687,12 @@
     var totalCensus=0, totalCapacity=0;
     rows.forEach(function(r){ if(r.census!=null) totalCensus+=r.census; if(r.capacity!=null) totalCapacity+=r.capacity; });
     var blendedPct = totalCapacity ? (totalCensus/totalCapacity*100) : null;
+    var allCohortSet = {}; censusState.pctRows.forEach(function(r){ allCohortSet[r.cohortKey]=true; });
+    var allCohorts = Object.keys(allCohortSet).map(Number).sort(function(a,b){return a-b;});
     kpiEl.innerHTML = [
       {lbl:'Facilities selected', val: censusState.selectedFacilities.size+' / '+censusState.facilities.length},
-      {lbl:'Blended occupancy', val: blendedPct==null?'—':blendedPct.toFixed(1)+'%'}
+      {lbl:'Blended occupancy', val: blendedPct==null?'—':blendedPct.toFixed(1)+'%'},
+      {lbl:'Census Report covers', val: allCohorts.length? (censusKeyLabel(allCohorts[0])+' – '+censusKeyLabel(allCohorts[allCohorts.length-1])) : '—'}
     ].map(function(c){
       return '<div class="kpi-card"><div class="lbl">'+c.lbl+'</div><div class="val mono">'+c.val+'</div></div>';
     }).join('');
@@ -3350,9 +3740,10 @@
   function censusRenderPayerMixTable(){
     var table = document.getElementById('censusPayerMixTable');
     if(!table) return;
-    var rows = censusFilteredDaysRows();
+    var rows = censusFilteredDaysRows();           // which payer rows to display
+    var totalRows = censusFilteredDaysRowsAnyPayer(); // true totals, independent of payer selection
     var types = censusState.payerTypes.filter(function(t){ return censusState.selectedPayerTypes.has(t); });
-    var cohortSet = {}; rows.forEach(function(r){ cohortSet[r.cohortKey]=true; });
+    var cohortSet = {}; totalRows.forEach(function(r){ cohortSet[r.cohortKey]=true; });
     var cohorts = Object.keys(cohortSet).map(Number).sort(function(a,b){return a-b;});
 
     if(!censusState.sources.censusReport){
@@ -3365,6 +3756,8 @@
     rows.forEach(function(r){
       var k = r.payerType+'||'+r.cohortKey;
       byTypeCohort[k] = (byTypeCohort[k]||0) + r.days;
+    });
+    totalRows.forEach(function(r){
       totalByCohort[r.cohortKey] = (totalByCohort[r.cohortKey]||0) + r.days;
     });
 
@@ -3457,9 +3850,6 @@
     censusRenderFacilityTable();
     censusRenderPayerTable();
     censusRenderChart();
-    censusRenderSkilled();
-    censusRenderSkilledDaysByMonth();
-    censusRenderSkilledPpdByMonth();
     censusRenderDaysTable();
     censusRenderDaysPayerTable();
     censusRenderPctTable();
@@ -3482,11 +3872,11 @@
   }
 
   function censusRefreshAfterSourceChange(){
-    if(censusState.sources.losReport || censusState.sources.salesJournal || censusState.sources.censusReport){
+    if(censusState.sources.losReport || censusState.sources.censusReport){
       document.getElementById('censusDropzone').classList.add('hidden');
       document.getElementById('censusApp').style.display = 'flex';
-      var loadedCount = CENSUS_SOURCE_KEYS.filter(function(k){ return !!censusState.sources[k]; }).length;
-      document.getElementById('censusTopSub').textContent = censusState.facilities.length + ' facilities · ' + loadedCount + ' / ' + CENSUS_SOURCE_KEYS.length + ' sources loaded';
+      var loadedCount = ['losReport','censusReport'].filter(function(k){ return !!censusState.sources[k]; }).length;
+      document.getElementById('censusTopSub').textContent = censusState.facilities.length + ' facilities · ' + loadedCount + ' / 2 sources loaded';
     }
     censusRenderFacilityList(document.getElementById('censusFacSearch') ? document.getElementById('censusFacSearch').value : '');
     censusRenderPayerList();
@@ -3495,11 +3885,6 @@
 
   function censusHydrateServerLOS(payload){
     censusState.sources.losReport = {
-      fileName: payload.fileName, rowCount: payload.rowCount, uploadedAt: payload.uploadedAt, records: payload.records
-    };
-  }
-  function censusHydrateServerSalesJournal(payload){
-    censusState.sources.salesJournal = {
       fileName: payload.fileName, rowCount: payload.rowCount, uploadedAt: payload.uploadedAt, records: payload.records
     };
   }
@@ -3526,14 +3911,11 @@
       if(payload && payload.losReport && payload.losReport.records && payload.losReport.records.length){
         censusHydrateServerLOS(payload.losReport); any = true;
       }
-      if(payload && payload.salesJournal && payload.salesJournal.records && payload.salesJournal.records.length){
-        censusHydrateServerSalesJournal(payload.salesJournal); any = true;
-      }
       if(payload && payload.censusReport && payload.censusReport.detailRecords && payload.censusReport.detailRecords.length){
         censusHydrateServerCensusReport(payload.censusReport); any = true;
       }
       if(payload && payload.payerMap){
-        censusHydrateServerPayerMap(payload.payerMap);
+        censusHydrateServerPayerMap(payload.payerMap); // still needed here — LOS/Days/Pct payer-type resolution uses it too
       }
       if(any){
         censusRebuild();
@@ -3563,6 +3945,14 @@
       censusRenderFacilityList(document.getElementById('censusFacSearch').value);
       censusRenderAll();
     });
+    document.getElementById('censusPayerAll').addEventListener('click', function(){
+      censusState.selectedPayerTypes = new Set(censusState.payerTypes);
+      censusRenderAll();
+    });
+    document.getElementById('censusPayerNone').addEventListener('click', function(){
+      censusState.selectedPayerTypes = new Set();
+      censusRenderAll();
+    });
   }
 
   function censusInitPopouts(){
@@ -3570,9 +3960,117 @@
     registerPopout('censusMonthTrigger', 'censusMonthPanel');
   }
 
+  /* =========================================================
+     SKILLED ANALYSIS — remaining wiring (hydration, live mode,
+     refresh-after-change, master render, search/select-all,
+     popouts, dropzone). Mirrors the Census Trends block above.
+  ========================================================== */
+  function skilledRenderAll(){
+    skilledRenderYearMonthPickers();
+    skilledRenderPayerList();
+    skilledRenderTable();
+    skilledRenderChart();
+    skilledRenderDaysByMonth();
+    skilledRenderAdrByMonth();
+    skilledRenderPpdByMonth();
+  }
+
+  function skilledSourceStatusText(sourceKey){
+    var src = skilledState.sources[sourceKey];
+    if(!src) return 'Not loaded yet';
+    var when = src.uploadedAt ? new Date(src.uploadedAt).toLocaleString() : '';
+    return src.rowCount.toLocaleString() + ' rows' + (when ? ' · updated '+when : '');
+  }
+
+  function skilledRefreshAfterSourceChange(){
+    if(skilledState.sources.salesJournal){
+      document.getElementById('skilledDropzone').classList.add('hidden');
+      document.getElementById('skilledApp').style.display = 'flex';
+      var loadedCount = ['salesJournal','payerMap'].filter(function(k){ return !!skilledState.sources[k]; }).length;
+      document.getElementById('skilledTopSub').textContent = skilledState.facilities.length + ' facilities · ' + loadedCount + ' / 2 sources loaded';
+    }
+    skilledRenderFacilityList(document.getElementById('skilledFacSearch') ? document.getElementById('skilledFacSearch').value : '');
+    skilledRenderPayerList();
+    skilledRenderAll();
+  }
+
+  function skilledHydrateServerSalesJournal(payload){
+    skilledState.sources.salesJournal = {
+      fileName: payload.fileName, rowCount: payload.rowCount, uploadedAt: payload.uploadedAt, records: payload.records
+    };
+  }
+  function skilledHydrateServerPayerMap(payload){
+    skilledState.sources.payerMap = {
+      fileName: payload.fileName, rowCount: payload.rowCount, uploadedAt: payload.uploadedAt,
+      dataRows: payload.dataRows, typeRows: payload.typeRows
+    };
+  }
+
+  // Reads from the same /api/census-dataset endpoint Census Trends uses —
+  // it's a shared backend, Skilled Analysis just cares about a different
+  // subset of the payload (salesJournal + payerMap instead of losReport +
+  // censusReport), and keeps its own independent state either way.
+  function skilledInitLiveMode(){
+    return fetch('/api/census-dataset').then(function(res){
+      if(!res.ok) throw new Error('no api');
+      return res.json();
+    }).then(function(payload){
+      skilledState.liveMode = true;
+      var any = false;
+      if(payload && payload.salesJournal && payload.salesJournal.records && payload.salesJournal.records.length){
+        skilledHydrateServerSalesJournal(payload.salesJournal); any = true;
+      }
+      if(payload && payload.payerMap){
+        skilledHydrateServerPayerMap(payload.payerMap);
+      }
+      if(any){
+        skilledRebuild();
+        skilledRefreshAfterSourceChange();
+      }
+    }).catch(function(){
+      skilledState.liveMode = false;
+    });
+  }
+
+  function skilledInitDropzone(){
+    // Imports now happen exclusively through the Admin tab — this view is
+    // read-only, same as AR Collections and Census Trends.
+  }
+
+  function skilledInitSearch(){
+    document.getElementById('skilledFacSearch').addEventListener('input', function(e){
+      skilledRenderFacilityList(e.target.value);
+    });
+    document.getElementById('skilledFacAll').addEventListener('click', function(){
+      skilledState.selectedFacilities = new Set(skilledState.facilities);
+      skilledRenderFacilityList(document.getElementById('skilledFacSearch').value);
+      skilledRenderAll();
+    });
+    document.getElementById('skilledFacNone').addEventListener('click', function(){
+      skilledState.selectedFacilities = new Set();
+      skilledRenderFacilityList(document.getElementById('skilledFacSearch').value);
+      skilledRenderAll();
+    });
+    document.getElementById('skilledPayerAll').addEventListener('click', function(){
+      skilledState.selectedPayerTypes = new Set(skilledState.payerTypes);
+      skilledRenderAll();
+    });
+    document.getElementById('skilledPayerNone').addEventListener('click', function(){
+      skilledState.selectedPayerTypes = new Set();
+      skilledRenderAll();
+    });
+  }
+
+  function skilledInitPopouts(){
+    registerPopout('skilledYearTrigger', 'skilledYearPanel');
+    registerPopout('skilledMonthTrigger', 'skilledMonthPanel');
+  }
+
   // Scoped to .census-tab-btn / .census-tabpanel specifically (not the
   // shared .tab-btn/.tabpanel AR Collections uses) so switching tabs here
   // never touches AR Collections' tab state, and vice versa.
+  var censusActiveTab = 'los';
+
   function censusInitTabs(){
     Array.prototype.forEach.call(document.querySelectorAll('.census-tab-btn'), function(btn){
       btn.addEventListener('click', function(){
@@ -3580,7 +4078,8 @@
         btn.classList.add('active');
         Array.prototype.forEach.call(document.querySelectorAll('.census-tabpanel'), function(p){p.style.display='none';});
         document.getElementById('tab-'+btn.getAttribute('data-tab')).style.display='block';
-        if(btn.getAttribute('data-tab')==='skilled') censusRenderSkilled();
+        censusActiveTab = btn.getAttribute('data-tab');
+        censusRenderYearMonthPickers();
       });
     });
   }
@@ -3615,6 +4114,7 @@
 
   function adminSourceStatusText(kind, key){
     if(kind==='ar') return sourceStatusText(key);
+    if(key==='salesJournal') return skilledSourceStatusText(key);
     return censusSourceStatusText(key);
   }
 
@@ -3632,8 +4132,19 @@
 
     var censusEl = document.getElementById('adminCensusRows');
     if(censusEl){
-      censusEl.innerHTML = CENSUS_SOURCES.map(function(s){
+      censusEl.innerHTML = CENSUS_SOURCES.filter(function(s){ return s.key==='losReport' || s.key==='censusReport'; }).map(function(s){
         var has = !!censusState.sources[s.key];
+        return '<div class="admin-import-row" data-kind="census" data-source="'+s.key+'">' +
+          '<div><div class="admin-import-label">'+s.label+'</div><div class="admin-import-status'+(has?' ok':'')+'">'+adminSourceStatusText('census',s.key)+'</div></div>' +
+          '<div><input type="file" accept=".xlsx,.xls" hidden id="adminFileInput-census-'+s.key+'"><button class="admin-import-btn" type="button" data-kind="census" data-source="'+s.key+'">'+(has?'Import updated file…':'Import file…')+'</button></div>' +
+        '</div>';
+      }).join('');
+    }
+
+    var skilledEl = document.getElementById('adminSkilledRows');
+    if(skilledEl){
+      skilledEl.innerHTML = CENSUS_SOURCES.filter(function(s){ return s.key==='salesJournal' || s.key==='payerMap'; }).map(function(s){
+        var has = !!(s.key==='salesJournal' ? skilledState.sources[s.key] : censusState.sources[s.key]);
         return '<div class="admin-import-row" data-kind="census" data-source="'+s.key+'">' +
           '<div><div class="admin-import-label">'+s.label+'</div><div class="admin-import-status'+(has?' ok':'')+'">'+adminSourceStatusText('census',s.key)+'</div></div>' +
           '<div><input type="file" accept=".xlsx,.xls" hidden id="adminFileInput-census-'+s.key+'"><button class="admin-import-btn" type="button" data-kind="census" data-source="'+s.key+'">'+(has?'Import updated file…':'Import file…')+'</button></div>' +
@@ -3675,11 +4186,13 @@
       .then(function(r){
         if(r.ok){
           showToast(label + ' imported — ' + r.body.rowCount.toLocaleString() + ' rows.');
-          // refresh the underlying app's live data so it's current the
-          // moment someone opens it, and wait for that before re-rendering
-          // this dashboard's status text (both are async fetches).
-          var refresh = kind==='ar' ? initLiveMode() : censusInitLiveMode();
-          refresh.then(adminRenderRows);
+          // Refresh whichever app(s) read this data, and wait for that before
+          // re-rendering this dashboard's status text (all async fetches).
+          // Census Trends and Skilled Analysis both read from the same
+          // /api/census-dataset endpoint but keep independent frontend
+          // state, so a census-domain import refreshes both.
+          var refreshes = kind==='ar' ? [initLiveMode()] : [censusInitLiveMode(), skilledInitLiveMode()];
+          Promise.all(refreshes).then(adminRenderRows);
         } else {
           alert('Could not import ' + label + ': ' + (r.body && r.body.error ? r.body.error : 'unknown error'));
           adminRenderRows();
@@ -3748,6 +4261,11 @@
   censusInitDropzone();
   censusInitSearch();
   censusInitLiveMode();
+
+  skilledInitPopouts();
+  skilledInitDropzone();
+  skilledInitSearch();
+  skilledInitLiveMode();
 
   initAdmin();
 })();
