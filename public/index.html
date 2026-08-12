@@ -1047,6 +1047,7 @@
         <button class="skilled-tab-btn" data-tab="adr">Average Daily Rate by month</button>
         <button class="skilled-tab-btn" data-tab="ppd">PPD by Month</button>
         <button class="skilled-tab-btn" data-tab="level">Level Detail</button>
+        <button class="skilled-tab-btn" data-tab="nemedicaid">NE Medicaid</button>
       </div>
 
       <div id="skilledtab-summary" class="skilled-tabpanel">
@@ -1114,7 +1115,7 @@
         <div class="panel-head">
           <div>
             <h2>Days by level</h2>
-            <div class="note">Skilled payers only — total days, average daily rate, and PPD per rate/level, combined across every selected payer except NE Medicaid, which bills on its own separate rate structure and has its own grid below.</div>
+            <div class="note">Skilled payers only — total days, average daily rate, and PPD per rate/level, combined across every selected payer except NE Medicaid, which bills on its own separate rate structure and has its own tab.</div>
           </div>
         </div>
         <div class="triangle-wrap"><table class="triangle" id="skilledLevelTotalsTable"></table></div>
@@ -1128,16 +1129,6 @@
           </div>
         </div>
         <div class="triangle-wrap"><table class="triangle" id="skilledLevelByMonthTable"></table></div>
-      </div>
-
-      <div class="panel" style="margin-bottom:22px;">
-        <div class="panel-head">
-          <div>
-            <h2>NE Medicaid — days by level</h2>
-            <div class="note">NE Medicaid pays on its own rate structure — the only Medicaid payer that does, so it gets its own grid here rather than being mixed into the combined one above.</div>
-          </div>
-        </div>
-        <div class="triangle-wrap"><table class="triangle" id="skilledNEMedicaidLevelTable"></table></div>
       </div>
 
       <div class="panel" style="margin-bottom:22px;">
@@ -1158,6 +1149,28 @@
           </div>
         </div>
         <div class="triangle-wrap"><table class="triangle" id="skilledLevelByFacilityTable"></table></div>
+      </div>
+      </div>
+
+      <div id="skilledtab-nemedicaid" class="skilled-tabpanel" style="display:none;">
+      <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head">
+          <div>
+            <h2>NE Medicaid — days by level</h2>
+            <div class="note">NE Medicaid pays on its own rate structure — the only Medicaid payer that does, so it's broken out here rather than being mixed into the rest of Skilled Analysis. Uses the same Facilities and Year/Month filters as the other tabs.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="skilledNEMedicaidLevelTable"></table></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>NE Medicaid — days by level — by month</h2>
+            <div class="note">Same rows as above, broken out by month instead of totaled together.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="skilledNEMedicaidByMonthTable"></table></div>
       </div>
       </div>
     </div>
@@ -3710,6 +3723,31 @@
     skilledRenderLevelByRows(table, rows, 'No NE Medicaid data matches the current filters.');
   }
 
+  function skilledRenderNEMedicaidByMonthTable(){
+    var table = document.getElementById('skilledNEMedicaidByMonthTable');
+    if(!table) return;
+    if(!skilledState.sources.salesJournal){
+      table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
+      return;
+    }
+    var rows = skilledFilteredRows().filter(function(r){ return r.isNEMedicaid; });
+    var g = skilledLevelByMonthGroups(rows);
+    if(!g.levels.length || !g.cohorts.length){
+      table.innerHTML = '<tr><td class="empty-note">No NE Medicaid data matches the current filters.</td></tr>';
+      return;
+    }
+    var thead = '<thead><tr><th>Level</th>' + g.cohorts.map(function(ck){return '<th>'+censusKeyLabel(ck)+'</th>';}).join('') + '</tr></thead>';
+    var bodyRows = g.levels.map(function(ln){
+      var cells = g.cohorts.map(function(ck){
+        var cell = g.byLevelCohort[ln+'||'+ck];
+        if(!cell) return '<td class="empty">—</td>';
+        return '<td class="dollar-cell">'+cell.units.toLocaleString()+'</td>';
+      }).join('');
+      return '<tr><th>'+ln+'</th>'+cells+'</tr>';
+    }).join('');
+    table.innerHTML = thead + '<tbody>' + bodyRows + '</tbody>';
+  }
+
   /* ---------------------------------------------------------
      RENDER: Level Detail — every payer expands (not just HMO/
      Unmapped) to show the rate-code-resolved level breakdown
@@ -4414,6 +4452,7 @@
     skilledRenderLevelTotalsTable();
     skilledRenderLevelByMonthTable();
     skilledRenderNEMedicaidLevelTable();
+    skilledRenderNEMedicaidByMonthTable();
     skilledRenderLevelTable();
     skilledRenderLevelByFacilityTable();
   }
