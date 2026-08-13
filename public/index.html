@@ -3347,18 +3347,32 @@
   //     specifically. Same imported-overrides-built-in pattern.
   // Only codes that resolve via neither return null (rare — mostly rows
   // with a missing/blank rate code).
+  var RATE_DETAIL_GENERIC_NONLABELS = {'NE MCD':1, 'RUG':1};
+  // A Payer Mapping "description" only counts as a real label if it isn't
+  // a generic placeholder and isn't just another rate code echoed back —
+  // some rows in that sheet have Description values like "220" or "RUG"
+  // that aren't descriptive at all, and without this check they'd block
+  // the Rate Key's much cleaner grouped label from ever being used.
+  function censusIsUsefulRateLabel(desc, rateCode, uploadedRateKey){
+    if(!desc) return false;
+    var upper = String(desc).trim().toUpperCase();
+    if(RATE_DETAIL_GENERIC_NONLABELS[upper]) return false;
+    if(upper === String(rateCode).trim().toUpperCase()) return false;
+    if((uploadedRateKey && uploadedRateKey[upper]) || CENSUS_RATE_KEY_BY_CODE[upper]) return false;
+    return true;
+  }
   function censusResolveRateDetail(uploaded, uploadedRateKey, company, payorCode, rateCode){
     if(!rateCode) return null;
     if(uploaded){
       var uExact = uploaded.rateByCombo[company+'||'+payorCode+'||'+rateCode];
-      if(uExact) return uExact;
+      if(censusIsUsefulRateLabel(uExact, rateCode, uploadedRateKey)) return uExact;
       var uFallback = uploaded.rateFallback[payorCode+'||'+rateCode];
-      if(uFallback) return uFallback;
+      if(censusIsUsefulRateLabel(uFallback, rateCode, uploadedRateKey)) return uFallback;
     }
     var exact = CENSUS_RATE_DETAIL_BY_COMPANY_CODE_RATE[company+'||'+payorCode+'||'+rateCode];
-    if(exact) return exact;
+    if(censusIsUsefulRateLabel(exact, rateCode, uploadedRateKey)) return exact;
     var fallback = CENSUS_RATE_DETAIL_BY_CODE_RATE_FALLBACK[payorCode+'||'+rateCode];
-    if(fallback) return fallback;
+    if(censusIsUsefulRateLabel(fallback, rateCode, uploadedRateKey)) return fallback;
     var rk = (uploadedRateKey && uploadedRateKey[rateCode]) || CENSUS_RATE_KEY_BY_CODE[rateCode];
     return rk ? censusRateTypeLabel(rk) : null;
   }
