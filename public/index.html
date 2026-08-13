@@ -1144,7 +1144,7 @@
         <div class="panel-head">
           <div>
             <h2>Days by level</h2>
-            <div class="note">Skilled payers only — total days, average daily rate, and PPD per rate/level, combined across every selected payer except NE Medicaid and Managed Medicaid, which each have their own tab.</div>
+            <div class="note">Skilled payers only — total days, average daily rate, and PPD per rate/level, combined across every selected payer except NE Medicaid and Managed Medicaid, which each have their own tab. ALF-only rates (Monthly Rate, Rural Single, Daily Rate) are excluded throughout this tab, since those aren't skilled nursing levels.</div>
           </div>
         </div>
         <div class="triangle-wrap"><table class="triangle" id="skilledLevelTotalsTable"></table></div>
@@ -1186,7 +1186,7 @@
         <div class="panel-head">
           <div>
             <h2>NE Medicaid — days by level</h2>
-            <div class="note">NE Medicaid pays on its own rate structure — the only Medicaid payer that does, so it's broken out here rather than being mixed into the rest of Skilled Analysis. Uses the same Facilities and Year/Month filters as the other tabs.</div>
+            <div class="note">NE Medicaid pays on its own rate structure — the only Medicaid payer that does, so it's broken out here rather than being mixed into the rest of Skilled Analysis. ALF-only rates (Monthly Rate, Rural Single, Daily Rate) are excluded, since those aren't skilled nursing levels. Uses the same Facilities and Year/Month filters as the other tabs.</div>
           </div>
         </div>
         <div class="triangle-wrap"><table class="triangle" id="skilledNEMedicaidLevelTable"></table></div>
@@ -3641,6 +3641,23 @@
     });
   }
 
+  // "Monthly Rate", "Rural Single", and "Daily Rate" are ALF (Assisted
+  // Living) billing, not skilled nursing — they show up under NE Medicaid
+  // rate codes but don't belong in any of the level/rate breakdown views
+  // (Level Detail, NE Medicaid, Managed MCD). This only excludes them from
+  // those level-grouped tables specifically; the payer-level totals
+  // (Summary, Trend, Days/Gross/PPD by month) are untouched, since those
+  // aren't broken out by level in the first place.
+  var SKILLED_ALF_LEVEL_LABELS = {'MONTHLY RATE':1, 'RURAL SINGLE':1, 'DAILY RATE':1};
+  function skilledIsALFLevel(r){
+    return !!SKILLED_ALF_LEVEL_LABELS[String(r.levelDetail||'').trim().toUpperCase()];
+  }
+  // Same rows as skilledFilteredRows(), with ALF-level rows removed — use
+  // this instead wherever a table groups by levelDetail.
+  function skilledFilteredRowsNoALF(){
+    return skilledFilteredRows().filter(function(r){ return !skilledIsALFLevel(r); });
+  }
+
   function censusFilteredDaysRows(){
     return censusState.daysRows.filter(function(r){
       return censusState.selectedFacilities.has(r.facility) &&
@@ -4119,7 +4136,7 @@
       table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
       return;
     }
-    var rows = skilledFilteredRows().filter(function(r){ return !r.isNEMedicaid && r.payerType !== 'MANAGED MCD'; });
+    var rows = skilledFilteredRowsNoALF().filter(function(r){ return !r.isNEMedicaid && r.payerType !== 'MANAGED MCD'; });
     skilledRenderLevelByRows(table, rows, 'No sales journal data matches the current filters.');
   }
 
@@ -4130,7 +4147,7 @@
       table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
       return;
     }
-    var rows = skilledFilteredRows().filter(function(r){ return r.isNEMedicaid; });
+    var rows = skilledFilteredRowsNoALF().filter(function(r){ return r.isNEMedicaid; });
     skilledRenderLevelByRows(table, rows, 'No NE Medicaid data matches the current filters.');
   }
 
@@ -4141,7 +4158,7 @@
       table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
       return;
     }
-    var rows = skilledFilteredRows().filter(function(r){ return r.payerType === 'MANAGED MCD'; });
+    var rows = skilledFilteredRowsNoALF().filter(function(r){ return r.payerType === 'MANAGED MCD'; });
     skilledRenderLevelByRows(table, rows, 'No Managed Medicaid data matches the current filters.');
   }
 
@@ -4152,7 +4169,7 @@
       table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
       return;
     }
-    var rows = skilledFilteredRows().filter(function(r){ return r.isNEMedicaid; });
+    var rows = skilledFilteredRowsNoALF().filter(function(r){ return r.isNEMedicaid; });
     var g = skilledLevelByMonthGroups(rows);
     if(!g.levels.length || !g.cohorts.length){
       table.innerHTML = '<tr><td class="empty-note">No NE Medicaid data matches the current filters.</td></tr>';
@@ -4177,7 +4194,7 @@
       table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
       return;
     }
-    var rows = skilledFilteredRows().filter(function(r){ return r.payerType === 'MANAGED MCD'; });
+    var rows = skilledFilteredRowsNoALF().filter(function(r){ return r.payerType === 'MANAGED MCD'; });
     var g = skilledLevelByMonthGroups(rows);
     if(!g.levels.length || !g.cohorts.length){
       table.innerHTML = '<tr><td class="empty-note">No Managed Medicaid data matches the current filters.</td></tr>';
@@ -4284,7 +4301,7 @@
       table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
       return;
     }
-    skilledRenderLevelGroupedTable(table, skilledFilteredRows(), function(r){ return r.label; }, 'Payer', skilledLevelOpenFamilies);
+    skilledRenderLevelGroupedTable(table, skilledFilteredRowsNoALF(), function(r){ return r.label; }, 'Payer', skilledLevelOpenFamilies);
   }
 
   /* ---------------------------------------------------------
@@ -4298,7 +4315,7 @@
       table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
       return;
     }
-    skilledRenderLevelGroupedTable(table, skilledFilteredRows(), function(r){ return censusFacilityDisplay(r.facility); }, 'Facility', skilledLevelOpenFacilities);
+    skilledRenderLevelGroupedTable(table, skilledFilteredRowsNoALF(), function(r){ return censusFacilityDisplay(r.facility); }, 'Facility', skilledLevelOpenFacilities);
   }
 
 
@@ -4352,7 +4369,7 @@
       table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
       return;
     }
-    var rows = skilledFilteredRows().filter(function(r){ return !r.isNEMedicaid && r.payerType !== 'MANAGED MCD'; });
+    var rows = skilledFilteredRowsNoALF().filter(function(r){ return !r.isNEMedicaid && r.payerType !== 'MANAGED MCD'; });
     var g = skilledLevelByMonthGroups(rows);
     if(!g.levels.length || !g.cohorts.length){
       table.innerHTML = '<tr><td class="empty-note">No sales journal data matches the current filters.</td></tr>';
