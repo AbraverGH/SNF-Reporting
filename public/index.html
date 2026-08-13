@@ -196,12 +196,12 @@
 
   /* Tabs */
   .tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
-  .tab-btn, .census-tab-btn, .skilled-tab-btn{
+  .tab-btn, .census-tab-btn, .skilled-tab-btn, .medicare-tab-btn{
     background:none;border:none;padding:10px 4px;margin-right:22px;font-size:13.5px;
     color:var(--ink-soft);font-weight:500;position:relative;top:1px;
   }
-  .tab-btn.active, .census-tab-btn.active, .skilled-tab-btn.active{color:var(--ink);font-weight:600;}
-  .tab-btn.active::after, .census-tab-btn.active::after, .skilled-tab-btn.active::after{
+  .tab-btn.active, .census-tab-btn.active, .skilled-tab-btn.active, .medicare-tab-btn.active{color:var(--ink);font-weight:600;}
+  .tab-btn.active::after, .census-tab-btn.active::after, .skilled-tab-btn.active::after, .medicare-tab-btn.active::after{
     content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--emerald);border-radius:2px;
   }
 
@@ -369,6 +369,12 @@
     text-align:center;padding:40px 20px;
   }
   #skilledDropzone.hidden{display:none;}
+  #medicareDropzone{
+    position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;
+    text-align:center;padding:40px 20px;
+  }
+  #medicareDropzone.hidden{display:none;}
   .dz-wrap{
     width:min(820px,94vw);border:2px dashed var(--line);border-radius:16px;
     background:var(--surface);padding:44px 36px;box-shadow:var(--shadow);
@@ -444,6 +450,7 @@
   .home-card-icon.census-icon{background:linear-gradient(140deg,#B98B4E,#8A6234 70%);}
   .home-card-icon.admin-icon{background:linear-gradient(140deg,#5B6B7A,#2E3A46 70%);}
   .home-card-icon.skilled-icon{background:linear-gradient(140deg,#6C63D6,#3D3684 70%);}
+  .home-card-icon.medicare-icon{background:linear-gradient(140deg,#2E86AB,#1B4F66 70%);}
   .home-card-title{font-family:'Space Grotesk';font-weight:600;font-size:17px;color:var(--ink);}
   .home-card-desc{font-size:12.5px;color:var(--ink-soft);line-height:1.5;flex:1;}
   .home-card-cta{font-size:12.5px;font-weight:600;color:var(--emerald);display:flex;align-items:center;gap:5px;}
@@ -486,6 +493,7 @@
       <div class="home-brand-text">
         <div class="home-t1">Vantis</div>
         <div class="home-t2">Operational analytics for Skilled Nursing facilities</div>
+        <div class="home-t2" id="homeAccessLabel" style="display:none;color:var(--emerald);font-weight:600;"></div>
       </div>
     </div>
 
@@ -517,6 +525,15 @@
         <div class="home-card-cta">Open <span>→</span></div>
       </button>
 
+      <button class="home-card" id="launchMedicareDays" type="button">
+        <div class="home-card-icon medicare-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 14.5h4"/></svg>
+        </div>
+        <div class="home-card-title">Medicare Days</div>
+        <div class="home-card-desc">Days, Gross, Coinsurance, Net, and PPD for Medicare — by facility and by month.</div>
+        <div class="home-card-cta">Open <span>→</span></div>
+      </button>
+
       <button class="home-card" id="launchAdmin" type="button">
         <div class="home-card-icon admin-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
@@ -526,6 +543,17 @@
         <div class="home-card-cta">Open <span>→</span></div>
       </button>
     </div>
+  </div>
+</div>
+
+<div id="requestAccessScreen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:18px;text-align:center;padding:40px 20px;">
+  <div class="dz-wrap" style="max-width:440px;">
+    <div class="dz-icon" style="margin-left:auto;margin-right:auto;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+    </div>
+    <h2>Access link required</h2>
+    <p>This page needs a valid access link to show any data. If you were given one, use that link directly — if it's expired or you don't have one, ask whoever manages Vantis for your organization to send you one.</p>
+    <button class="dz-source-btn" id="requestAccessAdminBtn" type="button" style="width:auto;padding:9px 22px;">Admin login →</button>
   </div>
 </div>
 
@@ -1181,6 +1209,187 @@
 
 </div>
 
+<div id="medicareDaysApp" style="display:none;">
+
+<div id="medicareDropzone">
+  <div class="dz-wrap" style="text-align:center;position:relative;">
+    <button class="stub-back" id="medicareBackFromEmptyBtn" type="button" style="position:static;margin-bottom:14px;display:inline-block;">← Back to Vantis</button>
+    <div class="dz-icon" style="margin-left:auto;margin-right:auto;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 14.5h4"/></svg>
+    </div>
+    <h2>No data published yet</h2>
+    <p>Medicare Days uses the same Sales Journal as Skilled Analysis — an admin needs to import it from the Admin tab before there's anything to show here.</p>
+    <button class="dz-source-btn" id="medicareGoToAdminBtn" type="button" style="width:auto;padding:9px 22px;">Go to Admin →</button>
+  </div>
+</div>
+
+<div id="medicareApp" style="display:none;">
+  <aside class="sidebar">
+    <button class="brand" id="medicareBackToHomeBtn" type="button" title="Back to Vantis home">
+      <div class="brand-mark">V</div>
+      <div class="brand-text">
+        <div class="t1">Medicare Days</div>
+        <div class="t2">← Back to Vantis</div>
+      </div>
+    </button>
+
+    <div class="side-section">
+      <div class="side-label">Facilities <span class="count" id="medicareFacCount"></span></div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="medicareFacSearch" placeholder="Search facility…">
+      </div>
+      <div class="side-btn-row">
+        <button id="medicareFacAll">Select all</button>
+        <button id="medicareFacNone">Clear</button>
+      </div>
+      <div class="facility-list" id="medicareFacilityList"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      Traditional Medicare only (not HMO/Managed Medicare) — same payer classification used throughout Vantis, sourced from the Sales Journal. Days are grouped by service start month.
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <h1>Medicare Days</h1>
+        <div class="sub" id="medicareTopSub">No data loaded yet</div>
+      </div>
+    </div>
+
+    <div class="content" id="medicareMainContent">
+      <div class="kpis" id="medicareKpiStrip"></div>
+
+      <div class="popout-filters">
+        <div class="popout-group">
+          <button class="popout-trigger" id="medicareYearTrigger" type="button">
+            <span class="popout-trigger-label">Year</span>
+            <span class="popout-trigger-value" id="medicareYearTriggerValue">—</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="popout-panel" id="medicareYearPanel" style="display:none;">
+            <div class="popout-panel-head">Year <span class="hint">— pick one or more</span></div>
+            <div class="cohort-picker" id="medicareYearPicker"></div>
+            <div class="popout-panel-actions"><button class="btn-load" id="medicareYearDoneBtn" type="button">Done</button></div>
+          </div>
+        </div>
+        <div class="popout-group">
+          <button class="popout-trigger" id="medicareMonthTrigger" type="button">
+            <span class="popout-trigger-label">Month</span>
+            <span class="popout-trigger-value" id="medicareMonthTriggerValue">—</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="popout-panel" id="medicareMonthPanel" style="display:none;">
+            <div class="popout-panel-head">Month <span class="hint">— pick one or more, any year (for seasonality)</span></div>
+            <div class="cohort-picker" id="medicareMonthPicker"></div>
+            <div class="popout-panel-actions"><button class="btn-load" id="medicareMonthDoneBtn" type="button">Done</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="medicare-tab-btn active" data-tab="summary">Summary</button>
+        <button class="medicare-tab-btn" data-tab="trend">Trend</button>
+        <button class="medicare-tab-btn" data-tab="days">Days by Month</button>
+        <button class="medicare-tab-btn" data-tab="gross">Gross by Month</button>
+        <button class="medicare-tab-btn" data-tab="coinsurance">Coinsurance by Month</button>
+        <button class="medicare-tab-btn" data-tab="net">Net by Month</button>
+        <button class="medicare-tab-btn" data-tab="ppd">PPD by Month</button>
+      </div>
+
+      <div id="medicaretab-summary" class="medicare-tabpanel">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Medicare — days, Gross, Coinsurance, Net &amp; PPD by facility</h2>
+            <div class="note">Uses the Facilities and Year/Month filters above. Top row blends all selected facilities together. <b>PPD</b> is net revenue per day (Net ÷ Days) — what's actually realized after coinsurance and other deductions come out.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="medicareSummaryTable"></table></div>
+      </div>
+      </div>
+
+      <div id="medicaretab-trend" class="medicare-tabpanel" style="display:none;">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>PPD trend — month over month</h2>
+            <div class="note">One line per selected facility, so you can compare how Medicare net-per-day is trending across months.</div>
+          </div>
+        </div>
+        <div id="medicareChartHolder"></div>
+      </div>
+      </div>
+
+      <div id="medicaretab-days" class="medicare-tabpanel" style="display:none;">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Medicare days — facility × month</h2>
+            <div class="note">Total Medicare days per facility per month. Top row sums across all selected facilities.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="medicareDaysTable"></table></div>
+      </div>
+      </div>
+
+      <div id="medicaretab-gross" class="medicare-tabpanel" style="display:none;">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Medicare Gross — facility × month</h2>
+            <div class="note">Gross billed revenue (before deductions) per facility per month. Top row sums across all selected facilities.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="medicareGrossTable"></table></div>
+      </div>
+      </div>
+
+      <div id="medicaretab-coinsurance" class="medicare-tabpanel" style="display:none;">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Medicare Coinsurance — facility × month</h2>
+            <div class="note">Coinsurance deducted per facility per month (typically shifted to a secondary payer). Top row sums across all selected facilities.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="medicareCoinsuranceTable"></table></div>
+      </div>
+      </div>
+
+      <div id="medicaretab-net" class="medicare-tabpanel" style="display:none;">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Medicare Net receivables — facility × month</h2>
+            <div class="note">Net revenue (after deductions) per facility per month. Top row sums across all selected facilities.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="medicareNetTable"></table></div>
+      </div>
+      </div>
+
+      <div id="medicaretab-ppd" class="medicare-tabpanel" style="display:none;">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Medicare PPD — facility × month</h2>
+            <div class="note">Net revenue per patient day (Net ÷ Days) per facility per month. Top row is a days-weighted blend, not a simple average.</div>
+          </div>
+        </div>
+        <div class="triangle-wrap"><table class="triangle" id="medicarePpdTable"></table></div>
+      </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="medicareToast"></div>
+
+</div>
+
 <div id="adminApp" style="display:none;">
   <div id="adminLoginScreen">
     <div class="admin-login-wrap">
@@ -1223,9 +1432,47 @@
         <div id="adminCensusRows"></div>
       </div>
 
-      <div class="panel">
+      <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head"><div><h2>Skilled Analysis</h2><div class="note">The Sales Journal is imported monthly; the Payer Mapping (also used by Census Trends) only needs updating when payor contracts/rates change.</div></div></div>
         <div id="adminSkilledRows"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Access Links</h2>
+            <div class="note">Scoped links for people who shouldn't see everything — pick which tiles and which facilities a link can see, then share the link. No password for them to remember; the link itself is what grants access, and it's enforced on every request, not just hidden in the UI.</div>
+          </div>
+          <button class="btn-load" id="adminAddAccessProfileBtn" type="button" style="white-space:nowrap;">+ Create access link</button>
+        </div>
+        <div id="adminAccessProfilesList" style="margin-top:14px;"></div>
+
+        <div id="adminAccessProfileForm" style="display:none;margin-top:18px;padding-top:18px;border-top:1px solid var(--line);">
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;">Label</label>
+            <input type="text" id="accessProfileLabel" placeholder="e.g. Nebraska Ops Team" style="width:100%;max-width:340px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;font-family:inherit;">
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;">Email <span style="font-weight:400;color:var(--ink-faint);">— optional, for your own records. This doesn't restrict who can use the link; anyone with the URL can open it, same as any other link.</span></label>
+            <input type="email" id="accessProfileEmail" placeholder="e.g. jane@example.com" style="width:100%;max-width:340px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;font-family:inherit;">
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;">Tiles</label>
+            <div id="accessProfileTiles" style="display:flex;gap:16px;flex-wrap:wrap;"></div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;">Facilities</label>
+            <div style="margin-bottom:8px;">
+              <label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="accessProfileAllFacilities" checked> All facilities</label>
+            </div>
+            <div id="accessProfileFacilities" style="display:none;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px 14px;max-height:220px;overflow-y:auto;padding:10px;border:1px solid var(--line);border-radius:8px;"></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button class="btn-load" id="accessProfileSaveBtn" type="button">Create link</button>
+            <button class="btn-ghost" id="accessProfileCancelBtn" type="button">Cancel</button>
+            <span id="accessProfileError" style="display:none;color:#B14A3C;font-size:12.5px;"></span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1235,6 +1482,118 @@
 <script>
 (function(){
   "use strict";
+
+  /* ---------------------------------------------------------
+     ACCESS CONTROL — resolves who's looking at this page before
+     anything else runs. Two paths: an admin session (full access,
+     same password-protected Admin tab as before), or a scoped
+     access link (?access=TOKEN) an admin generated for someone
+     else, which only unlocks specific tiles/facilities. There's no
+     login form for the second kind — the link itself is the
+     credential — but it's enforced on the backend on every data
+     request, not just hidden in the UI. No admin session and no
+     valid token means no data at all, by design.
+  --------------------------------------------------------- */
+  var ADMIN_KEY_STORAGE = 'vantisAdminKey';
+  var adminKey = null;
+  var adminAuthed = false;
+  var VANTIS_ACCESS_TOKEN_STORAGE = 'vantisAccessToken';
+  var activeAccess = null; // {tiles, facilities, label, isAdmin} once resolved
+  var vantisBooted = false;
+
+  // Attach to every /api/dataset and /api/census-dataset fetch — whichever
+  // credential is active (admin session takes priority) rides along so the
+  // backend knows what to filter down to.
+  function apiHeaders(){
+    if(adminAuthed && adminKey) return {'x-admin-key': adminKey};
+    var token = null;
+    try{ token = localStorage.getItem(VANTIS_ACCESS_TOKEN_STORAGE); }catch(e){}
+    return token ? {'x-access-token': token} : {};
+  }
+
+  function vantisTileAllowed(tile){
+    return !!activeAccess && (activeAccess.isAdmin || activeAccess.tiles.indexOf(tile) >= 0);
+  }
+
+  function vantisApplyTileGating(){
+    var tileMap = {ar:'launchARCollections', census:'launchCensusTrends', skilled:'launchSkilledAnalysis', medicare:'launchMedicareDays'};
+    Object.keys(tileMap).forEach(function(tile){
+      var btn = document.getElementById(tileMap[tile]);
+      if(btn) btn.style.display = vantisTileAllowed(tile) ? '' : 'none';
+    });
+    var subEl = document.getElementById('homeAccessLabel');
+    if(subEl) subEl.textContent = activeAccess.isAdmin ? '' : ('Viewing as: ' + activeAccess.label);
+    subEl && (subEl.style.display = activeAccess.isAdmin ? 'none' : 'block');
+  }
+
+  function vantisShowRequestAccess(){
+    var reqEl = document.getElementById('requestAccessScreen');
+    var homeEl = document.getElementById('homeScreen');
+    if(reqEl) reqEl.style.display = 'flex';
+    if(homeEl) homeEl.style.display = 'none';
+    var btn = document.getElementById('requestAccessAdminBtn');
+    if(btn && !btn.dataset.wired){
+      btn.dataset.wired = '1';
+      btn.addEventListener('click', function(){
+        document.getElementById('requestAccessScreen').style.display = 'none';
+        document.getElementById('adminApp').style.display = 'block';
+        initAdmin();
+      });
+    }
+  }
+
+  function vantisFinishBoot(){
+    vantisBooted = true;
+    var reqEl = document.getElementById('requestAccessScreen');
+    if(reqEl) reqEl.style.display = 'none';
+    vantisApplyTileGating();
+    initNavigation();
+    showScreen('home');
+    initTabs(); initPopouts(); initDropzone(); initSearch();
+    if(vantisTileAllowed('ar')) initLiveMode();
+
+    censusInitPopouts(); censusInitTabs(); censusInitDropzone(); censusInitSearch();
+    if(vantisTileAllowed('census')) censusInitLiveMode();
+
+    skilledInitPopouts(); skilledInitTabs(); skilledInitDropzone(); skilledInitSearch();
+    if(vantisTileAllowed('skilled')) skilledInitLiveMode();
+
+    medicareInitPopouts(); medicareInitTabs(); medicareInitDropzone(); medicareInitSearch();
+    if(vantisTileAllowed('medicare')) medicareInitLiveMode();
+
+    initAdmin();
+  }
+
+  function vantisResolveAccessAndBoot(){
+    var storedAdminKey = null;
+    try{ storedAdminKey = sessionStorage.getItem(ADMIN_KEY_STORAGE); }catch(e){}
+    if(storedAdminKey){
+      adminKey = storedAdminKey; adminAuthed = true;
+      activeAccess = {tiles: ['ar','census','skilled','medicare'], facilities: 'ALL', label: 'Admin', isAdmin: true};
+      vantisFinishBoot();
+      return;
+    }
+    var urlToken = null;
+    try{ urlToken = new URLSearchParams(window.location.search).get('access'); }catch(e){}
+    if(urlToken){
+      try{ localStorage.setItem(VANTIS_ACCESS_TOKEN_STORAGE, urlToken); }catch(e){}
+      try{ window.history.replaceState({}, '', window.location.pathname); }catch(e){} // don't leave the token sitting in the address bar
+    }
+    var token = urlToken;
+    if(!token){ try{ token = localStorage.getItem(VANTIS_ACCESS_TOKEN_STORAGE); }catch(e){} }
+    if(!token){ vantisShowRequestAccess(); return; }
+
+    fetch('/api/access/'+encodeURIComponent(token)).then(function(res){
+      if(!res.ok) throw new Error('invalid access token');
+      return res.json();
+    }).then(function(data){
+      activeAccess = {tiles: data.tiles, facilities: data.facilities, label: data.label, isAdmin: false};
+      vantisFinishBoot();
+    }).catch(function(){
+      try{ localStorage.removeItem(VANTIS_ACCESS_TOKEN_STORAGE); }catch(e){}
+      vantisShowRequestAccess();
+    });
+  }
 
   /* ---------------------------------------------------------
      CONFIG
@@ -2435,8 +2794,10 @@
     document.getElementById('arCollectionsApp').style.display = (name==='ar') ? 'block' : 'none';
     document.getElementById('censusTrendsApp').style.display = (name==='census') ? 'block' : 'none';
     document.getElementById('skilledAnalysisApp').style.display = (name==='skilled') ? 'block' : 'none';
+    document.getElementById('medicareDaysApp').style.display = (name==='medicare') ? 'block' : 'none';
     document.getElementById('adminApp').style.display = (name==='admin') ? 'block' : 'none';
-    document.title = (name==='home') ? 'Vantis - SNF Reporting' : (name==='ar' ? 'Vantis — AR Collections' : (name==='census' ? 'Vantis — Census Trends' : (name==='skilled' ? 'Vantis — Skilled Analysis' : 'Vantis — Admin')));
+    var titles = {home:'Vantis - SNF Reporting', ar:'Vantis — AR Collections', census:'Vantis — Census Trends', skilled:'Vantis — Skilled Analysis', medicare:'Vantis — Medicare Days', admin:'Vantis — Admin'};
+    document.title = titles[name] || 'Vantis';
     window.scrollTo(0,0);
     if(name==='admin') adminShowCorrectView();
   }
@@ -2451,6 +2812,9 @@
     document.getElementById('launchSkilledAnalysis').addEventListener('click', function(){
       showScreen('skilled');
     });
+    document.getElementById('launchMedicareDays').addEventListener('click', function(){
+      showScreen('medicare');
+    });
     document.getElementById('launchAdmin').addEventListener('click', function(){
       showScreen('admin');
     });
@@ -2463,6 +2827,9 @@
     document.getElementById('skilledBackToHomeBtn').addEventListener('click', function(){
       showScreen('home');
     });
+    document.getElementById('medicareBackToHomeBtn').addEventListener('click', function(){
+      showScreen('home');
+    });
     document.getElementById('arGoToAdminBtn').addEventListener('click', function(){
       showScreen('admin');
     });
@@ -2472,6 +2839,9 @@
     document.getElementById('skilledGoToAdminBtn').addEventListener('click', function(){
       showScreen('admin');
     });
+    document.getElementById('medicareGoToAdminBtn').addEventListener('click', function(){
+      showScreen('admin');
+    });
     document.getElementById('arBackFromEmptyBtn').addEventListener('click', function(){
       showScreen('home');
     });
@@ -2479,6 +2849,9 @@
       showScreen('home');
     });
     document.getElementById('skilledBackFromEmptyBtn').addEventListener('click', function(){
+      showScreen('home');
+    });
+    document.getElementById('medicareBackFromEmptyBtn').addEventListener('click', function(){
       showScreen('home');
     });
     document.getElementById('adminBackFromLoginBtn').addEventListener('click', function(){
@@ -2617,7 +2990,7 @@
   }
 
   function initLiveMode(){
-    return fetch('/api/dataset').then(function(res){
+    return fetch('/api/dataset', {headers: apiHeaders()}).then(function(res){
       if(!res.ok) throw new Error('no api');
       return res.json();
     }).then(function(payload){
@@ -4378,7 +4751,7 @@
   }
 
   function censusInitLiveMode(){
-    return fetch('/api/census-dataset').then(function(res){
+    return fetch('/api/census-dataset', {headers: apiHeaders()}).then(function(res){
       if(!res.ok) throw new Error('no api');
       return res.json();
     }).then(function(payload){
@@ -4499,7 +4872,7 @@
   // losReport + censusReport), and keeps its own independent state either
   // way.
   function skilledInitLiveMode(){
-    return fetch('/api/census-dataset').then(function(res){
+    return fetch('/api/census-dataset', {headers: apiHeaders()}).then(function(res){
       if(!res.ok) throw new Error('no api');
       return res.json();
     }).then(function(payload){
@@ -4571,6 +4944,412 @@
     });
   }
 
+  /* =========================================================
+     MEDICARE DAYS — its own standalone app (separate home screen
+     tile), reading the same Sales Journal Skilled Analysis uses,
+     filtered down to traditional Medicare only (not HMO/Managed
+     Medicare). Independent state, same pattern as every other app
+     in Vantis — reuses censusFacilityDisplay/censusKeyLabel/
+     colorForPct/registerPopout/MONTH_ABBR from the shared scope.
+  ========================================================== */
+  var medicareState = {
+    sources: {},               // salesJournal -> {fileName, rowCount, uploadedAt, records}
+    rows: [],                  // flat Medicare-only rows: {facility, cohortKey, year, month, days, gross, coinsurance, net}
+    facilities: [],
+    selectedFacilities: new Set(),
+    years: [],
+    selectedYears: new Set(),
+    monthsPresent: [],
+    selectedMonthsCal: new Set(),
+    liveMode: false
+  };
+
+  function medicareShowToast(msg){
+    var t = document.getElementById('medicareToast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 3200);
+  }
+
+  function medicareRebuild(){
+    var uploadedMapping = buildUploadedPayerMapping(censusState.sources.payerMap || skilledState.sources.payerMap);
+    var salesSrc = medicareState.sources.salesJournal;
+    medicareState.rows = (salesSrc && salesSrc.records) ? salesSrc.records
+      .map(function(rec){
+        var ptype = censusResolvePayerType(uploadedMapping, rec.company, rec.payorCode);
+        if(ptype !== 'MEDICARE') return null; // traditional Medicare only — not HMO/Managed Medicare
+        var startDate = new Date(rec.startISO);
+        var year = startDate.getUTCFullYear(), month = startDate.getUTCMonth();
+        return {
+          facility: rec.company,
+          cohortKey: year*12+month,
+          year: year, month: month,
+          days: rec.units, gross: rec.gross||0, coinsurance: rec.coinsuranceDed||0, net: rec.net||0
+        };
+      })
+      .filter(function(r){ return r; }) : [];
+
+    function syncSelection(newOptions, selectedSet){
+      var had = selectedSet.size > 0;
+      if(!had){ newOptions.forEach(function(o){ selectedSet.add(o); }); }
+      else { newOptions.forEach(function(o){ if(!selectedSet.has(o)) selectedSet.add(o); }); }
+    }
+
+    var facSet = {}; medicareState.rows.forEach(function(r){ facSet[r.facility]=true; });
+    medicareState.facilities = Object.keys(facSet).sort();
+    syncSelection(medicareState.facilities, medicareState.selectedFacilities);
+
+    var yearSet = {}, monthSet = {};
+    medicareState.rows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
+    medicareState.years = Object.keys(yearSet).map(Number).sort(function(a,b){return a-b;});
+    medicareState.monthsPresent = Object.keys(monthSet).map(Number).sort(function(a,b){return a-b;});
+    syncSelection(medicareState.years, medicareState.selectedYears);
+    syncSelection(medicareState.monthsPresent, medicareState.selectedMonthsCal);
+  }
+
+  function medicareFilteredRows(){
+    return medicareState.rows.filter(function(r){
+      return medicareState.selectedFacilities.has(r.facility) &&
+        medicareState.selectedYears.has(r.year) &&
+        medicareState.selectedMonthsCal.has(r.month);
+    });
+  }
+
+  function medicareRenderFacilityList(filterText){
+    var el = document.getElementById('medicareFacilityList');
+    el.innerHTML = '';
+    var ft = (filterText||'').toLowerCase();
+    medicareState.facilities.forEach(function(f){
+      var hay = (censusFacilityShort(f)+' '+censusFacilityCode(f)+' '+f).toLowerCase();
+      if(ft && hay.indexOf(ft)===-1) return;
+      var row = document.createElement('label');
+      row.className = 'facility-row';
+      var checked = medicareState.selectedFacilities.has(f);
+      row.innerHTML = '<input type="checkbox"'+(checked?' checked':'')+'><span class="fname">'+censusFacilityShort(f)+'</span><span class="fcode">'+censusFacilityCode(f)+'</span>';
+      row.querySelector('input').addEventListener('change', function(e){
+        if(e.target.checked) medicareState.selectedFacilities.add(f);
+        else medicareState.selectedFacilities.delete(f);
+        document.getElementById('medicareFacCount').textContent = '('+medicareState.selectedFacilities.size+'/'+medicareState.facilities.length+')';
+        medicareRenderAll();
+      });
+      el.appendChild(row);
+    });
+    document.getElementById('medicareFacCount').textContent = '('+medicareState.selectedFacilities.size+'/'+medicareState.facilities.length+')';
+  }
+
+  function medicareRenderYearMonthPickers(){
+    var yearEl = document.getElementById('medicareYearPicker');
+    yearEl.innerHTML = medicareState.years.map(function(y){
+      var on = medicareState.selectedYears.has(y);
+      return '<button class="cohort-chip'+(on?' on':'')+'" data-y="'+y+'">'+y+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(yearEl.querySelectorAll('.cohort-chip'), function(btn){
+      btn.addEventListener('click', function(){
+        var y = Number(btn.getAttribute('data-y'));
+        if(medicareState.selectedYears.has(y) && medicareState.selectedYears.size>1) medicareState.selectedYears.delete(y);
+        else if(!medicareState.selectedYears.has(y)) medicareState.selectedYears.add(y);
+        else { medicareShowToast('At least one year must stay selected.'); return; }
+        medicareRenderAll();
+      });
+    });
+    var yearsArr = Array.from(medicareState.selectedYears).sort(function(a,b){return a-b;});
+    document.getElementById('medicareYearTriggerValue').textContent =
+      yearsArr.length===0 ? '—' : (yearsArr.length<=3 ? yearsArr.join(', ') : yearsArr.length+' selected');
+
+    var monthEl = document.getElementById('medicareMonthPicker');
+    monthEl.innerHTML = medicareState.monthsPresent.map(function(m){
+      var on = medicareState.selectedMonthsCal.has(m);
+      return '<button class="cohort-chip'+(on?' on':'')+'" data-m="'+m+'">'+MONTH_ABBR[m]+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(monthEl.querySelectorAll('.cohort-chip'), function(btn){
+      btn.addEventListener('click', function(){
+        var m = Number(btn.getAttribute('data-m'));
+        if(medicareState.selectedMonthsCal.has(m) && medicareState.selectedMonthsCal.size>1) medicareState.selectedMonthsCal.delete(m);
+        else if(!medicareState.selectedMonthsCal.has(m)) medicareState.selectedMonthsCal.add(m);
+        else { medicareShowToast('At least one month must stay selected.'); return; }
+        medicareRenderAll();
+      });
+    });
+    var monthsArr = Array.from(medicareState.selectedMonthsCal).sort(function(a,b){return a-b;});
+    document.getElementById('medicareMonthTriggerValue').textContent =
+      monthsArr.length===0 ? '—' : (monthsArr.length===medicareState.monthsPresent.length ? 'All' : (monthsArr.length<=3 ? monthsArr.map(function(m){return MONTH_ABBR[m];}).join(', ') : monthsArr.length+' selected'));
+  }
+
+  function medicareMetrics(rows){
+    var days=0, gross=0, coinsurance=0, net=0;
+    rows.forEach(function(r){ days+=r.days; gross+=r.gross; coinsurance+=r.coinsurance; net+=r.net; });
+    return {days:days, gross:gross, coinsurance:coinsurance, net:net, ppd: days ? net/days : null};
+  }
+  function medicareFmtMoney(v){ return '$'+v.toLocaleString(undefined,{maximumFractionDigits:0}); }
+
+  function medicareRenderKPIs(){
+    var el = document.getElementById('medicareKpiStrip');
+    var rows = medicareFilteredRows();
+    var m = medicareMetrics(rows);
+    el.innerHTML = [
+      {lbl:'Facilities selected', val: medicareState.selectedFacilities.size+' / '+medicareState.facilities.length},
+      {lbl:'Medicare days', val: m.days.toLocaleString()},
+      {lbl:'Gross', val: medicareFmtMoney(m.gross)},
+      {lbl:'Coinsurance', val: medicareFmtMoney(m.coinsurance)},
+      {lbl:'Net receivables', val: medicareFmtMoney(m.net)},
+      {lbl:'Blended PPD', val: m.ppd==null?'—':'$'+m.ppd.toFixed(2)}
+    ].map(function(c){
+      return '<div class="kpi-card"><div class="lbl">'+c.lbl+'</div><div class="val mono">'+c.val+'</div></div>';
+    }).join('');
+  }
+
+  function medicareRenderSummaryTable(){
+    var table = document.getElementById('medicareSummaryTable');
+    if(!table) return;
+    if(!medicareState.sources.salesJournal){
+      table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
+      return;
+    }
+    var rows = medicareFilteredRows();
+    if(!rows.length){
+      table.innerHTML = '<tr><td class="empty-note">No Medicare data matches the current filters.</td></tr>';
+      return;
+    }
+    var facs = medicareState.facilities.filter(function(f){ return medicareState.selectedFacilities.has(f); });
+    var byFac = {};
+    rows.forEach(function(r){ (byFac[r.facility] = byFac[r.facility] || []).push(r); });
+
+    var thead = '<thead><tr><th>Facility</th><th>Days</th><th>Gross</th><th>Coinsurance</th><th>Net</th><th>PPD</th></tr></thead>';
+    var overall = medicareMetrics(rows);
+    var totalsRow = '<tr class="blended-row"><th>All selected</th>' +
+      '<td class="dollar-cell">'+overall.days.toLocaleString()+'</td>' +
+      '<td class="dollar-cell">'+medicareFmtMoney(overall.gross)+'</td>' +
+      '<td class="dollar-cell">'+medicareFmtMoney(overall.coinsurance)+'</td>' +
+      '<td class="dollar-cell">'+medicareFmtMoney(overall.net)+'</td>' +
+      '<td class="dollar-cell">'+(overall.ppd==null?'—':'$'+overall.ppd.toFixed(2))+'</td>' +
+    '</tr>';
+
+    var bodyRows = facs.map(function(f){
+      var m = medicareMetrics(byFac[f]||[]);
+      return '<tr><th>'+censusFacilityDisplay(f)+'</th>' +
+        '<td class="dollar-cell">'+m.days.toLocaleString()+'</td>' +
+        '<td class="dollar-cell">'+medicareFmtMoney(m.gross)+'</td>' +
+        '<td class="dollar-cell">'+medicareFmtMoney(m.coinsurance)+'</td>' +
+        '<td class="dollar-cell">'+medicareFmtMoney(m.net)+'</td>' +
+        '<td class="dollar-cell">'+(m.ppd==null?'—':'$'+m.ppd.toFixed(2))+'</td>' +
+      '</tr>';
+    }).join('');
+
+    table.innerHTML = thead + '<tbody>' + totalsRow + bodyRows + '</tbody>';
+  }
+
+  function medicareGroupByFacilityMonth(rows){
+    var byFacCohort = {};
+    rows.forEach(function(r){
+      var k = r.facility+'||'+r.cohortKey;
+      var g = byFacCohort[k] || (byFacCohort[k] = {days:0, gross:0, coinsurance:0, net:0});
+      g.days += r.days; g.gross += r.gross; g.coinsurance += r.coinsurance; g.net += r.net;
+    });
+    var cohortSet = {}; rows.forEach(function(r){ cohortSet[r.cohortKey]=true; });
+    var cohorts = Object.keys(cohortSet).map(Number).sort(function(a,b){return a-b;});
+    return {byFacCohort: byFacCohort, cohorts: cohorts};
+  }
+
+  // Generic facility × month renderer shared by the five "by month" tabs —
+  // they only differ in which value they read out of each cell's
+  // {days,gross,coinsurance,net} and how the blended top row combines them.
+  function medicareRenderFacilityMonthTable(tableId, valueFn){
+    var table = document.getElementById(tableId);
+    if(!table) return;
+    if(!medicareState.sources.salesJournal){
+      table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
+      return;
+    }
+    var rows = medicareFilteredRows();
+    var facs = medicareState.facilities.filter(function(f){ return medicareState.selectedFacilities.has(f); });
+    var g = medicareGroupByFacilityMonth(rows);
+    if(!g.cohorts.length || !facs.length){
+      table.innerHTML = '<tr><td class="empty-note">No Medicare data matches the current filters.</td></tr>';
+      return;
+    }
+    var thead = '<thead><tr><th>Facility</th>' + g.cohorts.map(function(ck){return '<th>'+censusKeyLabel(ck)+'</th>';}).join('') + '</tr></thead>';
+
+    var totalsRow = '<tr class="blended-row"><th>All selected</th>' + g.cohorts.map(function(ck){
+      var agg = {days:0,gross:0,coinsurance:0,net:0}, any=false;
+      facs.forEach(function(f){ var c=g.byFacCohort[f+'||'+ck]; if(c){ agg.days+=c.days; agg.gross+=c.gross; agg.coinsurance+=c.coinsurance; agg.net+=c.net; any=true; } });
+      return any ? '<td class="dollar-cell">'+valueFn(agg)+'</td>' : '<td class="empty">—</td>';
+    }).join('') + '</tr>';
+
+    var bodyRows = facs.map(function(f){
+      var cells = g.cohorts.map(function(ck){
+        var c = g.byFacCohort[f+'||'+ck];
+        return c ? '<td class="dollar-cell">'+valueFn(c)+'</td>' : '<td class="empty">—</td>';
+      }).join('');
+      return '<tr><th>'+censusFacilityDisplay(f)+'</th>'+cells+'</tr>';
+    }).join('');
+
+    table.innerHTML = thead + '<tbody>' + totalsRow + bodyRows + '</tbody>';
+  }
+
+  function medicareRenderDaysTable(){ medicareRenderFacilityMonthTable('medicareDaysTable', function(c){ return c.days.toLocaleString(); }); }
+  function medicareRenderGrossTable(){ medicareRenderFacilityMonthTable('medicareGrossTable', function(c){ return medicareFmtMoney(c.gross); }); }
+  function medicareRenderCoinsuranceTable(){ medicareRenderFacilityMonthTable('medicareCoinsuranceTable', function(c){ return medicareFmtMoney(c.coinsurance); }); }
+  function medicareRenderNetTable(){ medicareRenderFacilityMonthTable('medicareNetTable', function(c){ return medicareFmtMoney(c.net); }); }
+  function medicareRenderPpdTable(){ medicareRenderFacilityMonthTable('medicarePpdTable', function(c){ return c.days ? '$'+(c.net/c.days).toFixed(2) : '—'; }); }
+
+  function medicareRenderChart(){
+    var holder = document.getElementById('medicareChartHolder');
+    if(!holder) return;
+    if(!medicareState.sources.salesJournal){
+      holder.innerHTML = '<div class="empty-note">No Sales Journal has been imported yet.</div>';
+      return;
+    }
+    var rows = medicareFilteredRows();
+    var facs = medicareState.facilities.filter(function(f){ return medicareState.selectedFacilities.has(f); });
+    var g = medicareGroupByFacilityMonth(rows);
+    if(g.cohorts.length < 2){
+      holder.innerHTML = '<div class="empty-note">Need at least two months in the current selection to draw a trend.</div>';
+      return;
+    }
+
+    var palette = ['#0F6B4C','#17A673','#D99B2B','#C1503B','#5B6B62','#2E86AB','#8E5FB0','#B98B4E','#4472C4','#70AD47'];
+    var series = facs.map(function(f, i){
+      var pts = g.cohorts.map(function(ck){
+        var c = g.byFacCohort[f+'||'+ck];
+        return (c && c.days) ? {x: ck, y: c.net/c.days} : null;
+      }).filter(function(p){ return p; });
+      return {label: censusFacilityShort(f), color: palette[i%palette.length], pts: pts};
+    }).filter(function(s){ return s.pts.length>=2; });
+
+    if(!series.length){
+      holder.innerHTML = '<div class="empty-note">Not enough data points to draw a trend for the current selection.</div>';
+      return;
+    }
+
+    var allY = []; series.forEach(function(s){ s.pts.forEach(function(p){ allY.push(p.y); }); });
+    var maxY = Math.max.apply(null, allY), minY = Math.min(0, Math.min.apply(null, allY));
+
+    var W=Math.max(640, holder.clientWidth||760), H=340, padL=56,padR=20,padT=16,padB=36;
+    var plotW = W-padL-padR, plotH = H-padT-padB;
+    function xPix(ck){ return padL + ((ck-g.cohorts[0])/(g.cohorts[g.cohorts.length-1]-g.cohorts[0]))*plotW; }
+    function yPix(y){ return padT + (1-(y-minY)/(maxY-minY||1))*plotH; }
+
+    var svg = '<svg class="chart" width="100%" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">';
+    var steps = 4;
+    for(var i=0;i<=steps;i++){
+      var gv = minY + (maxY-minY)*(i/steps);
+      var gy = yPix(gv);
+      svg += '<line x1="'+padL+'" y1="'+gy+'" x2="'+(W-padR)+'" y2="'+gy+'" stroke="#DEE5DA" stroke-width="1"/>';
+      svg += '<text x="'+(padL-8)+'" y="'+(gy+4)+'" font-size="10" text-anchor="end">$'+gv.toFixed(0)+'</text>';
+    }
+    g.cohorts.forEach(function(ck){
+      svg += '<text x="'+xPix(ck)+'" y="'+(H-padB+16)+'" font-size="10" text-anchor="middle">'+censusKeyLabel(ck)+'</text>';
+    });
+    series.forEach(function(s){
+      var d = s.pts.map(function(p,i){ return (i===0?'M':'L')+xPix(p.x).toFixed(1)+','+yPix(p.y).toFixed(1); }).join(' ');
+      svg += '<path d="'+d+'" fill="none" stroke="'+s.color+'" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"/>';
+      s.pts.forEach(function(p){
+        svg += '<circle cx="'+xPix(p.x).toFixed(1)+'" cy="'+yPix(p.y).toFixed(1)+'" r="2.6" fill="'+s.color+'"><title>'+s.label+' · '+censusKeyLabel(p.x)+' · $'+p.y.toFixed(2)+'</title></circle>';
+      });
+    });
+    svg += '</svg>';
+
+    var legend = '<div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;">' + series.map(function(s){
+      return '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);"><span style="width:10px;height:10px;border-radius:2px;background:'+s.color+';display:inline-block;"></span>'+s.label+'</div>';
+    }).join('') + '</div>';
+
+    holder.innerHTML = svg + legend;
+  }
+
+  function medicareRenderAll(){
+    medicareRenderYearMonthPickers();
+    medicareRenderKPIs();
+    medicareRenderSummaryTable();
+    medicareRenderChart();
+    medicareRenderDaysTable();
+    medicareRenderGrossTable();
+    medicareRenderCoinsuranceTable();
+    medicareRenderNetTable();
+    medicareRenderPpdTable();
+  }
+
+  function medicareSourceStatusText(){
+    var src = medicareState.sources.salesJournal;
+    if(!src) return 'Not loaded yet';
+    var when = src.uploadedAt ? new Date(src.uploadedAt).toLocaleString() : '';
+    return src.rowCount.toLocaleString() + ' rows' + (when ? ' · updated '+when : '');
+  }
+
+  function medicareRefreshAfterSourceChange(){
+    if(medicareState.sources.salesJournal){
+      document.getElementById('medicareDropzone').classList.add('hidden');
+      document.getElementById('medicareApp').style.display = 'flex';
+      document.getElementById('medicareTopSub').textContent = medicareState.facilities.length + ' facilities · Medicare only';
+    }
+    medicareRenderFacilityList(document.getElementById('medicareFacSearch') ? document.getElementById('medicareFacSearch').value : '');
+    medicareRenderAll();
+  }
+
+  function medicareHydrateServerSalesJournal(payload){
+    medicareState.sources.salesJournal = {
+      fileName: payload.fileName, rowCount: payload.rowCount, uploadedAt: payload.uploadedAt, records: payload.records
+    };
+  }
+
+  // Reads from the same /api/census-dataset endpoint as Census Trends and
+  // Skilled Analysis — shared backend, independent frontend state, same
+  // pattern as every other app here.
+  function medicareInitLiveMode(){
+    return fetch('/api/census-dataset', {headers: apiHeaders()}).then(function(res){
+      if(!res.ok) throw new Error('no api');
+      return res.json();
+    }).then(function(payload){
+      medicareState.liveMode = true;
+      var any = false;
+      if(payload && payload.salesJournal && payload.salesJournal.records && payload.salesJournal.records.length){
+        medicareHydrateServerSalesJournal(payload.salesJournal); any = true;
+      }
+      if(any){
+        medicareRebuild();
+        medicareRefreshAfterSourceChange();
+      }
+    }).catch(function(){
+      medicareState.liveMode = false;
+    });
+  }
+
+  function medicareInitDropzone(){
+    // Imports now happen exclusively through the Admin tab — this view is
+    // read-only, same as every other app.
+  }
+
+  function medicareInitSearch(){
+    document.getElementById('medicareFacSearch').addEventListener('input', function(e){
+      medicareRenderFacilityList(e.target.value);
+    });
+    document.getElementById('medicareFacAll').addEventListener('click', function(){
+      medicareState.selectedFacilities = new Set(medicareState.facilities);
+      medicareRenderFacilityList(document.getElementById('medicareFacSearch').value);
+      medicareRenderAll();
+    });
+    document.getElementById('medicareFacNone').addEventListener('click', function(){
+      medicareState.selectedFacilities = new Set();
+      medicareRenderFacilityList(document.getElementById('medicareFacSearch').value);
+      medicareRenderAll();
+    });
+  }
+
+  function medicareInitPopouts(){
+    registerPopout('medicareYearTrigger', 'medicareYearPanel');
+    registerPopout('medicareMonthTrigger', 'medicareMonthPanel');
+  }
+
+  function medicareInitTabs(){
+    Array.prototype.forEach.call(document.querySelectorAll('.medicare-tab-btn'), function(btn){
+      btn.addEventListener('click', function(){
+        Array.prototype.forEach.call(document.querySelectorAll('.medicare-tab-btn'), function(b){b.classList.remove('active');});
+        btn.classList.add('active');
+        Array.prototype.forEach.call(document.querySelectorAll('.medicare-tabpanel'), function(p){p.style.display='none';});
+        document.getElementById('medicaretab-'+btn.getAttribute('data-tab')).style.display='block';
+      });
+    });
+  }
+
   // Scoped to .census-tab-btn / .census-tabpanel specifically (not the
   // shared .tab-btn/.tabpanel AR Collections uses) so switching tabs here
   // never touches AR Collections' tab state, and vice versa.
@@ -4598,9 +5377,6 @@
      still independently checks the real x-admin-key header,
      so security is unchanged — this only smooths out the UX.
   ========================================================== */
-  var ADMIN_KEY_STORAGE = 'vantisAdminKey';
-  var adminKey = null;
-  var adminAuthed = false;
 
   function adminVerify(key, cb){
     fetch('/api/admin/verify', { method:'POST', headers:{'x-admin-key':key} })
@@ -4614,7 +5390,7 @@
     if(!loginEl || !dashEl) return;
     loginEl.style.display = adminAuthed ? 'none' : 'flex';
     dashEl.style.display = adminAuthed ? 'block' : 'none';
-    if(adminAuthed) adminRenderRows();
+    if(adminAuthed){ adminRenderRows(); adminFetchAccessProfiles(); }
   }
 
   function adminSourceStatusText(kind, key){
@@ -4678,6 +5454,149 @@
     });
   }
 
+  /* ---------------------------------------------------------
+     ACCESS PROFILES — admin UI for creating/revoking scoped
+     access links. TILE_LABELS/facility list are the same ones
+     used elsewhere in the app, kept in one place here.
+  --------------------------------------------------------- */
+  var ACCESS_TILE_LABELS = {ar:'AR Collections', census:'Census Trends', skilled:'Skilled Analysis', medicare:'Medicare Days'};
+
+  function adminAccessLinkUrl(token){
+    return window.location.origin + window.location.pathname + '?access=' + token;
+  }
+
+  function adminFetchAccessProfiles(){
+    return fetch('/api/admin/access-profiles', {headers: {'x-admin-key': adminKey}})
+      .then(function(res){ return res.json(); })
+      .then(function(data){ adminRenderAccessProfiles(data.profiles || []); })
+      .catch(function(){ adminRenderAccessProfiles([]); });
+  }
+
+  function adminRenderAccessProfiles(profiles){
+    var el = document.getElementById('adminAccessProfilesList');
+    if(!el) return;
+    if(!profiles.length){
+      el.innerHTML = '<div class="empty-note">No access links yet — everyone with the base URL and the real admin password sees everything. Create a link below to scope down what someone else can see.</div>';
+      return;
+    }
+    el.innerHTML = profiles.map(function(p){
+      var tileTags = p.tiles.map(function(t){ return '<span class="fc-code" style="margin-left:0;margin-right:6px;">'+(ACCESS_TILE_LABELS[t]||t)+'</span>'; }).join('');
+      var facCount = p.facilities === 'ALL' ? 0 : Math.round(p.facilities.length / 2); // each facility stores 2 name variants (long+short) for backend matching
+      var facText = p.facilities === 'ALL' ? 'All facilities' : (facCount + ' facilit' + (facCount===1?'y':'ies'));
+      var labelText = p.label + (p.email ? ' <span style="font-weight:400;color:var(--ink-faint);">— '+p.email+'</span>' : '');
+      return '<div class="admin-import-row" data-profile-id="'+p.id+'">' +
+        '<div><div class="admin-import-label">'+labelText+'</div><div class="admin-import-status">'+tileTags+' · '+facText+'</div></div>' +
+        '<div style="display:flex;gap:8px;align-items:center;">' +
+          '<button class="btn-ghost access-copy-btn" type="button" data-token="'+p.token+'">Copy link</button>' +
+          '<button class="btn-ghost access-revoke-btn" type="button" data-id="'+p.id+'" style="color:#B14A3C;">Revoke</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call(el.querySelectorAll('.access-copy-btn'), function(btn){
+      btn.addEventListener('click', function(){
+        var url = adminAccessLinkUrl(btn.getAttribute('data-token'));
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(url).then(function(){ showToast('Link copied.'); }).catch(function(){ window.prompt('Copy this link:', url); });
+        } else {
+          window.prompt('Copy this link:', url);
+        }
+      });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('.access-revoke-btn'), function(btn){
+      btn.addEventListener('click', function(){
+        if(!window.confirm('Revoke this access link? Anyone using it will immediately lose access.')) return;
+        fetch('/api/admin/access-profiles/'+btn.getAttribute('data-id'), { method:'DELETE', headers:{'x-admin-key':adminKey} })
+          .then(function(){ adminFetchAccessProfiles(); });
+      });
+    });
+  }
+
+  function adminRenderAccessProfileFormOptions(){
+    var tilesEl = document.getElementById('accessProfileTiles');
+    if(tilesEl && !tilesEl.dataset.rendered){
+      tilesEl.dataset.rendered = '1';
+      tilesEl.innerHTML = Object.keys(ACCESS_TILE_LABELS).map(function(t){
+        return '<label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" value="'+t+'" class="access-tile-cb"> '+ACCESS_TILE_LABELS[t]+'</label>';
+      }).join('');
+    }
+    var facEl = document.getElementById('accessProfileFacilities');
+    if(facEl && !facEl.dataset.rendered){
+      facEl.dataset.rendered = '1';
+      var names = Object.keys(CENSUS_FACILITY_CROSSWALK).sort(function(a,b){
+        return CENSUS_FACILITY_CROSSWALK[a][0].localeCompare(CENSUS_FACILITY_CROSSWALK[b][0]);
+      });
+      facEl.innerHTML = names.map(function(longName){
+        var short = CENSUS_FACILITY_CROSSWALK[longName][0], code = CENSUS_FACILITY_CROSSWALK[longName][1];
+        return '<label style="font-size:12.5px;display:flex;align-items:center;gap:6px;"><input type="checkbox" class="access-facility-cb" data-long="'+longName.replace(/"/g,'&quot;')+'" data-short="'+short.replace(/"/g,'&quot;')+'"> '+short+' <span style="color:var(--ink-faint);">'+code+'</span></label>';
+      }).join('');
+    }
+  }
+
+  function adminResetAccessProfileForm(){
+    document.getElementById('accessProfileLabel').value = '';
+    document.getElementById('accessProfileEmail').value = '';
+    Array.prototype.forEach.call(document.querySelectorAll('.access-tile-cb'), function(cb){ cb.checked = false; });
+    Array.prototype.forEach.call(document.querySelectorAll('.access-facility-cb'), function(cb){ cb.checked = false; });
+    document.getElementById('accessProfileAllFacilities').checked = true;
+    document.getElementById('accessProfileFacilities').style.display = 'none';
+    document.getElementById('accessProfileError').style.display = 'none';
+  }
+
+  function adminInitAccessProfiles(){
+    document.getElementById('adminAddAccessProfileBtn').addEventListener('click', function(){
+      adminRenderAccessProfileFormOptions();
+      adminResetAccessProfileForm();
+      document.getElementById('adminAccessProfileForm').style.display = 'block';
+    });
+    document.getElementById('accessProfileCancelBtn').addEventListener('click', function(){
+      document.getElementById('adminAccessProfileForm').style.display = 'none';
+    });
+    document.getElementById('accessProfileAllFacilities').addEventListener('change', function(e){
+      document.getElementById('accessProfileFacilities').style.display = e.target.checked ? 'none' : 'grid';
+    });
+    document.getElementById('accessProfileSaveBtn').addEventListener('click', function(){
+      var errEl = document.getElementById('accessProfileError');
+      errEl.style.display = 'none';
+      var label = document.getElementById('accessProfileLabel').value.trim();
+      if(!label){ errEl.textContent = 'A label is required.'; errEl.style.display = 'inline'; return; }
+      var email = document.getElementById('accessProfileEmail').value.trim();
+      var tiles = Array.prototype.filter.call(document.querySelectorAll('.access-tile-cb'), function(cb){ return cb.checked; }).map(function(cb){ return cb.value; });
+      if(!tiles.length){ errEl.textContent = 'Pick at least one tile.'; errEl.style.display = 'inline'; return; }
+      var allFacilities = document.getElementById('accessProfileAllFacilities').checked;
+      var facilities = 'ALL';
+      if(!allFacilities){
+        facilities = [];
+        Array.prototype.forEach.call(document.querySelectorAll('.access-facility-cb'), function(cb){
+          if(cb.checked){ facilities.push(cb.getAttribute('data-long')); facilities.push(cb.getAttribute('data-short')); }
+        });
+        if(!facilities.length){ errEl.textContent = 'Pick at least one facility, or check "All facilities".'; errEl.style.display = 'inline'; return; }
+      }
+      var btn = document.getElementById('accessProfileSaveBtn');
+      btn.disabled = true; btn.textContent = 'Creating…';
+      fetch('/api/admin/access-profiles', {
+        method: 'POST', headers: {'x-admin-key': adminKey, 'Content-Type': 'application/json'},
+        body: JSON.stringify({label: label, email: email, tiles: tiles, facilities: facilities})
+      }).then(function(res){ return res.json().then(function(body){ return {ok:res.ok, body:body}; }); })
+        .then(function(r){
+          btn.disabled = false; btn.textContent = 'Create link';
+          if(r.ok){
+            document.getElementById('adminAccessProfileForm').style.display = 'none';
+            adminFetchAccessProfiles();
+            var url = adminAccessLinkUrl(r.body.profile.token);
+            window.prompt('Access link created — copy it to share:', url);
+          } else {
+            errEl.textContent = r.body.error || 'Could not create the link.';
+            errEl.style.display = 'inline';
+          }
+        }).catch(function(){
+          btn.disabled = false; btn.textContent = 'Create link';
+          errEl.textContent = 'Could not reach the server.';
+          errEl.style.display = 'inline';
+        });
+    });
+  }
+
   function adminImportAndPublish(file, kind, sourceKey){
     var endpoint = (kind==='ar' ? '/api/upload/' : '/api/census-upload/') + sourceKey;
     var label = kind==='ar' ? sourceLabel(sourceKey) : censusSourceLabel(sourceKey);
@@ -4696,7 +5615,7 @@
           // Census Trends and Skilled Analysis both read from the same
           // /api/census-dataset endpoint but keep independent frontend
           // state, so a census-domain import refreshes both.
-          var refreshes = kind==='ar' ? [initLiveMode()] : [censusInitLiveMode(), skilledInitLiveMode()];
+          var refreshes = kind==='ar' ? [initLiveMode()] : [censusInitLiveMode(), skilledInitLiveMode(), medicareInitLiveMode()];
           Promise.all(refreshes).then(adminRenderRows);
         } else {
           alert('Could not import ' + label + ': ' + (r.body && r.body.error ? r.body.error : 'unknown error'));
@@ -4719,8 +5638,12 @@
     });
   }
 
+  var adminInited = false;
   function initAdmin(){
+    if(adminInited) return;
+    adminInited = true;
     adminTryStoredKey();
+    adminInitAccessProfiles();
 
     document.getElementById('adminLoginForm').addEventListener('submit', function(e){
       e.preventDefault();
@@ -4737,7 +5660,14 @@
           adminAuthed = true;
           try{ sessionStorage.setItem(ADMIN_KEY_STORAGE, val); }catch(e){}
           document.getElementById('adminLoginInput').value = '';
-          adminShowCorrectView();
+          if(!vantisBooted){
+            activeAccess = {tiles: ['ar','census','skilled','medicare'], facilities: 'ALL', label: 'Admin', isAdmin: true};
+            document.getElementById('requestAccessScreen').style.display = 'none';
+            vantisFinishBoot();
+            showScreen('admin');
+          } else {
+            adminShowCorrectView();
+          }
         } else {
           errEl.textContent = 'Incorrect password. Try again.';
           errEl.style.display = 'block';
@@ -4753,27 +5683,7 @@
     });
   }
 
-  initNavigation();
-  showScreen('home');
-  initTabs();
-  initPopouts();
-  initDropzone();
-  initSearch();
-  initLiveMode();
-
-  censusInitPopouts();
-  censusInitTabs();
-  censusInitDropzone();
-  censusInitSearch();
-  censusInitLiveMode();
-
-  skilledInitPopouts();
-  skilledInitTabs();
-  skilledInitDropzone();
-  skilledInitSearch();
-  skilledInitLiveMode();
-
-  initAdmin();
+  vantisResolveAccessAndBoot();
 })();
 </script>
 </body>
