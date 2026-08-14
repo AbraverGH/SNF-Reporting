@@ -222,6 +222,9 @@
     font-weight:600;border-bottom:1px solid var(--line);z-index:2;font-size:11px;
   }
   table.triangle thead th:first-child{left:0;z-index:3;text-align:left;background:var(--surface-2);}
+  table.triangle thead th.sortable-th{cursor:pointer;user-select:none;}
+  table.triangle thead th.sortable-th:hover{background:var(--line);}
+  table.triangle .sort-indicator{display:inline-block;font-size:9px;color:var(--emerald);margin-left:2px;}
   table.triangle tbody th{
     position:sticky;left:0;background:var(--surface);text-align:left;color:var(--ink);
     font-weight:600;border-right:1px solid var(--line);z-index:1;font-family:'Inter';font-size:12.5px;
@@ -2818,6 +2821,124 @@
      TABS
   --------------------------------------------------------- */
   /* ---------------------------------------------------------
+     SORTABLE TABLES — every data table in the app shares the
+     `table.triangle` class, so this one utility adds click-to-sort
+     to all of them (every app, every tab) rather than each render
+     function needing its own sort logic. Handles the complications
+     that come up across this app's tables uniformly:
+      - Some tables have a pinned "All selected" summary row
+        (blended-row/total-row class, or that literal text) that
+        should never move, no matter how the rest is sorted.
+      - Some tables are hierarchical — an expandable row followed by
+        child rows revealed on click. Sorting moves the parent and
+        whichever children currently follow it as one block, so
+        expand state and grouping survive a sort.
+      - Cell values can be dollars, percents, plain numbers, or
+        text — sorting compares numerically when it can, falling
+        back to case-insensitive text.
+      - Sort state persists per table (by DOM id) across re-renders,
+        since several of these tables fully rebuild their rows on
+        every filter change or expand/collapse click — without this
+        a sort would silently reset the moment someone expanded a row.
+  --------------------------------------------------------- */
+  var sortableTableState = {}; // table id -> {colIndex, dir}
+
+  function sortableCellValue(cell){
+    if(!cell) return null;
+    var text = cell.textContent.trim();
+    if(text === '' || text === '—' || text === '·') return null;
+    var cleaned = text.replace(/[$,%]/g,'').trim();
+    if(cleaned !== '' && !isNaN(cleaned) && /^-?[\d.]+$/.test(cleaned)) return parseFloat(cleaned);
+    return text.toLowerCase();
+  }
+
+  function sortableIsPinnedRow(tr){
+    if(tr.className && (tr.className.indexOf('blended-row') >= 0 || tr.className.indexOf('total-row') >= 0)) return true;
+    var firstCell = tr.querySelector('th, td');
+    if(firstCell && /^all selected/i.test(firstCell.textContent.trim())) return true;
+    return false;
+  }
+
+  function sortableIsChildRow(tr){
+    return !!(tr.className && tr.className.indexOf('skilled-child-row') >= 0);
+  }
+
+  function sortableApplyIndicators(ths, colIndex, dir){
+    ths.forEach(function(t, i){
+      var ind = t.querySelector('.sort-indicator');
+      if(ind) ind.textContent = (i === colIndex) ? (dir === 'asc' ? ' \u25B2' : ' \u25BC') : '';
+    });
+  }
+
+  function sortTableBody(tbody, colIndex, dir){
+    var allRows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+    var pinned = [], blocks = [], currentBlock = null;
+    allRows.forEach(function(tr){
+      if(sortableIsPinnedRow(tr)){ pinned.push(tr); return; }
+      if(sortableIsChildRow(tr) && currentBlock){ currentBlock.push(tr); return; }
+      currentBlock = [tr];
+      blocks.push(currentBlock);
+    });
+    blocks.sort(function(a, b){
+      var av = sortableCellValue(a[0].children[colIndex]);
+      var bv = sortableCellValue(b[0].children[colIndex]);
+      if(av == null && bv == null) return 0;
+      if(av == null) return 1;   // blanks/— always sort last, regardless of direction
+      if(bv == null) return -1;
+      if(typeof av === 'number' && typeof bv === 'number') return dir === 'asc' ? av - bv : bv - av;
+      var as = String(av), bs = String(bv);
+      return dir === 'asc' ? as.localeCompare(bs) : bs.localeCompare(as);
+    });
+    var frag = document.createDocumentFragment();
+    pinned.forEach(function(tr){ frag.appendChild(tr); });
+    blocks.forEach(function(block){ block.forEach(function(tr){ frag.appendChild(tr); }); });
+    tbody.appendChild(frag);
+  }
+
+  function initSortableTable(table){
+    var thead = table.querySelector('thead');
+    var tbody = table.querySelector('tbody');
+    if(!thead || !tbody) return; // empty-state tables have neither — nothing to wire up
+    var headerRow = thead.querySelector('tr');
+    if(!headerRow) return;
+    var ths = Array.prototype.slice.call(headerRow.querySelectorAll('th'));
+    if(ths.length < 2) return; // nothing meaningful to sort by
+
+    var tableId = table.id || null;
+
+    ths.forEach(function(th, colIndex){
+      th.classList.add('sortable-th');
+      if(!th.querySelector('.sort-indicator')){
+        var ind = document.createElement('span');
+        ind.className = 'sort-indicator';
+        th.appendChild(ind);
+      }
+      th.onclick = function(){
+        var prev = tableId ? sortableTableState[tableId] : null;
+        var newDir = (prev && prev.colIndex === colIndex && prev.dir === 'asc') ? 'desc' : 'asc';
+        if(tableId) sortableTableState[tableId] = {colIndex: colIndex, dir: newDir};
+        sortableApplyIndicators(ths, colIndex, newDir);
+        sortTableBody(tbody, colIndex, newDir);
+      };
+    });
+
+    // Re-apply whatever sort was last active on this table — e.g. after an
+    // expand/collapse click or a filter change rebuilt its rows from
+    // scratch, which would otherwise silently drop back to default order.
+    if(tableId && sortableTableState[tableId]){
+      var s = sortableTableState[tableId];
+      if(s.colIndex < ths.length){
+        sortableApplyIndicators(ths, s.colIndex, s.dir);
+        sortTableBody(tbody, s.colIndex, s.dir);
+      }
+    }
+  }
+
+  function initSortableTablesAll(){
+    Array.prototype.forEach.call(document.querySelectorAll('table.triangle'), initSortableTable);
+  }
+
+  /* ---------------------------------------------------------
      VANTIS APP NAVIGATION — switches between the home screen
      and each app (AR Collections is fully built; Census
      Trends is a stub until that component exists).
@@ -2959,6 +3080,7 @@
     renderTrend();
     renderCombo();
     renderSummary();
+    initSortableTablesAll();
   }
 
   /* ---------------------------------------------------------
@@ -4873,6 +4995,7 @@
     censusRenderDaysPayerTable();
     censusRenderPctTable();
     censusRenderPayerMixTable();
+    initSortableTablesAll();
   }
 
   /* ---------------------------------------------------------
@@ -5000,6 +5123,7 @@
     skilledRenderManagedMCDByMonthTable();
     skilledRenderLevelTable();
     skilledRenderLevelByFacilityTable();
+    initSortableTablesAll();
   }
 
   function skilledSourceStatusText(sourceKey){
@@ -5438,6 +5562,7 @@
     medicareRenderCoinsuranceTable();
     medicareRenderNetTable();
     medicareRenderPpdTable();
+    initSortableTablesAll();
   }
 
   function medicareSourceStatusText(){
