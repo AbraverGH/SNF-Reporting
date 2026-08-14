@@ -1144,7 +1144,7 @@
         <div class="panel-head">
           <div>
             <h2>Days by level</h2>
-            <div class="note">Skilled payers only — total days, average daily rate, and PPD per rate/level, combined across every selected payer except NE Medicaid and Managed Medicaid, which each have their own tab. ALF-only rates (Monthly Rate, Rural Single, Daily Rate) are excluded from all of Skilled Analysis, since those aren't skilled nursing levels.</div>
+            <div class="note">Skilled payers only — total days, average daily rate, and PPD per rate/level, combined across every selected payer except NE Medicaid and Managed Medicaid, which each have their own tab. ALF-only rates (Monthly Rate, Rural Single, Daily Rate) are excluded from all of Skilled Analysis, since those aren't skilled nursing levels. Bariatric and Dialysis variants (different ICD codes, "Rate" vs not, etc.) are grouped into one row apiece.</div>
           </div>
         </div>
         <div class="triangle-wrap"><table class="triangle" id="skilledLevelTotalsTable"></table></div>
@@ -1471,6 +1471,7 @@
         <div id="adminAccessProfilesList" style="margin-top:14px;"></div>
 
         <div id="adminAccessProfileForm" style="display:none;margin-top:18px;padding-top:18px;border-top:1px solid var(--line);">
+          <h3 id="accessProfileFormTitle" style="margin:0 0 14px;font-size:14.5px;">Create access link</h3>
           <div style="margin-bottom:14px;">
             <label style="display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;">Label</label>
             <input type="text" id="accessProfileLabel" placeholder="e.g. Nebraska Ops Team" style="width:100%;max-width:340px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;font-family:inherit;">
@@ -3329,8 +3330,40 @@
       rateFallback[k2] = best;
     });
 
+    // The optional "Level Detail" override column — when present, this is
+    // what the Level Detail tab shows, used as-is with no other filtering,
+    // since it's a deliberate label rather than the repurposed Description
+    // field — but still guarded against values that are clearly a broken
+    // formula result (a VLOOKUP that didn't match, etc.) rather than an
+    // actual label someone meant to write, since a spreadsheet formula
+    // producing those in bulk is a realistic way for this column to get
+    // filled in without anyone intending it.
+    function censusIsRealOverrideValue(v){
+      if(v == null) return false;
+      var s = String(v).trim();
+      if(!s) return false;
+      if(/^#(N\/A|REF!|VALUE!|DIV\/0!|NAME\?|NULL!|NUM!)$/i.test(s)) return false;
+      if(s === '0') return false;
+      return true;
+    }
+    var overrideByCombo = {}, overrideVotes = {};
+    (payload.rateDetailRows||[]).forEach(function(r){
+      if(!censusIsRealOverrideValue(r.levelDetail)) return;
+      overrideByCombo[r.company+'||'+r.code+'||'+r.rateCode] = r.levelDetail;
+      var k3 = r.code+'||'+r.rateCode;
+      overrideVotes[k3] = overrideVotes[k3] || {};
+      overrideVotes[k3][r.levelDetail] = (overrideVotes[k3][r.levelDetail]||0)+1;
+    });
+    var overrideFallback = {};
+    Object.keys(overrideVotes).forEach(function(k3){
+      var votes = overrideVotes[k3], best=null, bestCount=-1;
+      Object.keys(votes).forEach(function(name){ if(votes[name]>bestCount){best=name;bestCount=votes[name];} });
+      overrideFallback[k3] = best;
+    });
+
     return {byCompanyCode: byCompanyCode, byCodeFallback: byCodeFallback, typeMap: typeMap,
-            rateByCombo: rateByCombo, rateFallback: rateFallback};
+            rateByCombo: rateByCombo, rateFallback: rateFallback,
+            overrideByCombo: overrideByCombo, overrideFallback: overrideFallback};
   }
   function censusBuildUploadedPayerMapping(){
     return buildUploadedPayerMapping(censusState.sources.payerMap);
@@ -3380,6 +3413,13 @@
   function censusResolveRateDetail(uploaded, uploadedRateKey, company, payorCode, rateCode){
     if(!rateCode) return null;
     if(uploaded){
+      // The explicit "Level Detail" override column wins outright when
+      // present — no usefulness filtering needed, since it's a deliberate
+      // label rather than the repurposed Description field.
+      var uOverrideExact = uploaded.overrideByCombo[company+'||'+payorCode+'||'+rateCode];
+      if(uOverrideExact) return uOverrideExact;
+      var uOverrideFallback = uploaded.overrideFallback[payorCode+'||'+rateCode];
+      if(uOverrideFallback) return uOverrideFallback;
       var uExact = uploaded.rateByCombo[company+'||'+payorCode+'||'+rateCode];
       if(censusIsUsefulRateLabel(uExact, rateCode, uploadedRateKey)) return uExact;
       var uFallback = uploaded.rateFallback[payorCode+'||'+rateCode];
@@ -3606,6 +3646,23 @@
       });
     })();
 
+    // Bariatric and Dialysis each show up as several near-duplicate labels
+    // (different ICD codes, "Rate" vs no "Rate", "Dial"/"DIALY" as a
+    // shorthand, "BARI" as a shorthand, etc.) that all mean the same thing
+    // for a level-mix breakdown — group them into one umbrella row apiece
+    // rather than fragmenting the table. "Skilled" and "Skilled Nursing"
+    // are the same thing too, just typed differently in different places.
+    (function groupUmbrellaLevels(){
+      function umbrella(label){
+        var upper = label.toUpperCase();
+        if(upper.indexOf('BARIATRIC') >= 0 || upper === 'BARI') return 'Bariatric';
+        if(upper.indexOf('DIALYSIS') >= 0 || upper === 'DIAL' || upper === 'DIALY') return 'Dialysis';
+        if(upper === 'SKILLED' || upper === 'SKILLED NURSING') return 'Skilled';
+        return label;
+      }
+      skilledState.rows.forEach(function(r){ r.levelDetail = umbrella(r.levelDetail); });
+    })();
+
     // ALF (Assisted Living) billing — "Monthly Rate", "Rural Single",
     // "Daily Rate" — isn't skilled nursing at all, so it's excluded from
     // Skilled Analysis entirely (every tab, not just the level-breakdown
@@ -3670,7 +3727,7 @@
   // those level-grouped tables specifically; the payer-level totals
   // (Summary, Trend, Days/Gross/PPD by month) are untouched, since those
   // aren't broken out by level in the first place.
-  var SKILLED_ALF_LEVEL_LABELS = {'MONTHLY RATE':1, 'RURAL SINGLE':1, 'DAILY RATE':1};
+  var SKILLED_ALF_LEVEL_LABELS = {'MONTHLY RATE':1, 'RURAL SINGLE':1, 'DAILY RATE':1, 'ALF':1};
   function skilledIsALFLevel(r){
     return !!SKILLED_ALF_LEVEL_LABELS[String(r.levelDetail||'').trim().toUpperCase()];
   }
@@ -5575,6 +5632,8 @@
      used elsewhere in the app, kept in one place here.
   --------------------------------------------------------- */
   var ACCESS_TILE_LABELS = {ar:'AR Collections', census:'Census Trends', skilled:'Skilled Analysis', medicare:'Medicare Days'};
+  var lastFetchedAccessProfiles = []; // cached so the Edit button can look up a profile's current values without a re-fetch
+  var editingAccessProfileId = null; // null = create mode; set = editing that profile (same token, updated permissions)
 
   function adminAccessLinkUrl(token){
     return window.location.origin + window.location.pathname + '?access=' + token;
@@ -5588,6 +5647,7 @@
   }
 
   function adminRenderAccessProfiles(profiles){
+    lastFetchedAccessProfiles = profiles;
     var el = document.getElementById('adminAccessProfilesList');
     if(!el) return;
     if(!profiles.length){
@@ -5604,6 +5664,7 @@
         '<div><div class="admin-import-label">'+labelText+'</div><div class="admin-import-status">'+tileTags+' · '+facText+adminText+'</div></div>' +
         '<div style="display:flex;gap:8px;align-items:center;">' +
           '<button class="btn-ghost access-copy-btn" type="button" data-token="'+p.token+'">Copy link</button>' +
+          '<button class="btn-ghost access-edit-btn" type="button" data-id="'+p.id+'">Edit</button>' +
           '<button class="btn-ghost access-revoke-btn" type="button" data-id="'+p.id+'" style="color:#B14A3C;">Revoke</button>' +
         '</div>' +
       '</div>';
@@ -5617,6 +5678,16 @@
         } else {
           window.prompt('Copy this link:', url);
         }
+      });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('.access-edit-btn'), function(btn){
+      btn.addEventListener('click', function(){
+        var profile = lastFetchedAccessProfiles.find(function(p){ return p.id === btn.getAttribute('data-id'); });
+        if(!profile) return;
+        adminRenderAccessProfileFormOptions();
+        adminPopulateAccessProfileForm(profile);
+        document.getElementById('adminAccessProfileForm').style.display = 'block';
+        document.getElementById('adminAccessProfileForm').scrollIntoView({behavior:'smooth', block:'nearest'});
       });
     });
     Array.prototype.forEach.call(el.querySelectorAll('.access-revoke-btn'), function(btn){
@@ -5650,6 +5721,9 @@
   }
 
   function adminResetAccessProfileForm(){
+    editingAccessProfileId = null;
+    document.getElementById('accessProfileFormTitle').textContent = 'Create access link';
+    document.getElementById('accessProfileSaveBtn').textContent = 'Create link';
     document.getElementById('accessProfileLabel').value = '';
     document.getElementById('accessProfileEmail').value = '';
     Array.prototype.forEach.call(document.querySelectorAll('.access-tile-cb'), function(cb){ cb.checked = false; });
@@ -5658,6 +5732,32 @@
     document.getElementById('accessProfileFacilities').style.display = 'none';
     document.getElementById('accessProfileShowAdmin').checked = true;
     document.getElementById('accessProfileError').style.display = 'none';
+  }
+
+  // Fills the (already-reset) form with an existing profile's current
+  // values and switches it into edit mode — same token/link, just updated
+  // permissions, so there's no new URL to re-share.
+  function adminPopulateAccessProfileForm(profile){
+    adminResetAccessProfileForm();
+    editingAccessProfileId = profile.id;
+    document.getElementById('accessProfileFormTitle').textContent = 'Edit access link';
+    document.getElementById('accessProfileSaveBtn').textContent = 'Save changes';
+    document.getElementById('accessProfileLabel').value = profile.label || '';
+    document.getElementById('accessProfileEmail').value = profile.email || '';
+    Array.prototype.forEach.call(document.querySelectorAll('.access-tile-cb'), function(cb){
+      cb.checked = profile.tiles.indexOf(cb.value) >= 0;
+    });
+    document.getElementById('accessProfileShowAdmin').checked = profile.showAdmin !== false;
+    var allFacilities = profile.facilities === 'ALL';
+    document.getElementById('accessProfileAllFacilities').checked = allFacilities;
+    document.getElementById('accessProfileFacilities').style.display = allFacilities ? 'none' : 'grid';
+    if(!allFacilities){
+      var facSet = {};
+      profile.facilities.forEach(function(f){ facSet[f] = true; });
+      Array.prototype.forEach.call(document.querySelectorAll('.access-facility-cb'), function(cb){
+        cb.checked = !!(facSet[cb.getAttribute('data-long')] || facSet[cb.getAttribute('data-short')]);
+      });
+    }
   }
 
   function adminInitAccessProfiles(){
@@ -5690,25 +5790,32 @@
         if(!facilities.length){ errEl.textContent = 'Pick at least one facility, or check "All facilities".'; errEl.style.display = 'inline'; return; }
       }
       var showAdmin = document.getElementById('accessProfileShowAdmin').checked;
+      var isEditing = !!editingAccessProfileId;
       var btn = document.getElementById('accessProfileSaveBtn');
-      btn.disabled = true; btn.textContent = 'Creating…';
-      fetch('/api/admin/access-profiles', {
-        method: 'POST', headers: {'x-admin-key': adminKey, 'Content-Type': 'application/json'},
+      btn.disabled = true; btn.textContent = isEditing ? 'Saving…' : 'Creating…';
+      var url = isEditing ? ('/api/admin/access-profiles/'+editingAccessProfileId) : '/api/admin/access-profiles';
+      var method = isEditing ? 'PUT' : 'POST';
+      fetch(url, {
+        method: method, headers: {'x-admin-key': adminKey, 'Content-Type': 'application/json'},
         body: JSON.stringify({label: label, email: email, tiles: tiles, facilities: facilities, showAdmin: showAdmin})
       }).then(function(res){ return res.json().then(function(body){ return {ok:res.ok, body:body}; }); })
         .then(function(r){
-          btn.disabled = false; btn.textContent = 'Create link';
+          btn.disabled = false; btn.textContent = isEditing ? 'Save changes' : 'Create link';
           if(r.ok){
             document.getElementById('adminAccessProfileForm').style.display = 'none';
             adminFetchAccessProfiles();
-            var url = adminAccessLinkUrl(r.body.profile.token);
-            window.prompt('Access link created — copy it to share:', url);
+            if(isEditing){
+              showToast('Access link updated — the same link now reflects the new permissions.');
+            } else {
+              var linkUrl = adminAccessLinkUrl(r.body.profile.token);
+              window.prompt('Access link created — copy it to share:', linkUrl);
+            }
           } else {
-            errEl.textContent = r.body.error || 'Could not create the link.';
+            errEl.textContent = r.body.error || ('Could not ' + (isEditing ? 'save changes to' : 'create') + ' the link.');
             errEl.style.display = 'inline';
           }
         }).catch(function(){
-          btn.disabled = false; btn.textContent = 'Create link';
+          btn.disabled = false; btn.textContent = isEditing ? 'Save changes' : 'Create link';
           errEl.textContent = 'Could not reach the server.';
           errEl.style.display = 'inline';
         });
