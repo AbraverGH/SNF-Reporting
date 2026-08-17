@@ -3241,7 +3241,7 @@
   // AR Collections, so the two apps read consistently. Falls back to the
   // raw Company Name if a facility isn't in this list (e.g. a brand-new
   // facility not yet added here).
-  var CENSUS_FACILITY_CROSSWALK = {"Emerald Care Center Claremore":["Claremore","OKCM"],"Emerald Care Center Columbus":["Columbus","NECL"],"Emerald Care Center Columbus ALF":["Columbus ALF","NECL ALF"],"Emerald Care Center Cozad":["Cozad","NECZ"],"Emerald Care Center Cozad ALF":["Cozad ALF","NECZ ALF"],"Emerald Care Center Lakeview":["Lakeview","NELV"],"Emerald Care Center Lakeview ALF":["Lakeview ALF","NELV ALF"],"Emerald Care Center Midwest":["Midwest","OKMW"],"Emerald Care Center Omaha":["Omaha","NEOM"],"Emerald Care Center Southwest":["Southwest","OKSW"],"Emerald Nursing & Rehab Brookside LLC":["Brookside","NEBS"],"Emerald Nursing & Rehab Lancaster LLC":["Lancaster","NELC"],"Emerald Nursing & Rehab Legacy Pointe LLC":["Legacy Pointe","NELP"],"Garden Manor Rehab and Nursing of Tulsa":["Tulsa","OKTU"],"Holmes Lake Rehabilitation & Care Center":["Holmes Lake","NEHL"],"Lexington Premier Nursing & Rehab LLC":["Lexington","KYLX"],"Memory Care Center at Emerald":["Memory Care","OKMC"],"Mercy Care Center LLC":["Mercy","NEME"],"Milford Meadows":["Milford Meadows","NEMM"],"Monument Alf":["Monument Alf","NEMT ALF"],"Monument Rehabilitation and Care Center":["Monument","NEMT"],"Pikeville Nursing and Rehab Center":["Pikeville","KYPI"]};
+  var CENSUS_FACILITY_CROSSWALK = {"Emerald Care Center Claremore":["Claremore","OKCM"],"Emerald Care Center Columbus":["Columbus","NECL"],"Emerald Care Center Columbus ALF":["Columbus ALF","NECL ALF"],"Emerald Care Center Cozad":["Cozad","NECZ"],"Emerald Care Center Cozad ALF":["Cozad ALF","NECZ ALF"],"Emerald Care Center Lakeview":["Lakeview","NELV"],"Emerald Care Center Lakeview ALF":["Lakeview ALF","NELV ALF"],"Emerald Care Center Midwest":["Midwest","OKMW"],"Emerald Care Center Omaha":["Omaha","NEOM"],"Emerald Care Center Southwest":["Southwest","OKSW"],"Emerald Nursing & Rehab Brookside LLC":["Brookside","NEBS"],"Emerald Nursing & Rehab Lancaster LLC":["Lancaster","NELC"],"Emerald Nursing & Rehab Legacy Pointe LLC":["Legacy Pointe","NELP"],"Garden Manor Rehab and Nursing of Tulsa":["Tulsa","OKTU"],"Holmes Lake Rehabilitation & Care Center":["Holmes Lake","NEHL"],"Lexington Premier Nursing & Rehab LLC":["Lexington","KYLX"],"Memory Care Center at Emerald":["Memory Care","NEMC"],"Mercy Care Center LLC":["Mercy","NEME"],"Milford Meadows":["Milford Meadows","NEMM"],"Monument Alf":["Monument Alf","NEMT ALF"],"Monument Rehabilitation and Care Center":["Monument","NEMT"],"Pikeville Nursing and Rehab Center":["Pikeville","KYPI"]};
   function censusFacilityShort(company){
     var pair = CENSUS_FACILITY_CROSSWALK[company];
     return pair ? pair[0] : company;
@@ -3621,7 +3621,11 @@
     'MANAGED MCD':'HMO Medicaid', 'COMMERCIAL':'HMO Commercial', 'PRIVATE':'Private',
     'HOSPICE':'Hospice', 'RSPITE':'Respite', 'VA':'VA', 'Unmapped':'Unmapped'
   };
-  var SKILLED_METHODOLOGY_FAMILIES = {'Medicare':1,'HMO Medicare':1,'HMO Commercial':1,'HMO Medicaid':1};
+  // Only these families get a PDPM/Levels/FFS/Flat suffix appended —
+  // plain "Medicare" deliberately isn't one of them, so PDPM-billed and
+  // non-PDPM Medicare stays merge into a single "Medicare" row rather than
+  // splitting into "Medicare" / "Medicare PDPM".
+  var SKILLED_METHODOLOGY_FAMILIES = {'HMO Medicare':1,'HMO Commercial':1,'HMO Medicaid':1};
   function censusSkilledMethodology(payorName, rateCode, uploadedRateKeyMap){
     var n = String(payorName||'').toUpperCase();
     if(n.indexOf('PDPM') >= 0) return 'PDPM';
