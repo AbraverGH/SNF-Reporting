@@ -5762,18 +5762,18 @@
         var has = !!state.sources[s.key];
         return '<div class="admin-import-row" data-kind="ar" data-source="'+s.key+'">' +
           '<div><div class="admin-import-label">'+s.label+'</div><div class="admin-import-status'+(has?' ok':'')+'">'+adminSourceStatusText('ar',s.key)+'</div></div>' +
-          '<div><input type="file" accept=".xlsx,.xls" hidden id="adminFileInput-ar-'+s.key+'"><button class="admin-import-btn" type="button" data-kind="ar" data-source="'+s.key+'">'+(has?'Import updated file…':'Import file…')+'</button></div>' +
+          '<div><input type="file" accept=".xlsx,.xls" hidden><button class="admin-import-btn" type="button" data-kind="ar" data-source="'+s.key+'">'+(has?'Import updated file…':'Import file…')+'</button></div>' +
         '</div>';
       }).join('');
     }
 
     var censusEl = document.getElementById('adminCensusRows');
     if(censusEl){
-      censusEl.innerHTML = CENSUS_SOURCES.filter(function(s){ return s.key==='losReport' || s.key==='censusReport' || s.key==='availableBeds'; }).map(function(s){
+      censusEl.innerHTML = CENSUS_SOURCES.filter(function(s){ return s.key==='losReport' || s.key==='censusReport' || s.key==='availableBeds' || s.key==='payerMap'; }).map(function(s){
         var has = !!censusState.sources[s.key];
         return '<div class="admin-import-row" data-kind="census" data-source="'+s.key+'">' +
           '<div><div class="admin-import-label">'+s.label+'</div><div class="admin-import-status'+(has?' ok':'')+'">'+adminSourceStatusText('census',s.key)+'</div></div>' +
-          '<div><input type="file" accept=".xlsx,.xls" hidden id="adminFileInput-census-'+s.key+'"><button class="admin-import-btn" type="button" data-kind="census" data-source="'+s.key+'">'+(has?'Import updated file…':'Import file…')+'</button></div>' +
+          '<div><input type="file" accept=".xlsx,.xls" hidden><button class="admin-import-btn" type="button" data-kind="census" data-source="'+s.key+'">'+(has?'Import updated file…':'Import file…')+'</button></div>' +
         '</div>';
       }).join('');
     }
@@ -5783,27 +5783,25 @@
       skilledEl.innerHTML = CENSUS_SOURCES.filter(function(s){ return s.key==='salesJournal' || s.key==='payerMap' || s.key==='rateKey'; }).map(function(s){
         var has = !!((s.key==='salesJournal' || s.key==='rateKey') ? skilledState.sources[s.key] : censusState.sources[s.key]);
         return '<div class="admin-import-row" data-kind="census" data-source="'+s.key+'">' +
-          '<div><div class="admin-import-label">'+s.label+'</div><div class="admin-import-status'+(has?' ok':'')+'">'+adminSourceStatusText('census',s.key)+'</div></div>' +
-          '<div><input type="file" accept=".xlsx,.xls" hidden id="adminFileInput-census-'+s.key+'"><button class="admin-import-btn" type="button" data-kind="census" data-source="'+s.key+'">'+(has?'Import updated file…':'Import file…')+'</button></div>' +
+          '<div><div class="admin-import-label">'+s.label+(s.key==='payerMap'?' <span style="font-weight:400;color:var(--ink-faint);">(shared with Census Trends)</span>':'')+'</div><div class="admin-import-status'+(has?' ok':'')+'">'+adminSourceStatusText('census',s.key)+'</div></div>' +
+          '<div><input type="file" accept=".xlsx,.xls" hidden><button class="admin-import-btn" type="button" data-kind="census" data-source="'+s.key+'">'+(has?'Import updated file…':'Import file…')+'</button></div>' +
         '</div>';
       }).join('');
     }
 
     Array.prototype.forEach.call(document.querySelectorAll('.admin-import-btn'), function(btn){
       btn.addEventListener('click', function(){
-        var kind = btn.getAttribute('data-kind'), key = btn.getAttribute('data-source');
-        var input = document.getElementById('adminFileInput-'+kind+'-'+key);
+        var row = btn.closest('.admin-import-row');
+        var input = row ? row.querySelector('input[type=file]') : null;
         if(input) input.click();
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('.admin-import-row input[type=file]'), function(input){
       input.addEventListener('change', function(){
         if(input.files[0]){
-          var rest = input.id.replace('adminFileInput-','');
-          var dashIdx = rest.indexOf('-');
-          var kind = rest.substring(0,dashIdx);
-          var key = rest.substring(dashIdx+1);
-          adminImportAndPublish(input.files[0], kind, key);
+          var row = input.closest('.admin-import-row');
+          var kind = row.getAttribute('data-kind'), key = row.getAttribute('data-source');
+          adminImportAndPublish(input.files[0], kind, key, row);
         }
         input.value = '';
       });
@@ -6006,12 +6004,12 @@
     });
   }
 
-  function adminImportAndPublish(file, kind, sourceKey){
+  function adminImportAndPublish(file, kind, sourceKey, triggerRow){
     var endpoint = (kind==='ar' ? '/api/upload/' : '/api/census-upload/') + sourceKey;
     var label = kind==='ar' ? sourceLabel(sourceKey) : censusSourceLabel(sourceKey);
     var fd = new FormData();
     fd.append('file', file);
-    var row = document.querySelector('.admin-import-row[data-kind="'+kind+'"][data-source="'+sourceKey+'"]');
+    var row = triggerRow || document.querySelector('.admin-import-row[data-kind="'+kind+'"][data-source="'+sourceKey+'"]');
     var btn = row ? row.querySelector('.admin-import-btn') : null;
     if(btn){ btn.disabled = true; btn.textContent = 'Importing…'; }
     fetch(endpoint, { method:'POST', headers:{'x-admin-key':adminKey}, body: fd })
