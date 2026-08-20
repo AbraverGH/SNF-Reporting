@@ -1460,6 +1460,11 @@
       </div>
 
       <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head"><div><h2>AR Collections — PCC (Paramount)</h2><div class="note">For facilities billing out of PointClickCare instead of the primary system. Journal Entries covers Revenue and Cash Receipts (both split automatically by facility — ALF/ILF/SNF); the AR Aging Report covers Aging Balance. Both are combined into the AR Collections sources above automatically, alongside the other facilities' own data.</div></div></div>
+        <div id="adminPccArRows"></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head"><div><h2>Census Trends</h2><div class="note">The Length of Stay report and Census Report are imported monthly; Available Beds only needs updating when bed counts change.</div></div></div>
         <div id="adminCensusRows"></div>
       </div>
@@ -1659,12 +1664,26 @@
     return s ? s.label : key;
   }
 
+  // PCC AR sources — a facility billing out of PointClickCare. Uploaded
+  // separately from the four sources above; the backend merges their
+  // Revenue/Cash/Aging Balance into the matching source when the app
+  // fetches /api/dataset, so these don't need their own render logic here.
+  var PCC_AR_SOURCES = [
+    {key:'pccJournal', label:'PCC Journal Entries'},
+    {key:'pccAging', label:'PCC AR Aging Report'}
+  ];
+  function pccArSourceLabel(key){
+    var s = PCC_AR_SOURCES.filter(function(x){return x.key===key;})[0];
+    return s ? s.label : key;
+  }
+
   var PAYER_COLUMNS = [
     {key:'allGroups', header:'All  Groups', label:'All Groups'},
     {key:'medicare', header:'Medicare', label:'Medicare'},
     {key:'neMedicaid', header:'NE Medicaid', label:'NE Medicaid'},
     {key:'kyMedicaid', header:'Kentucky Medicaid', label:'Kentucky Medicaid'},
     {key:'okMedicaid', header:'OK Medicaid', label:'OK Medicaid'},
+    {key:'ksMedicaid', header:'KS Medicaid', label:'KS Medicaid'},
     {key:'privatePay', header:'Private Pay', label:'Private Pay'},
     {key:'hmo', header:'HMO/Private Insurance', label:'HMO / Private Insurance'},
     {key:'hospice', header:'Hospice', label:'Hospice'},
@@ -1677,10 +1696,10 @@
   // into a single "Medicaid" line here, but the underlying dollar figures for all three
   // are still summed (and their % Collected values still revenue-weighted) wherever this
   // combined key is used — nothing from the source columns is dropped.
-  var MEDICAID_COMBO_KEYS = ['neMedicaid','kyMedicaid','okMedicaid'];
+  var MEDICAID_COMBO_KEYS = ['neMedicaid','kyMedicaid','okMedicaid','ksMedicaid'];
   var PAYER_OPTIONS = [
     {key:'medicare', label:'Medicare'},
-    {key:'medicaidCombined', label:'Medicaid (NE + KY + OK)'},
+    {key:'medicaidCombined', label:'Medicaid (NE + KY + OK + KS)'},
     {key:'privatePay', label:'Private Pay'},
     {key:'hmo', label:'HMO / Private Insurance'},
     {key:'hospice', label:'Hospice'},
@@ -3150,6 +3169,8 @@
     };
   }
 
+  var pccArStatus = {}; // populated from /api/dataset's _pccArStatus, admin sessions only
+
   function initLiveMode(){
     return fetch('/api/dataset', {headers: apiHeaders()}).then(function(res){
       if(!res.ok) throw new Error('no api');
@@ -3164,6 +3185,7 @@
           any = true;
         }
       });
+      if(payload && payload._pccArStatus) pccArStatus = payload._pccArStatus;
       if(any){
         state.selectedMonths = new Set();
         state.selectedAsOf = null;
@@ -3247,7 +3269,7 @@
   // AR Collections, so the two apps read consistently. Falls back to the
   // raw Company Name if a facility isn't in this list (e.g. a brand-new
   // facility not yet added here).
-  var CENSUS_FACILITY_CROSSWALK = {"Emerald Care Center Claremore":["Claremore","OKCM"],"Emerald Care Center Columbus":["Columbus","NECL"],"Emerald Care Center Columbus ALF":["Columbus ALF","NECL ALF"],"Emerald Care Center Cozad":["Cozad","NECZ"],"Emerald Care Center Cozad ALF":["Cozad ALF","NECZ ALF"],"Emerald Care Center Lakeview":["Lakeview","NELV"],"Emerald Care Center Lakeview ALF":["Lakeview ALF","NELV ALF"],"Emerald Care Center Midwest":["Midwest","OKMW"],"Emerald Care Center Omaha":["Omaha","NEOM"],"Emerald Care Center Southwest":["Southwest","OKSW"],"Emerald Nursing & Rehab Brookside LLC":["Brookside","NEBS"],"Emerald Nursing & Rehab Lancaster LLC":["Lancaster","NELC"],"Emerald Nursing & Rehab Legacy Pointe LLC":["Legacy Pointe","NELP"],"Garden Manor Rehab and Nursing of Tulsa":["Tulsa","OKTU"],"Holmes Lake Rehabilitation & Care Center":["Holmes Lake","NEHL"],"Lexington Premier Nursing & Rehab LLC":["Lexington","KYLX"],"Memory Care Center at Emerald":["Memory Care","NEMC"],"Mercy Care Center LLC":["Mercy","NEME"],"Milford Meadows":["Milford Meadows","NEMM"],"Monument Alf":["Monument Alf","NEMT ALF"],"Monument Rehabilitation and Care Center":["Monument","NEMT"],"Pikeville Nursing and Rehab Center":["Pikeville","KYPI"]};
+  var CENSUS_FACILITY_CROSSWALK = {"Emerald Care Center Claremore":["Claremore","OKCM"],"Emerald Care Center Columbus":["Columbus","NECL"],"Emerald Care Center Columbus ALF":["Columbus ALF","NECL ALF"],"Emerald Care Center Cozad":["Cozad","NECZ"],"Emerald Care Center Cozad ALF":["Cozad ALF","NECZ ALF"],"Emerald Care Center Lakeview":["Lakeview","NELV"],"Emerald Care Center Lakeview ALF":["Lakeview ALF","NELV ALF"],"Emerald Care Center Midwest":["Midwest","OKMW"],"Emerald Care Center Omaha":["Omaha","NEOM"],"Emerald Care Center Southwest":["Southwest","OKSW"],"Emerald Nursing & Rehab Brookside LLC":["Brookside","NEBS"],"Emerald Nursing & Rehab Lancaster LLC":["Lancaster","NELC"],"Emerald Nursing & Rehab Legacy Pointe LLC":["Legacy Pointe","NELP"],"Garden Manor Rehab and Nursing of Tulsa":["Tulsa","OKTU"],"Holmes Lake Rehabilitation & Care Center":["Holmes Lake","NEHL"],"Lexington Premier Nursing & Rehab LLC":["Lexington","KYLX"],"Memory Care Center at Emerald":["Memory Care","NEMC"],"Mercy Care Center LLC":["Mercy","NEME"],"Milford Meadows":["Milford Meadows","NEMM"],"Monument Alf":["Monument Alf","NEMT ALF"],"Monument Rehabilitation and Care Center":["Monument","NEMT"],"Pikeville Nursing and Rehab Center":["Pikeville","KYPI"],"Paramount - SNF":["Paramount SNF","KSPA"],"Paramount  - ALF":["Paramount ALF","KSPA ALF"],"Paramount - ILF":["Paramount ILF","KSPA ILF"]};
   function censusFacilityShort(company){
     var pair = CENSUS_FACILITY_CROSSWALK[company];
     return pair ? pair[0] : company;
@@ -5773,6 +5795,19 @@
       }).join('');
     }
 
+    var pccArEl = document.getElementById('adminPccArRows');
+    if(pccArEl){
+      pccArEl.innerHTML = PCC_AR_SOURCES.map(function(s){
+        var status = pccArStatus[s.key];
+        var has = !!status;
+        var statusText = has ? (status.rowCount.toLocaleString()+' rows'+(status.uploadedAt?' · updated '+new Date(status.uploadedAt).toLocaleString():'')) : 'Not loaded yet';
+        return '<div class="admin-import-row" data-kind="ar-pcc" data-source="'+s.key+'">' +
+          '<div><div class="admin-import-label">'+s.label+'</div><div class="admin-import-status'+(has?' ok':'')+'">'+statusText+'</div></div>' +
+          '<div><input type="file" accept=".csv" hidden><button class="admin-import-btn" type="button" data-kind="ar-pcc" data-source="'+s.key+'">'+(has?'Import updated file…':'Import file…')+'</button></div>' +
+        '</div>';
+      }).join('');
+    }
+
     var censusEl = document.getElementById('adminCensusRows');
     if(censusEl){
       censusEl.innerHTML = CENSUS_SOURCES.filter(function(s){ return s.key==='losReport' || s.key==='censusReport' || s.key==='availableBeds' || s.key==='payerMap'; }).map(function(s){
@@ -6011,8 +6046,8 @@
   }
 
   function adminImportAndPublish(file, kind, sourceKey, triggerRow){
-    var endpoint = (kind==='ar' ? '/api/upload/' : '/api/census-upload/') + sourceKey;
-    var label = kind==='ar' ? sourceLabel(sourceKey) : censusSourceLabel(sourceKey);
+    var endpoint = (kind==='ar' ? '/api/upload/' : kind==='ar-pcc' ? '/api/upload-pcc/' : '/api/census-upload/') + sourceKey;
+    var label = kind==='ar' ? sourceLabel(sourceKey) : kind==='ar-pcc' ? pccArSourceLabel(sourceKey) : censusSourceLabel(sourceKey);
     var fd = new FormData();
     fd.append('file', file);
     var row = triggerRow || document.querySelector('.admin-import-row[data-kind="'+kind+'"][data-source="'+sourceKey+'"]');
@@ -6028,7 +6063,7 @@
           // Census Trends and Skilled Analysis both read from the same
           // /api/census-dataset endpoint but keep independent frontend
           // state, so a census-domain import refreshes both.
-          var refreshes = kind==='ar' ? [initLiveMode()] : [censusInitLiveMode(), skilledInitLiveMode(), medicareInitLiveMode()];
+          var refreshes = (kind==='ar' || kind==='ar-pcc') ? [initLiveMode()] : [censusInitLiveMode(), skilledInitLiveMode(), medicareInitLiveMode()];
           Promise.all(refreshes).then(adminRenderRows);
         } else {
           alert('Could not import ' + label + ': ' + (r.body && r.body.error ? r.body.error : 'unknown error'));
