@@ -1465,6 +1465,11 @@
       </div>
 
       <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head"><div><h2>Medicare Days — PCC (Paramount)</h2><div class="note">A focused "A/R - Medicare A" export from PointClickCare, covering Paramount SNF's traditional Medicare activity — separate from the shared Sales Journal, so it doesn't affect Skilled Analysis' view of this facility (which would need a full Sales Journal, not a Medicare-only one). Feeds Medicare Days directly, alongside the other facilities' own Sales Journal data.</div></div></div>
+        <div id="adminPccMedicareRows"></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head"><div><h2>Census Trends</h2><div class="note">The Length of Stay report and Census Report are imported monthly; Available Beds only needs updating when bed counts change.</div></div></div>
         <div id="adminCensusRows"></div>
       </div>
@@ -1674,6 +1679,16 @@
   ];
   function pccArSourceLabel(key){
     var s = PCC_AR_SOURCES.filter(function(x){return x.key===key;})[0];
+    return s ? s.label : key;
+  }
+
+  // PCC Medicare Sales — feeds Medicare Days only, kept separate from the
+  // shared Sales Journal (see the backend note on PCC_MEDICARE_SOURCES).
+  var PCC_MEDICARE_SOURCES = [
+    {key:'pccMedicareSales', label:'PCC Medicare Sales'}
+  ];
+  function pccMedicareSourceLabel(key){
+    var s = PCC_MEDICARE_SOURCES.filter(function(x){return x.key===key;})[0];
     return s ? s.label : key;
   }
 
@@ -5357,7 +5372,7 @@
   function medicareRebuild(){
     var uploadedMapping = buildUploadedPayerMapping(censusState.sources.payerMap || skilledState.sources.payerMap);
     var salesSrc = medicareState.sources.salesJournal;
-    medicareState.rows = (salesSrc && salesSrc.records) ? salesSrc.records
+    var rows = (salesSrc && salesSrc.records) ? salesSrc.records
       .map(function(rec){
         var ptype = censusResolvePayerType(uploadedMapping, rec.company, rec.payorCode);
         if(ptype !== 'MEDICARE') return null; // traditional Medicare only — not HMO/Managed Medicare
@@ -5371,6 +5386,25 @@
         };
       })
       .filter(function(r){ return r; }) : [];
+
+    // PCC Medicare Sales — already pre-aggregated by facility/month, no
+    // payer-type resolution needed (the source file is Medicare A only by
+    // construction). Kept as a separate source (see PCC_MEDICARE_SOURCES
+    // on the backend) so it doesn't have to piggyback on the shared Sales
+    // Journal that Skilled Analysis and Census Trends also read from.
+    var pccSrc = medicareState.sources.pccMedicareSales;
+    if(pccSrc && pccSrc.data){
+      pccSrc.data.forEach(function(rec){
+        var month = MONTH_IDX[rec.monthAbbr];
+        rows.push({
+          facility: rec.company,
+          cohortKey: rec.year*12+month,
+          year: rec.year, month: month,
+          days: rec.days, gross: rec.gross, coinsurance: rec.coinsurance, net: rec.net
+        });
+      });
+    }
+    medicareState.rows = rows;
 
     function syncSelection(newOptions, selectedSet){
       var had = selectedSet.size > 0;
@@ -5396,6 +5430,13 @@
         medicareState.selectedYears.has(r.year) &&
         medicareState.selectedMonthsCal.has(r.month);
     });
+  }
+
+  // True once either the shared Sales Journal or PCC Medicare Sales has
+  // been loaded — either alone is enough to populate medicareState.rows,
+  // so "no data" checks need to recognize both, not just the Sales Journal.
+  function medicareHasAnySource(){
+    return !!(medicareState.sources.salesJournal || medicareState.sources.pccMedicareSales);
   }
 
   function medicareRenderFacilityList(filterText){
@@ -5484,7 +5525,7 @@
   function medicareRenderSummaryTable(){
     var table = document.getElementById('medicareSummaryTable');
     if(!table) return;
-    if(!medicareState.sources.salesJournal){
+    if(!medicareHasAnySource()){
       table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
       return;
     }
@@ -5539,7 +5580,7 @@
   function medicareRenderFacilityMonthTable(tableId, valueFn){
     var table = document.getElementById(tableId);
     if(!table) return;
-    if(!medicareState.sources.salesJournal){
+    if(!medicareHasAnySource()){
       table.innerHTML = '<tr><td class="empty-note">No Sales Journal has been imported yet — an admin can add one from the Admin tab.</td></tr>';
       return;
     }
@@ -5578,7 +5619,7 @@
   function medicareRenderChart(){
     var holder = document.getElementById('medicareChartHolder');
     if(!holder) return;
-    if(!medicareState.sources.salesJournal){
+    if(!medicareHasAnySource()){
       holder.innerHTML = '<div class="empty-note">No Sales Journal has been imported yet.</div>';
       return;
     }
@@ -5660,7 +5701,7 @@
   }
 
   function medicareRefreshAfterSourceChange(){
-    if(medicareState.sources.salesJournal){
+    if(medicareHasAnySource()){
       document.getElementById('medicareDropzone').classList.add('hidden');
       document.getElementById('medicareApp').style.display = 'flex';
       document.getElementById('medicareTopSub').textContent = medicareState.facilities.length + ' facilities · Medicare only';
@@ -5687,6 +5728,10 @@
       var any = false;
       if(payload && payload.salesJournal && payload.salesJournal.records && payload.salesJournal.records.length){
         medicareHydrateServerSalesJournal(payload.salesJournal); any = true;
+      }
+      if(payload && payload.pccMedicareSales && payload.pccMedicareSales.data && payload.pccMedicareSales.data.length){
+        medicareState.sources.pccMedicareSales = payload.pccMedicareSales;
+        any = true;
       }
       if(any){
         medicareRebuild();
@@ -5804,6 +5849,19 @@
         return '<div class="admin-import-row" data-kind="ar-pcc" data-source="'+s.key+'">' +
           '<div><div class="admin-import-label">'+s.label+'</div><div class="admin-import-status'+(has?' ok':'')+'">'+statusText+'</div></div>' +
           '<div><input type="file" accept=".csv" hidden><button class="admin-import-btn" type="button" data-kind="ar-pcc" data-source="'+s.key+'">'+(has?'Import updated file…':'Import file…')+'</button></div>' +
+        '</div>';
+      }).join('');
+    }
+
+    var pccMedEl = document.getElementById('adminPccMedicareRows');
+    if(pccMedEl){
+      pccMedEl.innerHTML = PCC_MEDICARE_SOURCES.map(function(s){
+        var status = medicareState.sources[s.key];
+        var has = !!status;
+        var statusText = has ? (status.rowCount.toLocaleString()+' rows'+(status.uploadedAt?' · updated '+new Date(status.uploadedAt).toLocaleString():'')) : 'Not loaded yet';
+        return '<div class="admin-import-row" data-kind="medicare-pcc" data-source="'+s.key+'">' +
+          '<div><div class="admin-import-label">'+s.label+'</div><div class="admin-import-status'+(has?' ok':'')+'">'+statusText+'</div></div>' +
+          '<div><input type="file" accept=".csv" hidden><button class="admin-import-btn" type="button" data-kind="medicare-pcc" data-source="'+s.key+'">'+(has?'Import updated file…':'Import file…')+'</button></div>' +
         '</div>';
       }).join('');
     }
@@ -6046,8 +6104,8 @@
   }
 
   function adminImportAndPublish(file, kind, sourceKey, triggerRow){
-    var endpoint = (kind==='ar' ? '/api/upload/' : kind==='ar-pcc' ? '/api/upload-pcc/' : '/api/census-upload/') + sourceKey;
-    var label = kind==='ar' ? sourceLabel(sourceKey) : kind==='ar-pcc' ? pccArSourceLabel(sourceKey) : censusSourceLabel(sourceKey);
+    var endpoint = (kind==='ar' ? '/api/upload/' : kind==='ar-pcc' ? '/api/upload-pcc/' : kind==='medicare-pcc' ? '/api/upload-pcc-medicare/' : '/api/census-upload/') + sourceKey;
+    var label = kind==='ar' ? sourceLabel(sourceKey) : kind==='ar-pcc' ? pccArSourceLabel(sourceKey) : kind==='medicare-pcc' ? pccMedicareSourceLabel(sourceKey) : censusSourceLabel(sourceKey);
     var fd = new FormData();
     fd.append('file', file);
     var row = triggerRow || document.querySelector('.admin-import-row[data-kind="'+kind+'"][data-source="'+sourceKey+'"]');
@@ -6062,7 +6120,9 @@
           // re-rendering this dashboard's status text (all async fetches).
           // Census Trends and Skilled Analysis both read from the same
           // /api/census-dataset endpoint but keep independent frontend
-          // state, so a census-domain import refreshes both.
+          // state, so a census-domain import refreshes both. PCC Medicare
+          // Sales also comes through that same endpoint (see
+          // medicareInitLiveMode), so it belongs in this same branch.
           var refreshes = (kind==='ar' || kind==='ar-pcc') ? [initLiveMode()] : [censusInitLiveMode(), skilledInitLiveMode(), medicareInitLiveMode()];
           Promise.all(refreshes).then(adminRenderRows);
         } else {
