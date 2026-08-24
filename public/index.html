@@ -345,6 +345,14 @@
   .cohort-chip.no-data{opacity:.4;}
   .cohort-chip.on.no-data{opacity:.55;}
   .popout-panel-head .hint.warn{color:var(--clay);}
+  .cohort-picker-controls{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+  .cohort-picker-controls button{
+    border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
+    font-size:10.5px;padding:3px 10px;border-radius:6px;font-family:inherit;cursor:pointer;
+    transition:.12s;
+  }
+  .cohort-picker-controls button:hover{border-color:var(--emerald);color:var(--emerald);}
+  .cohort-picker-controls .sep{width:1px;background:var(--line);margin:2px 2px;}
 
   /* Summary table */
   table.summary{width:100%;border-collapse:collapse;font-size:12.5px;}
@@ -633,6 +641,7 @@
           </button>
           <div class="popout-panel" id="monthsPanel" style="display:none;">
             <div class="popout-panel-head">Months of service <span class="hint">— pick one or more</span></div>
+            <div class="cohort-picker-controls" id="globalMonthsPickerControls"></div>
             <div class="cohort-picker" id="globalMonthsPicker"></div>
             <div class="popout-panel-actions"><button class="btn-load" id="monthsDoneBtn" type="button">Done</button></div>
           </div>
@@ -879,6 +888,7 @@
           </button>
           <div class="popout-panel" id="censusYearPanel" style="display:none;">
             <div class="popout-panel-head">Year <span class="hint" id="censusYearHint">— pick one or more</span></div>
+            <div class="cohort-picker-controls" id="censusYearPickerControls"></div>
             <div class="cohort-picker" id="censusYearPicker"></div>
             <div class="popout-panel-actions"><button class="btn-load" id="censusYearDoneBtn" type="button">Done</button></div>
           </div>
@@ -891,6 +901,7 @@
           </button>
           <div class="popout-panel" id="censusMonthPanel" style="display:none;">
             <div class="popout-panel-head">Month <span class="hint">— pick one or more, any year (for seasonality)</span></div>
+            <div class="cohort-picker-controls" id="censusMonthPickerControls"></div>
             <div class="cohort-picker" id="censusMonthPicker"></div>
             <div class="popout-panel-actions"><button class="btn-load" id="censusMonthDoneBtn" type="button">Done</button></div>
           </div>
@@ -1059,6 +1070,7 @@
           </button>
           <div class="popout-panel" id="skilledYearPanel" style="display:none;">
             <div class="popout-panel-head">Year <span class="hint">— pick one or more</span></div>
+            <div class="cohort-picker-controls" id="skilledYearPickerControls"></div>
             <div class="cohort-picker" id="skilledYearPicker"></div>
             <div class="popout-panel-actions"><button class="btn-load" id="skilledYearDoneBtn" type="button">Done</button></div>
           </div>
@@ -1071,6 +1083,7 @@
           </button>
           <div class="popout-panel" id="skilledMonthPanel" style="display:none;">
             <div class="popout-panel-head">Month <span class="hint">— pick one or more, any year (for seasonality)</span></div>
+            <div class="cohort-picker-controls" id="skilledMonthPickerControls"></div>
             <div class="cohort-picker" id="skilledMonthPicker"></div>
             <div class="popout-panel-actions"><button class="btn-load" id="skilledMonthDoneBtn" type="button">Done</button></div>
           </div>
@@ -1303,6 +1316,7 @@
           </button>
           <div class="popout-panel" id="medicareYearPanel" style="display:none;">
             <div class="popout-panel-head">Year <span class="hint">— pick one or more</span></div>
+            <div class="cohort-picker-controls" id="medicareYearPickerControls"></div>
             <div class="cohort-picker" id="medicareYearPicker"></div>
             <div class="popout-panel-actions"><button class="btn-load" id="medicareYearDoneBtn" type="button">Done</button></div>
           </div>
@@ -1315,6 +1329,7 @@
           </button>
           <div class="popout-panel" id="medicareMonthPanel" style="display:none;">
             <div class="popout-panel-head">Month <span class="hint">— pick one or more, any year (for seasonality)</span></div>
+            <div class="cohort-picker-controls" id="medicareMonthPickerControls"></div>
             <div class="cohort-picker" id="medicareMonthPicker"></div>
             <div class="popout-panel-actions"><button class="btn-load" id="medicareMonthDoneBtn" type="button">Done</button></div>
           </div>
@@ -1802,6 +1817,80 @@
   }
   var MONTH_IDX = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
   var MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  /* ---------------------------------------------------------
+     SHARED PICKER CONTROLS — "Select all / Clear all" plus, for
+     month-level pickers, "YTD / Q1 / Q2 / Q3 / Q4" quick-select
+     buttons. Used by every cohort-chip picker in the app (AR's Month
+     of Service, and Census/Skilled/Medicare's Year and Month
+     pickers) rather than each one having its own copy of this logic.
+
+     opts:
+       selectedSet — the Set to mutate (e.g. censusState.selectedMonthsCal)
+       allValues   — every selectable value currently available
+       minOne      — if true, "Clear all" keeps the single latest value
+                     selected instead of emptying the set entirely
+                     (matches the existing "at least one" rule those
+                     pickers already enforce on individual clicks)
+       presets     — 'calendarMonth' (values are 0-11 month indices,
+                     Q1-Q4/YTD computed directly), 'cohortKey' (values
+                     are year*12+month, so quarters are computed
+                     within whichever year is latest in allValues), or
+                     omitted/null for no quarter buttons (year pickers)
+       onChange    — called after any control changes the selection
+  --------------------------------------------------------- */
+  function renderPickerControls(containerId, opts){
+    var el = document.getElementById(containerId);
+    if(!el) return;
+    var selectedSet = opts.selectedSet, allValues = opts.allValues || [], minOne = !!opts.minOne, onChange = opts.onChange;
+
+    function setAll(vals){
+      selectedSet.clear();
+      vals.forEach(function(v){ selectedSet.add(v); });
+      onChange();
+    }
+    function selectAll(){ setAll(allValues); }
+    function clearAll(){ setAll(minOne && allValues.length ? [Math.max.apply(null, allValues)] : []); }
+
+    var buttons = [
+      {label:'Select all', fn: selectAll},
+      {label:'Clear all', fn: clearAll}
+    ];
+
+    if(opts.presets === 'calendarMonth'){
+      var present = allValues.slice().sort(function(a,b){return a-b;});
+      var latest = present.length ? present[present.length-1] : 11;
+      var quarters = [[0,1,2],[3,4,5],[6,7,8],[9,10,11]];
+      buttons.push({label:'YTD', fn: function(){ setAll(present.filter(function(m){ return m<=latest; })); }});
+      quarters.forEach(function(q, i){
+        buttons.push({label:'Q'+(i+1), fn: function(){
+          var vals = q.filter(function(m){ return present.indexOf(m)>=0; });
+          if(vals.length) setAll(vals);
+        }});
+      });
+    } else if(opts.presets === 'cohortKey'){
+      var years = allValues.map(function(ck){ return Math.floor(ck/12); });
+      var latestYear = years.length ? Math.max.apply(null, years) : null;
+      if(latestYear!=null){
+        var yearCohorts = allValues.filter(function(ck){ return Math.floor(ck/12)===latestYear; });
+        var latestCohort = yearCohorts.length ? Math.max.apply(null, yearCohorts) : null;
+        buttons.push({label:'YTD', fn: function(){
+          setAll(allValues.filter(function(ck){ return Math.floor(ck/12)===latestYear && ck<=latestCohort; }));
+        }});
+        [[0,1,2],[3,4,5],[6,7,8],[9,10,11]].forEach(function(q, i){
+          buttons.push({label:'Q'+(i+1), fn: function(){
+            var vals = q.map(function(m){ return latestYear*12+m; }).filter(function(ck){ return allValues.indexOf(ck)>=0; });
+            if(vals.length) setAll(vals);
+          }});
+        });
+      }
+    }
+
+    el.innerHTML = buttons.map(function(b, i){ return '<button type="button" data-i="'+i+'">'+b.label+'</button>'; }).join('');
+    Array.prototype.forEach.call(el.querySelectorAll('button'), function(btn, i){
+      btn.addEventListener('click', buttons[i].fn);
+    });
+  }
 
   function normHeader(h){
     return String(h||'').replace(/\s+/g,' ').trim().toLowerCase();
@@ -2307,6 +2396,10 @@
       });
     });
     document.getElementById('monthsTriggerValue').textContent = describeMonthSelection(state.selectedMonths);
+    renderPickerControls('globalMonthsPickerControls', {
+      selectedSet: state.selectedMonths, allValues: cohorts, minOne: false, presets: 'cohortKey',
+      onChange: renderAll
+    });
   }
 
   // Shared helper: turns a Set of cohort keys into a compact trigger label,
@@ -4093,6 +4186,15 @@
     var monthsArr = Array.from(censusState.selectedMonthsCal).sort(function(a,b){return a-b;});
     document.getElementById('censusMonthTriggerValue').textContent =
       monthsArr.length===0 ? '—' : (monthsArr.length===censusState.monthsPresent.length ? 'All' : (monthsArr.length<=3 ? monthsArr.map(function(m){return MONTH_ABBR[m];}).join(', ') : monthsArr.length+' selected'));
+
+    renderPickerControls('censusYearPickerControls', {
+      selectedSet: censusState.selectedYears, allValues: censusState.years, minOne: true,
+      onChange: censusRenderAll
+    });
+    renderPickerControls('censusMonthPickerControls', {
+      selectedSet: censusState.selectedMonthsCal, allValues: censusState.monthsPresent, minOne: true, presets: 'calendarMonth',
+      onChange: censusRenderAll
+    });
   }
 
   /* =========================================================
@@ -4175,6 +4277,15 @@
     var monthsArr = Array.from(skilledState.selectedMonthsCal).sort(function(a,b){return a-b;});
     document.getElementById('skilledMonthTriggerValue').textContent =
       monthsArr.length===0 ? '—' : (monthsArr.length===skilledState.monthsPresent.length ? 'All' : (monthsArr.length<=3 ? monthsArr.map(function(m){return MONTH_ABBR[m];}).join(', ') : monthsArr.length+' selected'));
+
+    renderPickerControls('skilledYearPickerControls', {
+      selectedSet: skilledState.selectedYears, allValues: skilledState.years, minOne: true,
+      onChange: skilledRenderAll
+    });
+    renderPickerControls('skilledMonthPickerControls', {
+      selectedSet: skilledState.selectedMonthsCal, allValues: skilledState.monthsPresent, minOne: true, presets: 'calendarMonth',
+      onChange: skilledRenderAll
+    });
   }
 
   /* ---------------------------------------------------------
@@ -5497,6 +5608,15 @@
     var monthsArr = Array.from(medicareState.selectedMonthsCal).sort(function(a,b){return a-b;});
     document.getElementById('medicareMonthTriggerValue').textContent =
       monthsArr.length===0 ? '—' : (monthsArr.length===medicareState.monthsPresent.length ? 'All' : (monthsArr.length<=3 ? monthsArr.map(function(m){return MONTH_ABBR[m];}).join(', ') : monthsArr.length+' selected'));
+
+    renderPickerControls('medicareYearPickerControls', {
+      selectedSet: medicareState.selectedYears, allValues: medicareState.years, minOne: true,
+      onChange: medicareRenderAll
+    });
+    renderPickerControls('medicareMonthPickerControls', {
+      selectedSet: medicareState.selectedMonthsCal, allValues: medicareState.monthsPresent, minOne: true, presets: 'calendarMonth',
+      onChange: medicareRenderAll
+    });
   }
 
   function medicareMetrics(rows){
