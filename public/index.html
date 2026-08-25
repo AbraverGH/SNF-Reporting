@@ -881,26 +881,13 @@
 
       <div class="popout-filters">
         <div class="popout-group">
-          <button class="popout-trigger" id="censusYearTrigger" type="button">
-            <span class="popout-trigger-label">Year</span>
-            <span class="popout-trigger-value" id="censusYearTriggerValue">—</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div class="popout-panel" id="censusYearPanel" style="display:none;">
-            <div class="popout-panel-head">Year <span class="hint" id="censusYearHint">— pick one or more</span></div>
-            <div class="cohort-picker-controls" id="censusYearPickerControls"></div>
-            <div class="cohort-picker" id="censusYearPicker"></div>
-            <div class="popout-panel-actions"><button class="btn-load" id="censusYearDoneBtn" type="button">Done</button></div>
-          </div>
-        </div>
-        <div class="popout-group">
           <button class="popout-trigger" id="censusMonthTrigger" type="button">
             <span class="popout-trigger-label">Month</span>
             <span class="popout-trigger-value" id="censusMonthTriggerValue">—</span>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="popout-panel" id="censusMonthPanel" style="display:none;">
-            <div class="popout-panel-head">Month <span class="hint">— pick one or more, any year (for seasonality)</span></div>
+            <div class="popout-panel-head">Month <span class="hint" id="censusMonthHint">— pick one or more, each year+month independent</span></div>
             <div class="cohort-picker-controls" id="censusMonthPickerControls"></div>
             <div class="cohort-picker" id="censusMonthPicker"></div>
             <div class="popout-panel-actions"><button class="btn-load" id="censusMonthDoneBtn" type="button">Done</button></div>
@@ -1063,26 +1050,13 @@
 
       <div class="popout-filters">
         <div class="popout-group">
-          <button class="popout-trigger" id="skilledYearTrigger" type="button">
-            <span class="popout-trigger-label">Year</span>
-            <span class="popout-trigger-value" id="skilledYearTriggerValue">—</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div class="popout-panel" id="skilledYearPanel" style="display:none;">
-            <div class="popout-panel-head">Year <span class="hint">— pick one or more</span></div>
-            <div class="cohort-picker-controls" id="skilledYearPickerControls"></div>
-            <div class="cohort-picker" id="skilledYearPicker"></div>
-            <div class="popout-panel-actions"><button class="btn-load" id="skilledYearDoneBtn" type="button">Done</button></div>
-          </div>
-        </div>
-        <div class="popout-group">
           <button class="popout-trigger" id="skilledMonthTrigger" type="button">
             <span class="popout-trigger-label">Month</span>
             <span class="popout-trigger-value" id="skilledMonthTriggerValue">—</span>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="popout-panel" id="skilledMonthPanel" style="display:none;">
-            <div class="popout-panel-head">Month <span class="hint">— pick one or more, any year (for seasonality)</span></div>
+            <div class="popout-panel-head">Month <span class="hint">— pick one or more, each year+month independent</span></div>
             <div class="cohort-picker-controls" id="skilledMonthPickerControls"></div>
             <div class="cohort-picker" id="skilledMonthPicker"></div>
             <div class="popout-panel-actions"><button class="btn-load" id="skilledMonthDoneBtn" type="button">Done</button></div>
@@ -1309,26 +1283,13 @@
 
       <div class="popout-filters">
         <div class="popout-group">
-          <button class="popout-trigger" id="medicareYearTrigger" type="button">
-            <span class="popout-trigger-label">Year</span>
-            <span class="popout-trigger-value" id="medicareYearTriggerValue">—</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div class="popout-panel" id="medicareYearPanel" style="display:none;">
-            <div class="popout-panel-head">Year <span class="hint">— pick one or more</span></div>
-            <div class="cohort-picker-controls" id="medicareYearPickerControls"></div>
-            <div class="cohort-picker" id="medicareYearPicker"></div>
-            <div class="popout-panel-actions"><button class="btn-load" id="medicareYearDoneBtn" type="button">Done</button></div>
-          </div>
-        </div>
-        <div class="popout-group">
           <button class="popout-trigger" id="medicareMonthTrigger" type="button">
             <span class="popout-trigger-label">Month</span>
             <span class="popout-trigger-value" id="medicareMonthTriggerValue">—</span>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="popout-panel" id="medicareMonthPanel" style="display:none;">
-            <div class="popout-panel-head">Month <span class="hint">— pick one or more, any year (for seasonality)</span></div>
+            <div class="popout-panel-head">Month <span class="hint">— pick one or more, each year+month independent</span></div>
             <div class="cohort-picker-controls" id="medicareMonthPickerControls"></div>
             <div class="cohort-picker" id="medicareMonthPicker"></div>
             <div class="popout-panel-actions"><button class="btn-load" id="medicareMonthDoneBtn" type="button">Done</button></div>
@@ -1522,6 +1483,10 @@
             <label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="accessProfileShowAdmin" checked> Show the Admin tile on their home screen</label>
             <div style="font-size:12px;color:var(--ink-faint);margin-top:4px;margin-left:20px;">Just declutters their view — Admin still needs the real admin password either way, so this isn't a security setting.</div>
           </div>
+          <div style="margin-bottom:14px;">
+            <label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="accessProfileCanExport"> Allow exporting data to CSV</label>
+            <div style="font-size:12px;color:var(--ink-faint);margin-top:4px;margin-left:20px;">Off by default — unlike the Admin tile setting above, this is a real security boundary: once exported, the data can be shared or stored anywhere, outside this app's access controls.</div>
+          </div>
           <div style="margin-bottom:16px;">
             <label style="display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;">Facilities</label>
             <div style="margin-bottom:8px;">
@@ -1636,7 +1601,7 @@
     try{ storedAdminKey = sessionStorage.getItem(ADMIN_KEY_STORAGE); }catch(e){}
     if(storedAdminKey){
       adminKey = storedAdminKey; adminAuthed = true;
-      activeAccess = {tiles: ['ar','census','skilled','medicare'], facilities: 'ALL', label: 'Admin', isAdmin: true, showAdmin: true};
+      activeAccess = {tiles: ['ar','census','skilled','medicare'], facilities: 'ALL', label: 'Admin', isAdmin: true, showAdmin: true, canExport: true};
       vantisFinishBoot();
       return;
     }
@@ -1654,7 +1619,7 @@
       if(!res.ok) throw new Error('invalid access token');
       return res.json();
     }).then(function(data){
-      activeAccess = {tiles: data.tiles, facilities: data.facilities, label: data.label, isAdmin: false, showAdmin: data.showAdmin !== false};
+      activeAccess = {tiles: data.tiles, facilities: data.facilities, label: data.label, isAdmin: false, showAdmin: data.showAdmin !== false, canExport: data.canExport === true};
       vantisFinishBoot();
     }).catch(function(){
       try{ localStorage.removeItem(VANTIS_ACCESS_TOKEN_STORAGE); }catch(e){}
@@ -1909,6 +1874,7 @@
     byAsOfMonth: null,           // "Collections by As-Of-Date" tab: single month of service selection
     byAsOfDates: new Set(),      // "Collections by As-Of-Date" tab: multi as-of date selection
     summarySort: {col:'delta', dir:'desc'},
+    monthsDefaulted: false,      // true once the "no selection yet" default has run once — see renderGlobalPickers, so Clear all doesn't get silently undone on the next render
     liveMode: false   // true once we've confirmed a backend (server.js) is serving this page
   };
 
@@ -2379,8 +2345,9 @@
     document.getElementById('asOfTriggerValue').textContent = state.selectedAsOf!=null ? keyLabel(state.selectedAsOf) : '—';
 
     var cohorts = allCohortKeys();
-    if(state.selectedMonths.size === 0 && cohorts.length){
+    if(!state.monthsDefaulted && state.selectedMonths.size === 0 && cohorts.length){
       cohorts.slice(-6).forEach(function(c){ state.selectedMonths.add(c); });
+      state.monthsDefaulted = true;
     }
     var moEl = document.getElementById('globalMonthsPicker');
     moEl.innerHTML = cohorts.map(function(ck){
@@ -3072,6 +3039,85 @@
   }
 
   /* ---------------------------------------------------------
+     CSV EXPORT — one "Export CSV" button per panel that contains
+     a table, added automatically (same sweep pattern as the
+     sortable-tables setup above) rather than touching every
+     individual table-rendering function. Gated by activeAccess.
+     canExport, set from the access profile (or always true for
+     admin sessions) — see /api/access/:token on the backend.
+  --------------------------------------------------------- */
+  function csvEscapeCell(val){
+    val = String(val==null ? '' : val).trim();
+    if(/[",\r\n]/.test(val)) return '"' + val.replace(/"/g,'""') + '"';
+    return val;
+  }
+  // Facility cells are "<th>Brookside<span class="fc-code">NEBS</span></th>"
+  // — .textContent alone would run them together as "BrooksideNEBS", so
+  // this adds a space before any nested .fc-code specifically.
+  function cellText(cell){
+    var clone = cell.cloneNode(true);
+    Array.prototype.forEach.call(clone.querySelectorAll('.fc-code'), function(span){
+      span.textContent = ' ' + span.textContent.trim();
+    });
+    return clone.textContent.replace(/\s+/g,' ').trim();
+  }
+  function tableToCSV(table){
+    var lines = [];
+    Array.prototype.forEach.call(table.querySelectorAll('thead tr'), function(tr){
+      var cells = tr.querySelectorAll('th,td');
+      lines.push(Array.prototype.map.call(cells, function(c){ return csvEscapeCell(cellText(c)); }).join(','));
+    });
+    Array.prototype.forEach.call(table.querySelectorAll('tbody tr'), function(tr){
+      if(tr.style.display === 'none') return; // skip collapsed child rows in expandable tables
+      var cells = tr.querySelectorAll('th,td');
+      lines.push(Array.prototype.map.call(cells, function(c){ return csvEscapeCell(cellText(c)); }).join(','));
+    });
+    return lines.join('\r\n');
+  }
+  function downloadCSV(csvContent, filename){
+    var blob = new Blob(['\uFEFF'+csvContent], {type: 'text/csv;charset=utf-8;'}); // BOM so Excel reads UTF-8 correctly (facility names use non-ASCII dashes etc.)
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+  function addExportButtonsToAllPanels(){
+    // Sweep runs on every render regardless of permission, so a button
+    // left over from a permission change (rare, but access profiles can
+    // be edited live) never lingers — remove-then-maybe-readd each time.
+    // Note: this runs on every table.triangle in the document, including
+    // ones belonging to a currently-hidden app (e.g. Census Trends' tables
+    // right after an admin upload, before anyone has navigated there) —
+    // that's intentional, not a bug: those buttons sit inside a display:
+    // none container and are never visible or clickable to a real user, and
+    // skipping them by visibility caused a worse problem (a render that
+    // happens while hidden would never get buttons at all, since nothing
+    // re-runs this sweep later at navigation time).
+    Array.prototype.forEach.call(document.querySelectorAll('.export-csv-btn'), function(btn){ btn.remove(); });
+    if(!(activeAccess && activeAccess.canExport)) return;
+    Array.prototype.forEach.call(document.querySelectorAll('table.triangle'), function(table){
+      if(!table.querySelector('tbody tr')) return; // nothing to export yet (empty-state placeholder row)
+      var panel = table.closest('.panel');
+      var head = panel ? panel.querySelector('.panel-head') : null;
+      if(!head || head.querySelector('.export-csv-btn')) return;
+      var h2 = head.querySelector('h2');
+      var title = h2 ? h2.textContent.trim() : 'export';
+      var btn = document.createElement('button');
+      btn.className = 'btn-ghost export-csv-btn';
+      btn.type = 'button';
+      btn.textContent = 'Export CSV';
+      btn.addEventListener('click', function(){
+        var filename = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') + '.csv';
+        downloadCSV(tableToCSV(table), filename);
+      });
+      head.appendChild(btn);
+    });
+  }
+
+  /* ---------------------------------------------------------
      VANTIS APP NAVIGATION — switches between the home screen
      and each app (AR Collections is fully built; Census
      Trends is a stub until that component exists).
@@ -3214,6 +3260,7 @@
     renderCombo();
     renderSummary();
     initSortableTablesAll();
+    addExportButtonsToAllPanels();
   }
 
   /* ---------------------------------------------------------
@@ -3466,6 +3513,11 @@
     selectedFacilities: new Set(),
     payerTypes: [],
     selectedPayerTypes: new Set(),
+    // Single combined Year+Month picker — each cohort is one specific
+    // year+month (e.g. Dec 2025 and Jan 2026 select/deselect independently),
+    // replacing the old separate Year and Month-of-any-year pickers below.
+    cohorts: [],
+    selectedCohorts: new Set(),
     years: [],
     selectedYears: new Set(),
     monthsPresent: [],         // calendar months (0-11) that actually appear anywhere
@@ -3484,6 +3536,8 @@
     selectedFacilities: new Set(),
     payerTypes: [],
     selectedPayerTypes: new Set(),
+    cohorts: [],
+    selectedCohorts: new Set(),
     years: [],
     selectedYears: new Set(),
     monthsPresent: [],
@@ -3870,14 +3924,16 @@
       censusState.payerTypes.forEach(function(t){ censusState.selectedPayerTypes.add(t); });
     }
 
-    var yearSet = {}, monthSet = {};
-    censusState.rows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
-    censusState.daysRows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
-    censusState.pctRows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
+    var yearSet = {}, monthSet = {}, cohortSet = {};
+    censusState.rows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; cohortSet[r.cohortKey]=true; });
+    censusState.daysRows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; cohortSet[r.cohortKey]=true; });
+    censusState.pctRows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; cohortSet[r.cohortKey]=true; });
     censusState.years = Object.keys(yearSet).map(Number).sort(function(a,b){return a-b;});
     censusState.monthsPresent = Object.keys(monthSet).map(Number).sort(function(a,b){return a-b;});
+    censusState.cohorts = Object.keys(cohortSet).map(Number).sort(function(a,b){return a-b;});
     syncSelection(censusState.years, censusState.selectedYears);
     syncSelection(censusState.monthsPresent, censusState.selectedMonthsCal);
+    syncSelection(censusState.cohorts, censusState.selectedCohorts);
   }
 
   // Rebuilds skilledState.rows from the Sales Journal, same shape/logic as
@@ -4000,20 +4056,21 @@
       skilledState.payerTypes.forEach(function(t){ skilledState.selectedPayerTypes.add(t); });
     }
 
-    var yearSet = {}, monthSet = {};
-    skilledState.rows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
+    var yearSet = {}, monthSet = {}, cohortSet = {};
+    skilledState.rows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; cohortSet[r.cohortKey]=true; });
     skilledState.years = Object.keys(yearSet).map(Number).sort(function(a,b){return a-b;});
     skilledState.monthsPresent = Object.keys(monthSet).map(Number).sort(function(a,b){return a-b;});
+    skilledState.cohorts = Object.keys(cohortSet).map(Number).sort(function(a,b){return a-b;});
     syncSelection(skilledState.years, skilledState.selectedYears);
     syncSelection(skilledState.monthsPresent, skilledState.selectedMonthsCal);
+    syncSelection(skilledState.cohorts, skilledState.selectedCohorts);
   }
 
   function skilledFilteredRows(){
     return skilledState.rows.filter(function(r){
       return skilledState.selectedFacilities.has(r.facility) &&
         skilledState.selectedPayerTypes.has(r.payerType) &&
-        skilledState.selectedYears.has(r.year) &&
-        skilledState.selectedMonthsCal.has(r.month);
+        skilledState.selectedCohorts.has(r.cohortKey);
     });
   }
 
@@ -4038,8 +4095,7 @@
     return censusState.daysRows.filter(function(r){
       return censusState.selectedFacilities.has(r.facility) &&
         censusState.selectedPayerTypes.has(r.payerType) &&
-        censusState.selectedYears.has(r.year) &&
-        censusState.selectedMonthsCal.has(r.month);
+        censusState.selectedCohorts.has(r.cohortKey);
     });
   }
 
@@ -4052,8 +4108,7 @@
   function censusFilteredDaysRowsAnyPayer(){
     return censusState.daysRows.filter(function(r){
       return censusState.selectedFacilities.has(r.facility) &&
-        censusState.selectedYears.has(r.year) &&
-        censusState.selectedMonthsCal.has(r.month);
+        censusState.selectedCohorts.has(r.cohortKey);
     });
   }
 
@@ -4064,8 +4119,7 @@
   function censusFilteredPctRows(){
     return censusState.pctRows.filter(function(r){
       return censusState.selectedFacilities.has(r.facility) &&
-        censusState.selectedYears.has(r.year) &&
-        censusState.selectedMonthsCal.has(r.month);
+        censusState.selectedCohorts.has(r.cohortKey);
     });
   }
 
@@ -4073,8 +4127,7 @@
     return censusState.rows.filter(function(r){
       return censusState.selectedFacilities.has(r.facility) &&
         censusState.selectedPayerTypes.has(r.payerType) &&
-        censusState.selectedYears.has(r.year) &&
-        censusState.selectedMonthsCal.has(r.month);
+        censusState.selectedCohorts.has(r.cohortKey);
     });
   }
 
@@ -4140,59 +4193,36 @@
 
   function censusRenderYearMonthPickers(){
     var activeRows = censusActiveTabRows();
-    var yearsWithData = {}, monthsWithData = {};
-    activeRows.forEach(function(r){ yearsWithData[r.year]=true; monthsWithData[r.month]=true; });
-    var anyYearMissing = censusState.years.some(function(y){ return !yearsWithData[y]; });
+    var cohortsWithData = {};
+    activeRows.forEach(function(r){ cohortsWithData[r.cohortKey]=true; });
+    var anyCohortMissing = censusState.cohorts.some(function(ck){ return !cohortsWithData[ck]; });
 
-    var yearEl = document.getElementById('censusYearPicker');
-    yearEl.innerHTML = censusState.years.map(function(y){
-      var on = censusState.selectedYears.has(y);
-      var noData = !yearsWithData[y];
-      return '<button class="cohort-chip'+(on?' on':'')+(noData?' no-data':'')+'" data-y="'+y+'"'+(noData?' title="No data for '+censusActiveTabLabel()+' in '+y+'"':'')+'>'+y+'</button>';
+    var el = document.getElementById('censusMonthPicker');
+    el.innerHTML = censusState.cohorts.map(function(ck){
+      var on = censusState.selectedCohorts.has(ck);
+      var noData = !cohortsWithData[ck];
+      return '<button class="cohort-chip'+(on?' on':'')+(noData?' no-data':'')+'" data-ck="'+ck+'"'+(noData?' title="No data for '+censusActiveTabLabel()+' in '+keyLabel(ck)+'"':'')+'>'+keyLabel(ck)+'</button>';
     }).join('');
-    Array.prototype.forEach.call(yearEl.querySelectorAll('.cohort-chip'), function(btn){
+    Array.prototype.forEach.call(el.querySelectorAll('.cohort-chip'), function(btn){
       btn.addEventListener('click', function(){
-        var y = Number(btn.getAttribute('data-y'));
-        if(censusState.selectedYears.has(y) && censusState.selectedYears.size>1) censusState.selectedYears.delete(y);
-        else if(!censusState.selectedYears.has(y)) censusState.selectedYears.add(y);
-        else { censusShowToast('At least one year must stay selected.'); return; }
-        censusRenderAll();
-      });
-    });
-    var yearsArr = Array.from(censusState.selectedYears).sort(function(a,b){return a-b;});
-    document.getElementById('censusYearTriggerValue').textContent =
-      yearsArr.length===0 ? '—' : (yearsArr.length<=3 ? yearsArr.join(', ') : yearsArr.length+' selected');
-    var yearHintEl = document.getElementById('censusYearHint');
-    if(yearHintEl){
-      yearHintEl.textContent = anyYearMissing ? ('— dimmed years have no data for '+censusActiveTabLabel()) : '— pick one or more';
-      yearHintEl.classList.toggle('warn', anyYearMissing);
-    }
-
-    var monthEl = document.getElementById('censusMonthPicker');
-    monthEl.innerHTML = censusState.monthsPresent.map(function(m){
-      var on = censusState.selectedMonthsCal.has(m);
-      var noData = !monthsWithData[m];
-      return '<button class="cohort-chip'+(on?' on':'')+(noData?' no-data':'')+'" data-m="'+m+'"'+(noData?' title="No data for '+censusActiveTabLabel()+' in '+MONTH_ABBR[m]+'"':'')+'>'+MONTH_ABBR[m]+'</button>';
-    }).join('');
-    Array.prototype.forEach.call(monthEl.querySelectorAll('.cohort-chip'), function(btn){
-      btn.addEventListener('click', function(){
-        var m = Number(btn.getAttribute('data-m'));
-        if(censusState.selectedMonthsCal.has(m) && censusState.selectedMonthsCal.size>1) censusState.selectedMonthsCal.delete(m);
-        else if(!censusState.selectedMonthsCal.has(m)) censusState.selectedMonthsCal.add(m);
+        var ck = Number(btn.getAttribute('data-ck'));
+        if(censusState.selectedCohorts.has(ck) && censusState.selectedCohorts.size>1) censusState.selectedCohorts.delete(ck);
+        else if(!censusState.selectedCohorts.has(ck)) censusState.selectedCohorts.add(ck);
         else { censusShowToast('At least one month must stay selected.'); return; }
         censusRenderAll();
       });
     });
-    var monthsArr = Array.from(censusState.selectedMonthsCal).sort(function(a,b){return a-b;});
+    var arr = Array.from(censusState.selectedCohorts).sort(function(a,b){return a-b;});
     document.getElementById('censusMonthTriggerValue').textContent =
-      monthsArr.length===0 ? '—' : (monthsArr.length===censusState.monthsPresent.length ? 'All' : (monthsArr.length<=3 ? monthsArr.map(function(m){return MONTH_ABBR[m];}).join(', ') : monthsArr.length+' selected'));
+      arr.length===0 ? '—' : (arr.length===censusState.cohorts.length ? 'All' : (arr.length<=3 ? arr.map(keyLabel).join(', ') : arr.length+' selected'));
+    var hintEl = document.getElementById('censusMonthHint');
+    if(hintEl){
+      hintEl.textContent = anyCohortMissing ? ('— dimmed months have no data for '+censusActiveTabLabel()) : '— pick one or more, each year+month independent';
+      hintEl.classList.toggle('warn', anyCohortMissing);
+    }
 
-    renderPickerControls('censusYearPickerControls', {
-      selectedSet: censusState.selectedYears, allValues: censusState.years, minOne: true,
-      onChange: censusRenderAll
-    });
     renderPickerControls('censusMonthPickerControls', {
-      selectedSet: censusState.selectedMonthsCal, allValues: censusState.monthsPresent, minOne: true, presets: 'calendarMonth',
+      selectedSet: censusState.selectedCohorts, allValues: censusState.cohorts, minOne: true, presets: 'cohortKey',
       onChange: censusRenderAll
     });
   }
@@ -4242,48 +4272,26 @@
   }
 
   function skilledRenderYearMonthPickers(){
-    var yearEl = document.getElementById('skilledYearPicker');
-    yearEl.innerHTML = skilledState.years.map(function(y){
-      var on = skilledState.selectedYears.has(y);
-      return '<button class="cohort-chip'+(on?' on':'')+'" data-y="'+y+'">'+y+'</button>';
+    var el = document.getElementById('skilledMonthPicker');
+    el.innerHTML = skilledState.cohorts.map(function(ck){
+      var on = skilledState.selectedCohorts.has(ck);
+      return '<button class="cohort-chip'+(on?' on':'')+'" data-ck="'+ck+'">'+keyLabel(ck)+'</button>';
     }).join('');
-    Array.prototype.forEach.call(yearEl.querySelectorAll('.cohort-chip'), function(btn){
+    Array.prototype.forEach.call(el.querySelectorAll('.cohort-chip'), function(btn){
       btn.addEventListener('click', function(){
-        var y = Number(btn.getAttribute('data-y'));
-        if(skilledState.selectedYears.has(y) && skilledState.selectedYears.size>1) skilledState.selectedYears.delete(y);
-        else if(!skilledState.selectedYears.has(y)) skilledState.selectedYears.add(y);
-        else { skilledShowToast('At least one year must stay selected.'); return; }
-        skilledRenderAll();
-      });
-    });
-    var yearsArr = Array.from(skilledState.selectedYears).sort(function(a,b){return a-b;});
-    document.getElementById('skilledYearTriggerValue').textContent =
-      yearsArr.length===0 ? '—' : (yearsArr.length<=3 ? yearsArr.join(', ') : yearsArr.length+' selected');
-
-    var monthEl = document.getElementById('skilledMonthPicker');
-    monthEl.innerHTML = skilledState.monthsPresent.map(function(m){
-      var on = skilledState.selectedMonthsCal.has(m);
-      return '<button class="cohort-chip'+(on?' on':'')+'" data-m="'+m+'">'+MONTH_ABBR[m]+'</button>';
-    }).join('');
-    Array.prototype.forEach.call(monthEl.querySelectorAll('.cohort-chip'), function(btn){
-      btn.addEventListener('click', function(){
-        var m = Number(btn.getAttribute('data-m'));
-        if(skilledState.selectedMonthsCal.has(m) && skilledState.selectedMonthsCal.size>1) skilledState.selectedMonthsCal.delete(m);
-        else if(!skilledState.selectedMonthsCal.has(m)) skilledState.selectedMonthsCal.add(m);
+        var ck = Number(btn.getAttribute('data-ck'));
+        if(skilledState.selectedCohorts.has(ck) && skilledState.selectedCohorts.size>1) skilledState.selectedCohorts.delete(ck);
+        else if(!skilledState.selectedCohorts.has(ck)) skilledState.selectedCohorts.add(ck);
         else { skilledShowToast('At least one month must stay selected.'); return; }
         skilledRenderAll();
       });
     });
-    var monthsArr = Array.from(skilledState.selectedMonthsCal).sort(function(a,b){return a-b;});
+    var arr = Array.from(skilledState.selectedCohorts).sort(function(a,b){return a-b;});
     document.getElementById('skilledMonthTriggerValue').textContent =
-      monthsArr.length===0 ? '—' : (monthsArr.length===skilledState.monthsPresent.length ? 'All' : (monthsArr.length<=3 ? monthsArr.map(function(m){return MONTH_ABBR[m];}).join(', ') : monthsArr.length+' selected'));
+      arr.length===0 ? '—' : (arr.length===skilledState.cohorts.length ? 'All' : (arr.length<=3 ? arr.map(keyLabel).join(', ') : arr.length+' selected'));
 
-    renderPickerControls('skilledYearPickerControls', {
-      selectedSet: skilledState.selectedYears, allValues: skilledState.years, minOne: true,
-      onChange: skilledRenderAll
-    });
     renderPickerControls('skilledMonthPickerControls', {
-      selectedSet: skilledState.selectedMonthsCal, allValues: skilledState.monthsPresent, minOne: true, presets: 'calendarMonth',
+      selectedSet: skilledState.selectedCohorts, allValues: skilledState.cohorts, minOne: true, presets: 'cohortKey',
       onChange: skilledRenderAll
     });
   }
@@ -5201,6 +5209,7 @@
     censusRenderPctTable();
     censusRenderPayerMixTable();
     initSortableTablesAll();
+    addExportButtonsToAllPanels();
   }
 
   /* ---------------------------------------------------------
@@ -5311,7 +5320,6 @@
   }
 
   function censusInitPopouts(){
-    registerPopout('censusYearTrigger', 'censusYearPanel');
     registerPopout('censusMonthTrigger', 'censusMonthPanel');
   }
 
@@ -5337,6 +5345,7 @@
     skilledRenderLevelTable();
     skilledRenderLevelByFacilityTable();
     initSortableTablesAll();
+    addExportButtonsToAllPanels();
   }
 
   function skilledSourceStatusText(sourceKey){
@@ -5435,7 +5444,6 @@
   }
 
   function skilledInitPopouts(){
-    registerPopout('skilledYearTrigger', 'skilledYearPanel');
     registerPopout('skilledMonthTrigger', 'skilledMonthPanel');
   }
 
@@ -5466,6 +5474,8 @@
     rows: [],                  // flat Medicare-only rows: {facility, cohortKey, year, month, days, gross, coinsurance, net}
     facilities: [],
     selectedFacilities: new Set(),
+    cohorts: [],
+    selectedCohorts: new Set(),
     years: [],
     selectedYears: new Set(),
     monthsPresent: [],
@@ -5527,19 +5537,20 @@
     medicareState.facilities = Object.keys(facSet).sort();
     syncSelection(medicareState.facilities, medicareState.selectedFacilities);
 
-    var yearSet = {}, monthSet = {};
-    medicareState.rows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; });
+    var yearSet = {}, monthSet = {}, cohortSet = {};
+    medicareState.rows.forEach(function(r){ yearSet[r.year]=true; monthSet[r.month]=true; cohortSet[r.cohortKey]=true; });
     medicareState.years = Object.keys(yearSet).map(Number).sort(function(a,b){return a-b;});
     medicareState.monthsPresent = Object.keys(monthSet).map(Number).sort(function(a,b){return a-b;});
+    medicareState.cohorts = Object.keys(cohortSet).map(Number).sort(function(a,b){return a-b;});
     syncSelection(medicareState.years, medicareState.selectedYears);
     syncSelection(medicareState.monthsPresent, medicareState.selectedMonthsCal);
+    syncSelection(medicareState.cohorts, medicareState.selectedCohorts);
   }
 
   function medicareFilteredRows(){
     return medicareState.rows.filter(function(r){
       return medicareState.selectedFacilities.has(r.facility) &&
-        medicareState.selectedYears.has(r.year) &&
-        medicareState.selectedMonthsCal.has(r.month);
+        medicareState.selectedCohorts.has(r.cohortKey);
     });
   }
 
@@ -5573,48 +5584,26 @@
   }
 
   function medicareRenderYearMonthPickers(){
-    var yearEl = document.getElementById('medicareYearPicker');
-    yearEl.innerHTML = medicareState.years.map(function(y){
-      var on = medicareState.selectedYears.has(y);
-      return '<button class="cohort-chip'+(on?' on':'')+'" data-y="'+y+'">'+y+'</button>';
+    var el = document.getElementById('medicareMonthPicker');
+    el.innerHTML = medicareState.cohorts.map(function(ck){
+      var on = medicareState.selectedCohorts.has(ck);
+      return '<button class="cohort-chip'+(on?' on':'')+'" data-ck="'+ck+'">'+keyLabel(ck)+'</button>';
     }).join('');
-    Array.prototype.forEach.call(yearEl.querySelectorAll('.cohort-chip'), function(btn){
+    Array.prototype.forEach.call(el.querySelectorAll('.cohort-chip'), function(btn){
       btn.addEventListener('click', function(){
-        var y = Number(btn.getAttribute('data-y'));
-        if(medicareState.selectedYears.has(y) && medicareState.selectedYears.size>1) medicareState.selectedYears.delete(y);
-        else if(!medicareState.selectedYears.has(y)) medicareState.selectedYears.add(y);
-        else { medicareShowToast('At least one year must stay selected.'); return; }
-        medicareRenderAll();
-      });
-    });
-    var yearsArr = Array.from(medicareState.selectedYears).sort(function(a,b){return a-b;});
-    document.getElementById('medicareYearTriggerValue').textContent =
-      yearsArr.length===0 ? '—' : (yearsArr.length<=3 ? yearsArr.join(', ') : yearsArr.length+' selected');
-
-    var monthEl = document.getElementById('medicareMonthPicker');
-    monthEl.innerHTML = medicareState.monthsPresent.map(function(m){
-      var on = medicareState.selectedMonthsCal.has(m);
-      return '<button class="cohort-chip'+(on?' on':'')+'" data-m="'+m+'">'+MONTH_ABBR[m]+'</button>';
-    }).join('');
-    Array.prototype.forEach.call(monthEl.querySelectorAll('.cohort-chip'), function(btn){
-      btn.addEventListener('click', function(){
-        var m = Number(btn.getAttribute('data-m'));
-        if(medicareState.selectedMonthsCal.has(m) && medicareState.selectedMonthsCal.size>1) medicareState.selectedMonthsCal.delete(m);
-        else if(!medicareState.selectedMonthsCal.has(m)) medicareState.selectedMonthsCal.add(m);
+        var ck = Number(btn.getAttribute('data-ck'));
+        if(medicareState.selectedCohorts.has(ck) && medicareState.selectedCohorts.size>1) medicareState.selectedCohorts.delete(ck);
+        else if(!medicareState.selectedCohorts.has(ck)) medicareState.selectedCohorts.add(ck);
         else { medicareShowToast('At least one month must stay selected.'); return; }
         medicareRenderAll();
       });
     });
-    var monthsArr = Array.from(medicareState.selectedMonthsCal).sort(function(a,b){return a-b;});
+    var arr = Array.from(medicareState.selectedCohorts).sort(function(a,b){return a-b;});
     document.getElementById('medicareMonthTriggerValue').textContent =
-      monthsArr.length===0 ? '—' : (monthsArr.length===medicareState.monthsPresent.length ? 'All' : (monthsArr.length<=3 ? monthsArr.map(function(m){return MONTH_ABBR[m];}).join(', ') : monthsArr.length+' selected'));
+      arr.length===0 ? '—' : (arr.length===medicareState.cohorts.length ? 'All' : (arr.length<=3 ? arr.map(keyLabel).join(', ') : arr.length+' selected'));
 
-    renderPickerControls('medicareYearPickerControls', {
-      selectedSet: medicareState.selectedYears, allValues: medicareState.years, minOne: true,
-      onChange: medicareRenderAll
-    });
     renderPickerControls('medicareMonthPickerControls', {
-      selectedSet: medicareState.selectedMonthsCal, allValues: medicareState.monthsPresent, minOne: true, presets: 'calendarMonth',
+      selectedSet: medicareState.selectedCohorts, allValues: medicareState.cohorts, minOne: true, presets: 'cohortKey',
       onChange: medicareRenderAll
     });
   }
@@ -5811,6 +5800,7 @@
     medicareRenderNetTable();
     medicareRenderPpdTable();
     initSortableTablesAll();
+    addExportButtonsToAllPanels();
   }
 
   function medicareSourceStatusText(){
@@ -5884,7 +5874,6 @@
   }
 
   function medicareInitPopouts(){
-    registerPopout('medicareYearTrigger', 'medicareYearPanel');
     registerPopout('medicareMonthTrigger', 'medicareMonthPanel');
   }
 
@@ -6060,9 +6049,10 @@
       var facCount = p.facilities === 'ALL' ? 0 : Math.round(p.facilities.length / 2); // each facility stores 2 name variants (long+short) for backend matching
       var facText = p.facilities === 'ALL' ? 'All facilities' : (facCount + ' facilit' + (facCount===1?'y':'ies'));
       var adminText = p.showAdmin === false ? ' · no Admin tile' : '';
+      var exportText = p.canExport === true ? ' · can export' : '';
       var labelText = p.label + (p.email ? ' <span style="font-weight:400;color:var(--ink-faint);">— '+p.email+'</span>' : '');
       return '<div class="admin-import-row" data-profile-id="'+p.id+'">' +
-        '<div><div class="admin-import-label">'+labelText+'</div><div class="admin-import-status">'+tileTags+' · '+facText+adminText+'</div></div>' +
+        '<div><div class="admin-import-label">'+labelText+'</div><div class="admin-import-status">'+tileTags+' · '+facText+adminText+exportText+'</div></div>' +
         '<div style="display:flex;gap:8px;align-items:center;">' +
           '<button class="btn-ghost access-copy-btn" type="button" data-token="'+p.token+'">Copy link</button>' +
           '<button class="btn-ghost access-edit-btn" type="button" data-id="'+p.id+'">Edit</button>' +
@@ -6132,6 +6122,7 @@
     document.getElementById('accessProfileAllFacilities').checked = true;
     document.getElementById('accessProfileFacilities').style.display = 'none';
     document.getElementById('accessProfileShowAdmin').checked = true;
+    document.getElementById('accessProfileCanExport').checked = false;
     document.getElementById('accessProfileError').style.display = 'none';
   }
 
@@ -6149,6 +6140,7 @@
       cb.checked = profile.tiles.indexOf(cb.value) >= 0;
     });
     document.getElementById('accessProfileShowAdmin').checked = profile.showAdmin !== false;
+    document.getElementById('accessProfileCanExport').checked = profile.canExport === true;
     var allFacilities = profile.facilities === 'ALL';
     document.getElementById('accessProfileAllFacilities').checked = allFacilities;
     document.getElementById('accessProfileFacilities').style.display = allFacilities ? 'none' : 'grid';
@@ -6191,6 +6183,7 @@
         if(!facilities.length){ errEl.textContent = 'Pick at least one facility, or check "All facilities".'; errEl.style.display = 'inline'; return; }
       }
       var showAdmin = document.getElementById('accessProfileShowAdmin').checked;
+      var canExport = document.getElementById('accessProfileCanExport').checked;
       var isEditing = !!editingAccessProfileId;
       var btn = document.getElementById('accessProfileSaveBtn');
       btn.disabled = true; btn.textContent = isEditing ? 'Saving…' : 'Creating…';
@@ -6198,7 +6191,7 @@
       var method = isEditing ? 'PUT' : 'POST';
       fetch(url, {
         method: method, headers: {'x-admin-key': adminKey, 'Content-Type': 'application/json'},
-        body: JSON.stringify({label: label, email: email, tiles: tiles, facilities: facilities, showAdmin: showAdmin})
+        body: JSON.stringify({label: label, email: email, tiles: tiles, facilities: facilities, showAdmin: showAdmin, canExport: canExport})
       }).then(function(res){ return res.json().then(function(body){ return {ok:res.ok, body:body}; }); })
         .then(function(r){
           btn.disabled = false; btn.textContent = isEditing ? 'Save changes' : 'Create link';
@@ -6289,7 +6282,7 @@
           try{ sessionStorage.setItem(ADMIN_KEY_STORAGE, val); }catch(e){}
           document.getElementById('adminLoginInput').value = '';
           if(!vantisBooted){
-            activeAccess = {tiles: ['ar','census','skilled','medicare'], facilities: 'ALL', label: 'Admin', isAdmin: true, showAdmin: true};
+            activeAccess = {tiles: ['ar','census','skilled','medicare'], facilities: 'ALL', label: 'Admin', isAdmin: true, showAdmin: true, canExport: true};
             document.getElementById('requestAccessScreen').style.display = 'none';
             vantisFinishBoot();
             showScreen('admin');
