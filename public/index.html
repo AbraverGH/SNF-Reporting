@@ -67,6 +67,12 @@
     font-family:'Space Grotesk';font-weight:700;font-size:15px;color:#fff;
     flex:none;
   }
+  /* Matches each app's home-screen tile color exactly (see .home-card-icon
+     variants) so the sidebar badge you land on after clicking in is
+     visually the same app, not a generic green "V" for everything. */
+  .brand-mark.census-mark{background:linear-gradient(140deg,#B98B4E,#8A6234 70%);}
+  .brand-mark.skilled-mark{background:linear-gradient(140deg,#6C63D6,#3D3684 70%);}
+  .brand-mark.medicare-mark{background:linear-gradient(140deg,#2E86AB,#1B4F66 70%);}
   .brand-text .t1{font-family:'Space Grotesk';font-weight:600;font-size:15px;line-height:1.2;color:var(--sidebar-ink);}
   .brand-text .t2{font-size:11px;color:var(--sidebar-ink-soft);letter-spacing:.03em;transition:.15s;}
 
@@ -591,7 +597,7 @@
 <div id="app">
   <aside class="sidebar">
     <button class="brand" id="backToHomeBtn" type="button" title="Back to Vantis home">
-      <div class="brand-mark">V</div>
+      <div class="brand-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg></div>
       <div class="brand-text">
         <div class="t1">AR Collections</div>
         <div class="t2">← Back to Vantis</div>
@@ -834,7 +840,7 @@
 <div id="censusApp" style="display:none;">
   <aside class="sidebar">
     <button class="brand" id="censusBackToHomeBtn" type="button" title="Back to Vantis home">
-      <div class="brand-mark">V</div>
+      <div class="brand-mark census-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3 2.5-5.2 5.5-5.2s5.5 2.2 5.5 5.2"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15 14.4c2.2.2 4.5 1.9 4.5 5.1"/></svg></div>
       <div class="brand-text">
         <div class="t1">Census Trends</div>
         <div class="t2">← Back to Vantis</div>
@@ -1003,7 +1009,7 @@
 <div id="skilledApp" style="display:none;">
   <aside class="sidebar">
     <button class="brand" id="skilledBackToHomeBtn" type="button" title="Back to Vantis home">
-      <div class="brand-mark">V</div>
+      <div class="brand-mark skilled-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
       <div class="brand-text">
         <div class="t1">Skilled Analysis</div>
         <div class="t2">← Back to Vantis</div>
@@ -1245,7 +1251,7 @@
 <div id="medicareApp" style="display:none;">
   <aside class="sidebar">
     <button class="brand" id="medicareBackToHomeBtn" type="button" title="Back to Vantis home">
-      <div class="brand-mark">V</div>
+      <div class="brand-mark medicare-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 14.5h4"/></svg></div>
       <div class="brand-text">
         <div class="t1">Medicare Days</div>
         <div class="t2">← Back to Vantis</div>
