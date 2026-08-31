@@ -2087,19 +2087,40 @@
   // % collected for a single facility/cohort/as-of node, revenue-weighted across
   // whichever payer column(s) the selected payer maps to (1 for a normal payer,
   // 3 for the combined Medicaid option).
+  // % Collected is derived here from Cash Receipts ÷ Revenue, not read from
+  // a pre-computed "% Collected" column in the source file. That source
+  // column turned out to only be populated for some payer types in a given
+  // month (e.g. Private Pay and Budget, but not Medicare/Medicaid/HMO) —
+  // meaning payers with no "% Collected" row were silently dropped from
+  // this blend while still correctly counting toward the Revenue and Cash
+  // figures shown right next to it, producing a badly misleading number
+  // (confirmed against a real case: source data implied ~13% collected,
+  // but the old blend — built from only the 2 of 8 payer types that had a
+  // % Collected row — showed 70%). Deriving it from Cash/Revenue instead
+  // guarantees this always stays mathematically consistent with the
+  // dollar figures displayed alongside it, since those two metrics are
+  // fully populated for every payer type.
+  // Sums Revenue and Cash Receipts independently across payer keys, then
+  // takes one ratio — NOT a per-key weighted average that requires both
+  // values on the same key. That per-key requirement was excluding whole
+  // payer types: Cash Receipts turned out to be just as incomplete
+  // per-payer as the old "% Collected" column was (e.g. Medicare and each
+  // individual Medicaid split had Revenue but no Cash Receipts recorded at
+  // that granularity for a given month), so those payers were silently
+  // dropped from the blend entirely — while their Revenue still counted in
+  // getRevForNode elsewhere, and Cash Receipts recorded at a coarser level
+  // (Private Pay, Budget) got all the weight instead. Confirmed against a
+  // real case: with every payer selected, this data implied Brookside was
+  // at ~11% collected in July (Revenue and Cash Receipts both correctly
+  // summed to that), but the per-key version showed 89%, driven almost
+  // entirely by the 2 of ~9 payer types that happened to have both values
+  // on the same key. Summing independently first (matching blendedPct's
+  // approach) fixes this the same way.
   function getPctForNode(node, payerKey){
-    if(!node) return null;
-    var keys = payerKeysFor(payerKey);
-    var num=0, den=0, any=false;
-    keys.forEach(function(k){
-      var pct = node['% Collected'] ? node['% Collected'][k] : null;
-      var rev = node['Revenue'] ? node['Revenue'][k] : null;
-      if(pct == null) return;
-      any = true;
-      if(rev != null && rev > 0){ num += pct*rev; den += rev; }
-      else { num += pct; den += 1; }
-    });
-    return (any && den>0) ? num/den : null;
+    var rev = getRevForNode(node, payerKey);
+    var cashRaw = getDollarForNode(node, 'Cash Receipts', payerKey);
+    if(rev == null || cashRaw == null || rev <= 0) return null;
+    return (-cashRaw/rev)*100;
   }
 
   // Total revenue for a node across whichever payer column(s) the selected payer maps to.
@@ -2129,24 +2150,17 @@
   }
 
   // weighted % collected across selected facilities for a given cohort/asOf/payer
+  // Directly sums Cash Receipts and Revenue across every selected facility
+  // and payer (via sumMetric, the same function the KPI cards already use
+  // correctly), then takes one ratio — rather than averaging each
+  // facility's own percentage together, which needed a fallback for
+  // facilities with no revenue and could still get distorted by it. A
+  // single direct sum has no such edge case to get wrong.
   function blendedPct(cohortKey, asOfKey, payerKey){
-    var num = 0, den = 0, any = false;
-    state.selectedFacilities.forEach(function(fac){
-      var node = byFacCohortAsOf[fac] && byFacCohortAsOf[fac][cohortKey] && byFacCohortAsOf[fac][cohortKey][asOfKey];
-      if(!node) return;
-      var pct = getPctForNode(node, payerKey);
-      var rev = getRevForNode(node, payerKey);
-      if(pct == null) return;
-      any = true;
-      if(rev != null && rev > 0){
-        num += pct * rev; den += rev;
-      } else {
-        // fall back to simple average weight of 1 if no revenue figure available
-        num += pct; den += 1;
-      }
-    });
-    if(!any || den === 0) return null;
-    return num/den;
+    var rev = sumMetric(cohortKey, asOfKey, payerKey, 'Revenue');
+    var cashRaw = sumMetric(cohortKey, asOfKey, payerKey, 'Cash Receipts');
+    if(rev == null || cashRaw == null || rev <= 0) return null;
+    return (-cashRaw/rev)*100;
   }
 
   function colorForPct(v){
