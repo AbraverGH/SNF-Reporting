@@ -3821,12 +3821,28 @@
   // Resolves a (company, payor code) pair to a payer type against a
   // pre-built mapping object (see censusBuildUploadedPayerMapping) — if
   // that mapping is null (nothing imported), falls back to the mapping
-  // built into the app — company+code exact match first, then a
-  // code-only match, then "Unmapped".
-  function censusResolvePayerType(uploaded, company, code){
+  // built into the app — company+code exact match first, then (if a payor
+  // name is available) a name-based match, then a cross-facility code-only
+  // match, then "Unmapped".
+  //
+  // The name-based step exists because payor codes aren't always unique
+  // across facilities — the same code can mean two different payors at two
+  // different facilities (confirmed with a real case: one facility's code
+  // for a Medicare HMO plan was a different facility's code for an
+  // unrelated Medicaid HMO plan). When there's no exact (company, code)
+  // row for a given facility, guessing from the code alone risks picking
+  // up whichever payor happens to use that code most often *elsewhere* —
+  // which is exactly what went wrong in that case. The payor's own name,
+  // as billed on the specific transaction, doesn't have that ambiguity, so
+  // it's tried first, before falling back to the code-only guess.
+  function censusResolvePayerType(uploaded, company, code, payorName){
     if(uploaded){
       var uExact = uploaded.byCompanyCode[company+'||'+code];
       if(uExact) return uExact;
+      if(payorName){
+        var byName = uploaded.typeMap[censusNormPayor(payorName)];
+        if(byName) return byName;
+      }
       var uFallback = uploaded.byCodeFallback[code];
       if(uFallback) return uFallback;
     }
@@ -3876,7 +3892,7 @@
     return null;
   }
   function censusSkilledClassify(uploaded, uploadedRateKeyMap, company, code, payorName, rateCode){
-    var ptype = censusResolvePayerType(uploaded, company, code);
+    var ptype = censusResolvePayerType(uploaded, company, code, payorName);
     // If the payer type itself resolved to something real (a value came
     // back from Sheet1's "Payer Type" column) but that value isn't in the
     // dictionary above yet, show it as-is rather than mislabeling it
@@ -3907,7 +3923,7 @@
         year: year, month: month,
         days: rec.days,
         payorCode: rec.payorCode,
-        payerType: censusResolvePayerType(uploadedMapping, rec.company, rec.payorCode)
+        payerType: censusResolvePayerType(uploadedMapping, rec.company, rec.payorCode, rec.payorCode)
       };
     }) : [];
 
@@ -5534,7 +5550,7 @@
     var salesSrc = medicareState.sources.salesJournal;
     var rows = (salesSrc && salesSrc.records) ? salesSrc.records
       .map(function(rec){
-        var ptype = censusResolvePayerType(uploadedMapping, rec.company, rec.payorCode);
+        var ptype = censusResolvePayerType(uploadedMapping, rec.company, rec.payorCode, rec.payorName);
         if(ptype !== 'MEDICARE') return null; // traditional Medicare only — not HMO/Managed Medicare
         var startDate = new Date(rec.startISO);
         var year = startDate.getUTCFullYear(), month = startDate.getUTCMonth();
