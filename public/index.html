@@ -546,6 +546,8 @@
     transition:.14s; cursor:pointer;
   }
   .snap-section:hover{box-shadow:0 4px 16px -6px rgba(0,0,0,.18);transform:translateY(-1px);border-color:var(--accent, var(--line));}
+  .snap-section-static{cursor:default;opacity:.72;}
+  .snap-section-static:hover{box-shadow:none;transform:none;border-color:var(--line);}
   .snap-section[data-app="ar"]{--accent:#17A673;}
   .snap-section[data-app="census"]{--accent:#B98B4E;}
   .snap-section[data-app="skilled"]{--accent:#6C63D6;}
@@ -6357,20 +6359,34 @@
     return '<div class="snap-metric"><div class="snap-metric-label">'+label+'</div><div class="snap-metric-value">'+valueHtml+(noteHtml?noteHtml:'')+'</div></div>';
   }
 
-  function snapshotSectionHtml(title, monthLabel, bodyHtml, isEmpty, appKey, fac){
-    return '<div class="snap-section" data-app="'+appKey+'" data-fac-short="'+fac.short+'" data-fac-company="'+(fac.company||'')+'">' +
+  function snapshotSectionHtml(title, monthLabel, bodyHtml, isEmpty, appKey, fac, allowed){
+    var clickable = allowed && !isEmpty;
+    var dataAttrs = clickable ? (' data-app="'+appKey+'" data-fac-short="'+fac.short+'" data-fac-company="'+(fac.company||'')+'"') : '';
+    var emptyMsg = allowed ? 'No data published yet' : 'Not included in your access';
+    return '<div class="snap-section'+(clickable?'':' snap-section-static')+'"'+dataAttrs+'>' +
       '<div class="snap-section-head"><span class="snap-section-title">'+title+'</span>' +
       (monthLabel ? '<span class="snap-section-month">'+monthLabel+'</span>' : '') + '</div>' +
-      (isEmpty ? '<div class="snap-empty">No data published yet</div>' : bodyHtml) +
-      (isEmpty ? '' : '<div class="snap-section-hint">View full detail →</div>') +
+      (isEmpty ? '<div class="snap-empty">'+emptyMsg+'</div>' : bodyHtml) +
+      (clickable ? '<div class="snap-section-hint">View full detail →</div>' : '') +
       '</div>';
   }
 
   function snapshotRenderCard(fac){
-    var ar = snapshotGetARData(fac.short);
-    var cen = snapshotGetCensusData(fac.company);
-    var sk = snapshotGetSkilledData(fac.company);
-    var med = snapshotGetMedicareData(fac.company);
+    // Each section is gated by the SAME tile permission that controls the
+    // corresponding full app — the Snapshot tile itself is shown whenever
+    // ANY one of the four is allowed, but that must never let a viewer
+    // see data from an app they don't individually have access to. So the
+    // data is never even fetched for a disallowed section, not just
+    // hidden after the fact.
+    var arAllowed = vantisTileAllowed('ar');
+    var censusAllowed = vantisTileAllowed('census');
+    var skilledAllowed = vantisTileAllowed('skilled');
+    var medicareAllowed = vantisTileAllowed('medicare');
+
+    var ar = arAllowed ? snapshotGetARData(fac.short) : null;
+    var cen = censusAllowed ? snapshotGetCensusData(fac.company) : null;
+    var sk = skilledAllowed ? snapshotGetSkilledData(fac.company) : null;
+    var med = medicareAllowed ? snapshotGetMedicareData(fac.company) : null;
 
     var arBody = '';
     if(ar){
@@ -6417,10 +6433,10 @@
     return '<div class="snap-card">' +
       '<div class="snap-card-head"><h2>'+fac.short+' <span class="fc-code">'+(fac.code||'')+'</span></h2></div>' +
       '<div class="snap-grid">' +
-        snapshotSectionHtml('AR Collections', ar?ar.rangeLabel:null, arBody, !ar, 'ar', fac) +
-        snapshotSectionHtml('Census Trends', null, cenBody, !cenBody, 'census', fac) +
-        snapshotSectionHtml('Skilled Analysis', sk?sk.monthLabel:null, skBody, !sk, 'skilled', fac) +
-        snapshotSectionHtml('Medicare Days', med?med.monthLabel:null, medBody, !med, 'medicare', fac) +
+        snapshotSectionHtml('AR Collections', ar?ar.rangeLabel:null, arBody, !ar, 'ar', fac, arAllowed) +
+        snapshotSectionHtml('Census Trends', null, cenBody, !cenBody, 'census', fac, censusAllowed) +
+        snapshotSectionHtml('Skilled Analysis', sk?sk.monthLabel:null, skBody, !sk, 'skilled', fac, skilledAllowed) +
+        snapshotSectionHtml('Medicare Days', med?med.monthLabel:null, medBody, !med, 'medicare', fac, medicareAllowed) +
       '</div>' +
     '</div>';
   }
