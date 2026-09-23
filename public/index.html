@@ -51,6 +51,10 @@
     --sidebar: #0E1E26; --sidebar-2: #1B3A4880; --sidebar-line: #234A5C;
     --emerald: #1B4F66; --emerald-bright: #2E86AB; --emerald-pale: #DCEEF5;
   }
+  #snapshotApp{
+    --sidebar: #24121A; --sidebar-2: #3A1F2C80; --sidebar-line: #4A2836;
+    --emerald: #6E2436; --emerald-bright: #B0455B; --emerald-pale: #F5DEE3;
+  }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;}
   body{
@@ -493,6 +497,7 @@
   .home-card-icon.admin-icon{background:linear-gradient(140deg,#5B6B7A,#2E3A46 70%);}
   .home-card-icon.skilled-icon{background:linear-gradient(140deg,#6C63D6,#3D3684 70%);}
   .home-card-icon.medicare-icon{background:linear-gradient(140deg,#2E86AB,#1B4F66 70%);}
+  .home-card-icon.snapshot-icon{background:linear-gradient(140deg,#B0455B,#6E2436 70%);}
   .home-card-title{font-family:'Space Grotesk';font-weight:600;font-size:17px;color:var(--ink);}
   .home-card-desc{font-size:12.5px;color:var(--ink-soft);line-height:1.5;flex:1;}
   .home-card-cta{font-size:12.5px;font-weight:600;color:var(--emerald);display:flex;align-items:center;gap:5px;}
@@ -523,6 +528,41 @@
   @media(max-width:900px){
     .sidebar{position:fixed;left:-320px;transition:.2s;z-index:50;}
     .kpis{grid-template-columns:repeat(2,1fr);}
+  }
+
+  /* ---- Facility Snapshot ---- */
+  .snap-card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:26px 28px;margin-bottom:28px;
+  }
+  .snap-card-head{border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:18px;}
+  .snap-card-head h2{font-family:'Space Grotesk';font-size:22px;margin:0;color:var(--ink);}
+  .snap-card-head .fc-code{font-size:13px;font-weight:400;color:var(--ink-faint);font-family:'IBM Plex Mono';margin-left:8px;}
+  .snap-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .snap-section{border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;background:var(--surface-2);}
+  .snap-section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line);}
+  .snap-section-title{font-family:'Space Grotesk';font-weight:600;font-size:13.5px;color:var(--ink);}
+  .snap-section-month{font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.03em;}
+  .snap-subgroup-label{font-size:9.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.03em;margin:8px 0 2px 0;}
+  .snap-subgroup-label:first-child{margin-top:0;}
+  .snap-metric{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:5px 0;}
+  .snap-metric-label{font-size:12px;color:var(--ink-soft);}
+  .snap-metric-value{font-family:'IBM Plex Mono';font-size:14px;font-weight:600;color:var(--ink);text-align:right;white-space:nowrap;}
+  .snap-note{display:block;font-family:'Inter',sans-serif;font-size:9.5px;font-weight:400;color:var(--ink-faint);margin-top:1px;}
+  .snap-note.up{color:var(--emerald);}
+  .snap-note.down{color:var(--clay);}
+  .snap-empty{font-size:12px;color:var(--ink-faint);font-style:italic;padding:6px 0;}
+
+  @media print{
+    body *{visibility:hidden;}
+    #snapshotApp, #snapshotApp *{visibility:visible;}
+    #snapshotApp{position:absolute;left:0;top:0;width:100%;}
+    #snapshotApp .sidebar, #snapshotApp .topbar{display:none !important;}
+    #snapshotMainContent{padding:0;}
+    .snap-card{box-shadow:none;border:none;page-break-after:always;padding:0 0 20px 0;margin-bottom:0;}
+    .snap-card:last-child{page-break-after:auto;}
+    .snap-section{break-inside:avoid;}
+    * {-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   }
 </style>
 </head>
@@ -573,6 +613,15 @@
         </div>
         <div class="home-card-title">Medicare Days</div>
         <div class="home-card-desc">Days, Gross, Coinsurance, Net, and PPD for Medicare — by facility and by month.</div>
+        <div class="home-card-cta">Open <span>→</span></div>
+      </button>
+
+      <button class="home-card" id="launchFacilitySnapshot" type="button">
+        <div class="home-card-icon snapshot-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/></svg>
+        </div>
+        <div class="home-card-title">Facility Snapshot</div>
+        <div class="home-card-desc">One-page summary per facility, pulled from every app — latest month, with month-over-month notes. Printable.</div>
         <div class="home-card-cta">Open <span>→</span></div>
       </button>
 
@@ -1423,6 +1472,67 @@
 
 </div>
 
+<div id="facilitySnapshotApp" style="display:none;">
+
+<div id="snapshotDropzone">
+  <div class="dz-wrap" style="text-align:center;position:relative;">
+    <button class="stub-back" id="snapshotBackFromEmptyBtn" type="button" style="position:static;margin-bottom:14px;display:inline-block;">← Back to Vantis</button>
+    <div class="dz-icon" style="margin-left:auto;margin-right:auto;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/></svg>
+    </div>
+    <h2>No data published yet</h2>
+    <p>Facility Snapshot pulls from AR Collections, Census Trends, Skilled Analysis, and Medicare Days — an admin needs to import at least one of those sources from the Admin tab before there's anything to show here.</p>
+    <button class="dz-source-btn" id="snapshotGoToAdminBtn" type="button" style="width:auto;padding:9px 22px;">Go to Admin →</button>
+  </div>
+</div>
+
+<div id="snapshotApp" style="display:none;">
+  <aside class="sidebar">
+    <button class="brand" id="snapshotBackToHomeBtn" type="button" title="Back to Vantis home">
+      <div class="brand-mark snapshot-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/></svg></div>
+      <div class="brand-text">
+        <div class="t1">Facility Snapshot</div>
+        <div class="t2">← Back to Vantis</div>
+      </div>
+    </button>
+
+    <div class="side-section">
+      <div class="side-label">Facilities <span class="count" id="snapshotFacCount"></span></div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="snapshotFacSearch" placeholder="Search facility…">
+      </div>
+      <div class="side-btn-row">
+        <button id="snapshotFacAll">Select all</button>
+        <button id="snapshotFacNone">Clear</button>
+      </div>
+      <div class="facility-list" id="snapshotFacilityList"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      Each section shows that app's own latest available month for the facility — sources don't always update at the same time, so AR Collections and Census Trends may show different months. The small note under each section compares to the prior month.
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <h1>Facility Snapshot</h1>
+        <div class="sub" id="snapshotTopSub">No data loaded yet</div>
+      </div>
+      <button class="btn-ghost" id="snapshotPrintBtn" type="button">Print / Save PDF</button>
+    </div>
+
+    <div class="content" id="snapshotMainContent">
+      <div id="snapshotCards"></div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="snapshotToast"></div>
+
+</div>
+
 <div id="adminApp" style="display:none;">
   <div id="adminLoginScreen">
     <div class="admin-login-wrap">
@@ -1573,6 +1683,11 @@
       var btn = document.getElementById(tileMap[tile]);
       if(btn) btn.style.display = vantisTileAllowed(tile) ? '' : 'none';
     });
+    // Facility Snapshot doesn't have its own tile permission — it's a
+    // read-only aggregation of the same four apps above, so it's shown
+    // whenever any one of them is, rather than requiring a separate grant.
+    var snapshotBtn = document.getElementById('launchFacilitySnapshot');
+    if(snapshotBtn) snapshotBtn.style.display = Object.keys(tileMap).some(vantisTileAllowed) ? '' : 'none';
     // Purely cosmetic — Admin is still protected by the real admin
     // password no matter what this is set to, this just avoids showing a
     // link recipient a tile they have no use for.
@@ -1617,6 +1732,8 @@
 
     medicareInitPopouts(); medicareInitTabs(); medicareInitDropzone(); medicareInitSearch();
     if(vantisTileAllowed('medicare')) medicareInitLiveMode();
+
+    snapshotInitDropzone(); snapshotInitSearch();
 
     initAdmin();
   }
@@ -3167,8 +3284,9 @@
     document.getElementById('censusTrendsApp').style.display = (name==='census') ? 'block' : 'none';
     document.getElementById('skilledAnalysisApp').style.display = (name==='skilled') ? 'block' : 'none';
     document.getElementById('medicareDaysApp').style.display = (name==='medicare') ? 'block' : 'none';
+    document.getElementById('facilitySnapshotApp').style.display = (name==='snapshot') ? 'block' : 'none';
     document.getElementById('adminApp').style.display = (name==='admin') ? 'block' : 'none';
-    var titles = {home:'Vantis - SNF Reporting', ar:'Vantis — AR Collections', census:'Vantis — Census Trends', skilled:'Vantis — Skilled Analysis', medicare:'Vantis — Medicare Days', admin:'Vantis — Admin'};
+    var titles = {home:'Vantis - SNF Reporting', ar:'Vantis — AR Collections', census:'Vantis — Census Trends', skilled:'Vantis — Skilled Analysis', medicare:'Vantis — Medicare Days', snapshot:'Vantis — Facility Snapshot', admin:'Vantis — Admin'};
     document.title = titles[name] || 'Vantis';
     window.scrollTo(0,0);
     if(name==='admin') adminShowCorrectView();
@@ -3187,6 +3305,10 @@
     document.getElementById('launchMedicareDays').addEventListener('click', function(){
       showScreen('medicare');
     });
+    document.getElementById('launchFacilitySnapshot').addEventListener('click', function(){
+      showScreen('snapshot');
+      snapshotRefreshAfterSourceChange();
+    });
     document.getElementById('launchAdmin').addEventListener('click', function(){
       showScreen('admin');
     });
@@ -3202,6 +3324,9 @@
     document.getElementById('medicareBackToHomeBtn').addEventListener('click', function(){
       showScreen('home');
     });
+    document.getElementById('snapshotBackToHomeBtn').addEventListener('click', function(){
+      showScreen('home');
+    });
     document.getElementById('arGoToAdminBtn').addEventListener('click', function(){
       showScreen('admin');
     });
@@ -3214,6 +3339,9 @@
     document.getElementById('medicareGoToAdminBtn').addEventListener('click', function(){
       showScreen('admin');
     });
+    document.getElementById('snapshotGoToAdminBtn').addEventListener('click', function(){
+      showScreen('admin');
+    });
     document.getElementById('arBackFromEmptyBtn').addEventListener('click', function(){
       showScreen('home');
     });
@@ -3224,6 +3352,9 @@
       showScreen('home');
     });
     document.getElementById('medicareBackFromEmptyBtn').addEventListener('click', function(){
+      showScreen('home');
+    });
+    document.getElementById('snapshotBackFromEmptyBtn').addEventListener('click', function(){
       showScreen('home');
     });
     document.getElementById('adminBackFromLoginBtn').addEventListener('click', function(){
@@ -5959,6 +6090,364 @@
         censusRenderYearMonthPickers();
       });
     });
+  }
+
+  /* =========================================================
+     FACILITY SNAPSHOT — a fifth app that doesn't load any data of
+     its own. It reads directly from the four other apps' already-
+     loaded state (state/byFacCohortAsOf for AR, censusState,
+     skilledState, medicareState), and for each selected facility
+     builds one card showing that app's own latest available month,
+     with a small note comparing it to the prior month. Facilities
+     are keyed by their SHORT name throughout (e.g. "Brookside") —
+     that's what AR Collections already uses internally, so the
+     other three apps' rows (keyed by full company name) get
+     translated via censusFacilityShort() when read here.
+  ========================================================== */
+  var snapshotState = {
+    facilities: [],           // [{short, code, company}], union across all 4 apps
+    selectedFacilities: new Set()
+  };
+
+  // "All payers, all 4 AR sources" — deliberately independent of whatever
+  // state.selectedPayers happens to be in the AR Collections app itself
+  // (a leftover filter from a prior visit shouldn't silently change what
+  // a printed snapshot shows). Matches exactly what each source's own
+  // "Select all" already does, budget included, for consistency with the
+  // rest of the app's "select all" convention.
+  function snapshotAllARPayerKeys(){
+    var set = new Set();
+    SOURCE_KEYS.forEach(function(src){
+      PAYER_OPTIONS.forEach(function(p){ set.add(src+'::'+p.key); });
+    });
+    return set;
+  }
+
+  function snapshotBuildFacilityList(){
+    var map = {};
+    (state.facilities||[]).forEach(function(f){
+      map[f.facility] = {short: f.facility, code: f.code, company: f.company};
+    });
+    [censusState, skilledState, medicareState].forEach(function(appState){
+      (appState.facilities||[]).forEach(function(company){
+        var short = censusFacilityShort(company);
+        if(!map[short]) map[short] = {short: short, code: censusFacilityCode(company), company: company};
+        else if(!map[short].company) map[short].company = company;
+      });
+    });
+    var list = Object.keys(map).sort().map(function(k){ return map[k]; });
+    var hadSelection = snapshotState.selectedFacilities && snapshotState.selectedFacilities.size > 0;
+    snapshotState.facilities = list;
+    if(!hadSelection){
+      snapshotState.selectedFacilities = new Set(list.map(function(f){ return f.short; }));
+    } else {
+      // drop selections for facilities that no longer exist in any source
+      var valid = {}; list.forEach(function(f){ valid[f.short]=true; });
+      Array.from(snapshotState.selectedFacilities).forEach(function(s){
+        if(!valid[s]) snapshotState.selectedFacilities.delete(s);
+      });
+    }
+  }
+
+  // ---- AR Collections: Revenue, Cash Collected, Aging Balance, % Collected ----
+  function snapshotGetARData(shortName){
+    var facData = byFacCohortAsOf[shortName];
+    if(!facData) return null;
+    var cohortKeys = Object.keys(facData).map(Number);
+    if(!cohortKeys.length) return null;
+    var payerKeys = snapshotAllARPayerKeys();
+
+    function forCohort(ck){
+      var asOfKeys = Object.keys(facData[ck] || {}).map(Number);
+      if(!asOfKeys.length) return null;
+      var latestAsOf = Math.max.apply(null, asOfKeys);
+      var rev = sumMetric(ck, latestAsOf, payerKeys, 'Revenue', [shortName]);
+      var cashRaw = sumMetric(ck, latestAsOf, payerKeys, 'Cash Receipts', [shortName]);
+      var aging = sumMetric(ck, latestAsOf, payerKeys, 'Aging Bals', [shortName]);
+      if(rev==null && cashRaw==null && aging==null) return null;
+      var cash = cashRaw==null ? null : -cashRaw;
+      var pct = (rev!=null && rev>0 && cashRaw!=null) ? (-cashRaw/rev*100) : null;
+      return {revenue: rev, cash: cash, aging: aging, pct: pct};
+    }
+
+    var latestCohort = Math.max.apply(null, cohortKeys);
+    var current = forCohort(latestCohort);
+    if(!current){
+      // that latest cohort had no as-of snapshot at all (shouldn't normally
+      // happen, but fall back one month rather than showing nothing)
+      var remaining = cohortKeys.filter(function(c){ return c!==latestCohort; });
+      if(!remaining.length) return null;
+      latestCohort = Math.max.apply(null, remaining);
+      current = forCohort(latestCohort);
+      if(!current) return null;
+    }
+    var prev = forCohort(latestCohort-1);
+    return {monthLabel: keyLabel(latestCohort), prevMonthLabel: prev ? keyLabel(latestCohort-1) : null, current: current, prev: prev};
+  }
+
+  // ---- Census Trends: Average Length of Stay, Census Days, Occupancy % ----
+  function snapshotGetCensusData(company){
+    if(!company) return null;
+    // LOS comes from a separate source file (Length of Stay Report) than
+    // Days/Occupancy (both from the Census Report), so each gets its own
+    // latest-month rather than one combined month across all three — that
+    // combined approach was leaving Days/Occupancy blank under whatever
+    // month LOS happened to be newest for, even when Days/Occupancy had
+    // real data for an earlier month.
+    function losCohorts(){
+      var set = {};
+      censusState.rows.forEach(function(r){ if(r.facility===company) set[r.cohortKey]=true; });
+      return Object.keys(set).map(Number);
+    }
+    function occCohorts(){
+      var set = {};
+      censusState.daysRows.concat(censusState.pctRows).forEach(function(r){ if(r.facility===company) set[r.cohortKey]=true; });
+      return Object.keys(set).map(Number);
+    }
+    function losForCohort(ck){
+      var rows = censusState.rows.filter(function(r){ return r.facility===company && r.cohortKey===ck; });
+      if(!rows.length) return null;
+      return {avgLOS: rows.reduce(function(s,r){return s+r.days;},0)/rows.length};
+    }
+    function occForCohort(ck){
+      var daysRows = censusState.daysRows.filter(function(r){ return r.facility===company && r.cohortKey===ck; });
+      var pctRows = censusState.pctRows.filter(function(r){ return r.facility===company && r.cohortKey===ck; });
+      if(!daysRows.length && !pctRows.length) return null;
+      var totalDays = daysRows.length ? daysRows.reduce(function(s,r){return s+r.days;},0) : null;
+      var occRow = pctRows[0];
+      var occupancyPct = occRow && occRow.capacity ? (occRow.census/occRow.capacity*100) : null;
+      return {censusDays: totalDays, occupancyPct: occupancyPct};
+    }
+
+    var losKeys = losCohorts(), occKeys = occCohorts();
+    if(!losKeys.length && !occKeys.length) return null;
+
+    var losOut = null;
+    if(losKeys.length){
+      var losCk = Math.max.apply(null, losKeys);
+      var losCur = losForCohort(losCk);
+      var losPrev = losForCohort(losCk-1);
+      losOut = {monthLabel: keyLabel(losCk), prevMonthLabel: losPrev?keyLabel(losCk-1):null, current: losCur, prev: losPrev};
+    }
+    var occOut = null;
+    if(occKeys.length){
+      var occCk = Math.max.apply(null, occKeys);
+      var occCur = occForCohort(occCk);
+      var occPrev = occForCohort(occCk-1);
+      occOut = {monthLabel: keyLabel(occCk), prevMonthLabel: occPrev?keyLabel(occCk-1):null, current: occCur, prev: occPrev};
+    }
+    return {los: losOut, occ: occOut};
+  }
+
+  // ---- Skilled Analysis: Days, Blended Avg Daily Rate, Blended PPD ----
+  function snapshotGetSkilledData(company){
+    if(!company) return null;
+    function forCohort(ck){
+      var rows = skilledState.rows.filter(function(r){ return r.facility===company && r.cohortKey===ck; });
+      if(!rows.length) return null;
+      var days = rows.reduce(function(s,r){return s+(r.units||0);},0);
+      var gross = rows.reduce(function(s,r){return s+(r.gross||0);},0);
+      var net = rows.reduce(function(s,r){return s+(r.net||0);},0);
+      return {days: days, avgDailyRate: days ? gross/days : null, ppd: days ? net/days : null};
+    }
+    var cohortSet = {};
+    skilledState.rows.forEach(function(r){ if(r.facility===company) cohortSet[r.cohortKey]=true; });
+    var cohortKeys = Object.keys(cohortSet).map(Number);
+    if(!cohortKeys.length) return null;
+    var latestCohort = Math.max.apply(null, cohortKeys);
+    var current = forCohort(latestCohort);
+    if(!current) return null;
+    var prev = forCohort(latestCohort-1);
+    return {monthLabel: keyLabel(latestCohort), prevMonthLabel: prev ? keyLabel(latestCohort-1) : null, current: current, prev: prev};
+  }
+
+  // ---- Medicare Days: Days, Gross, Coinsurance, Net, PPD ----
+  function snapshotGetMedicareData(company){
+    if(!company) return null;
+    function forCohort(ck){
+      var rows = medicareState.rows.filter(function(r){ return r.facility===company && r.cohortKey===ck; });
+      if(!rows.length) return null;
+      var days = rows.reduce(function(s,r){return s+(r.days||0);},0);
+      var gross = rows.reduce(function(s,r){return s+(r.gross||0);},0);
+      var coinsurance = rows.reduce(function(s,r){return s+(r.coinsurance||0);},0);
+      var net = rows.reduce(function(s,r){return s+(r.net||0);},0);
+      return {days: days, gross: gross, coinsurance: coinsurance, net: net, ppd: days ? net/days : null};
+    }
+    var cohortSet = {};
+    medicareState.rows.forEach(function(r){ if(r.facility===company) cohortSet[r.cohortKey]=true; });
+    var cohortKeys = Object.keys(cohortSet).map(Number);
+    if(!cohortKeys.length) return null;
+    var latestCohort = Math.max.apply(null, cohortKeys);
+    var current = forCohort(latestCohort);
+    if(!current) return null;
+    var prev = forCohort(latestCohort-1);
+    return {monthLabel: keyLabel(latestCohort), prevMonthLabel: prev ? keyLabel(latestCohort-1) : null, current: current, prev: prev};
+  }
+
+  // Small comparison note under each metric — "+5.2% vs Jun 2026" for
+  // dollar/count metrics, "+2.3 pts vs Jun 2026" for values that are
+  // already a percentage (Occupancy %, % Collected), since a "% change of
+  // a percentage" reads as confusing on a printed page.
+  function snapshotPctNote(current, prev, prevLabel){
+    if(current==null || prev==null || prev===0 || !prevLabel) return '';
+    var pct = (current-prev)/Math.abs(prev)*100;
+    var sign = pct>=0 ? '+' : '';
+    var cls = pct>0 ? 'up' : (pct<0 ? 'down' : '');
+    return '<span class="snap-note '+cls+'">'+sign+pct.toFixed(1)+'% vs '+prevLabel+'</span>';
+  }
+  function snapshotPtNote(current, prev, prevLabel){
+    if(current==null || prev==null || !prevLabel) return '';
+    var pts = current-prev;
+    var sign = pts>=0 ? '+' : '';
+    var cls = pts>0 ? 'up' : (pts<0 ? 'down' : '');
+    return '<span class="snap-note '+cls+'">'+sign+pts.toFixed(1)+' pts vs '+prevLabel+'</span>';
+  }
+
+  function snapshotMetricRow(label, valueHtml, noteHtml){
+    return '<div class="snap-metric"><div class="snap-metric-label">'+label+'</div><div class="snap-metric-value">'+valueHtml+(noteHtml?noteHtml:'')+'</div></div>';
+  }
+
+  function snapshotSectionHtml(title, monthLabel, bodyHtml, isEmpty){
+    return '<div class="snap-section">' +
+      '<div class="snap-section-head"><span class="snap-section-title">'+title+'</span>' +
+      (monthLabel ? '<span class="snap-section-month">'+monthLabel+'</span>' : '') + '</div>' +
+      (isEmpty ? '<div class="snap-empty">No data published yet</div>' : bodyHtml) +
+      '</div>';
+  }
+
+  function snapshotRenderCard(fac){
+    var ar = snapshotGetARData(fac.short);
+    var cen = snapshotGetCensusData(fac.company);
+    var sk = snapshotGetSkilledData(fac.company);
+    var med = snapshotGetMedicareData(fac.company);
+
+    var arBody = '';
+    if(ar){
+      arBody =
+        snapshotMetricRow('Revenue', fmtMoneyFull(ar.current.revenue), snapshotPctNote(ar.current.revenue, ar.prev&&ar.prev.revenue, ar.prevMonthLabel)) +
+        snapshotMetricRow('Cash Collected', fmtMoneyFull(ar.current.cash), snapshotPctNote(ar.current.cash, ar.prev&&ar.prev.cash, ar.prevMonthLabel)) +
+        snapshotMetricRow('Aging Balance', fmtMoneyFull(ar.current.aging), snapshotPctNote(ar.current.aging, ar.prev&&ar.prev.aging, ar.prevMonthLabel)) +
+        snapshotMetricRow('% Collected', ar.current.pct==null?'—':ar.current.pct.toFixed(1)+'%', snapshotPtNote(ar.current.pct, ar.prev&&ar.prev.pct, ar.prevMonthLabel));
+    }
+
+    var cenBody = '';
+    var cenMonthLabel = null;
+    if(cen && (cen.los || cen.occ)){
+      var cenParts = [];
+      if(cen.los){
+        cenParts.push('<div class="snap-subgroup-label">Length of Stay — '+cen.los.monthLabel+'</div>' +
+          snapshotMetricRow('Average Length of Stay', cen.los.current.avgLOS==null?'—':cen.los.current.avgLOS.toFixed(1)+' days', snapshotPctNote(cen.los.current.avgLOS, cen.los.prev&&cen.los.prev.avgLOS, cen.los.prevMonthLabel)));
+      }
+      if(cen.occ){
+        cenParts.push('<div class="snap-subgroup-label">Census — '+cen.occ.monthLabel+'</div>' +
+          snapshotMetricRow('Census Days', cen.occ.current.censusDays==null?'—':cen.occ.current.censusDays.toLocaleString(), snapshotPctNote(cen.occ.current.censusDays, cen.occ.prev&&cen.occ.prev.censusDays, cen.occ.prevMonthLabel)) +
+          snapshotMetricRow('Occupancy %', cen.occ.current.occupancyPct==null?'—':cen.occ.current.occupancyPct.toFixed(1)+'%', snapshotPtNote(cen.occ.current.occupancyPct, cen.occ.prev&&cen.occ.prev.occupancyPct, cen.occ.prevMonthLabel)));
+      }
+      cenBody = cenParts.join('');
+    }
+
+    var skBody = '';
+    if(sk){
+      skBody =
+        snapshotMetricRow('Days', sk.current.days==null?'—':sk.current.days.toLocaleString(), snapshotPctNote(sk.current.days, sk.prev&&sk.prev.days, sk.prevMonthLabel)) +
+        snapshotMetricRow('Avg Daily Rate', sk.current.avgDailyRate==null?'—':fmtMoneyFull(sk.current.avgDailyRate), snapshotPctNote(sk.current.avgDailyRate, sk.prev&&sk.prev.avgDailyRate, sk.prevMonthLabel)) +
+        snapshotMetricRow('Blended PPD', sk.current.ppd==null?'—':fmtMoneyFull(sk.current.ppd), snapshotPctNote(sk.current.ppd, sk.prev&&sk.prev.ppd, sk.prevMonthLabel));
+    }
+
+    var medBody = '';
+    if(med){
+      medBody =
+        snapshotMetricRow('Days', med.current.days==null?'—':med.current.days.toLocaleString(), snapshotPctNote(med.current.days, med.prev&&med.prev.days, med.prevMonthLabel)) +
+        snapshotMetricRow('Gross', fmtMoneyFull(med.current.gross), snapshotPctNote(med.current.gross, med.prev&&med.prev.gross, med.prevMonthLabel)) +
+        snapshotMetricRow('Coinsurance', fmtMoneyFull(med.current.coinsurance), snapshotPctNote(med.current.coinsurance, med.prev&&med.prev.coinsurance, med.prevMonthLabel)) +
+        snapshotMetricRow('Net Receivables', fmtMoneyFull(med.current.net), snapshotPctNote(med.current.net, med.prev&&med.prev.net, med.prevMonthLabel)) +
+        snapshotMetricRow('PPD', med.current.ppd==null?'—':fmtMoneyFull(med.current.ppd), snapshotPctNote(med.current.ppd, med.prev&&med.prev.ppd, med.prevMonthLabel));
+    }
+
+    return '<div class="snap-card">' +
+      '<div class="snap-card-head"><h2>'+fac.short+' <span class="fc-code">'+(fac.code||'')+'</span></h2></div>' +
+      '<div class="snap-grid">' +
+        snapshotSectionHtml('AR Collections', ar?ar.monthLabel:null, arBody, !ar) +
+        snapshotSectionHtml('Census Trends', null, cenBody, !cenBody) +
+        snapshotSectionHtml('Skilled Analysis', sk?sk.monthLabel:null, skBody, !sk) +
+        snapshotSectionHtml('Medicare Days', med?med.monthLabel:null, medBody, !med) +
+      '</div>' +
+    '</div>';
+  }
+
+  function snapshotRenderFacilityList(filterText){
+    var el = document.getElementById('snapshotFacilityList');
+    if(!el) return;
+    el.innerHTML = '';
+    var ft = (filterText||'').toLowerCase();
+    snapshotState.facilities.forEach(function(f){
+      var hay = (f.short+' '+(f.code||'')+' '+(f.company||'')).toLowerCase();
+      if(ft && hay.indexOf(ft)===-1) return;
+      var row = document.createElement('label');
+      row.className = 'facility-row';
+      var checked = snapshotState.selectedFacilities.has(f.short);
+      row.innerHTML = '<input type="checkbox"'+(checked?' checked':'')+'><span class="fname">'+f.short+'</span><span class="fcode">'+(f.code||'')+'</span>';
+      row.querySelector('input').addEventListener('change', function(e){
+        if(e.target.checked) snapshotState.selectedFacilities.add(f.short);
+        else snapshotState.selectedFacilities.delete(f.short);
+        document.getElementById('snapshotFacCount').textContent = '('+snapshotState.selectedFacilities.size+'/'+snapshotState.facilities.length+')';
+        snapshotRenderAll();
+      });
+      el.appendChild(row);
+    });
+    document.getElementById('snapshotFacCount').textContent = '('+snapshotState.selectedFacilities.size+'/'+snapshotState.facilities.length+')';
+  }
+
+  function snapshotRenderAll(){
+    var el = document.getElementById('snapshotCards');
+    if(!el) return;
+    var selected = snapshotState.facilities.filter(function(f){ return snapshotState.selectedFacilities.has(f.short); });
+    if(!selected.length){
+      el.innerHTML = '<div class="empty-note">Pick at least one facility above.</div>';
+      return;
+    }
+    el.innerHTML = selected.map(snapshotRenderCard).join('');
+    document.getElementById('snapshotTopSub').textContent = selected.length + ' of ' + snapshotState.facilities.length + ' facilities selected';
+  }
+
+  function snapshotHasAnySource(){
+    return anySourceLoaded() ||
+      (censusState.sources.losReport||censusState.sources.censusReport) ||
+      (skilledState.sources.salesJournal||skilledState.sources.payerMap) ||
+      medicareState.sources.salesJournal;
+  }
+
+  function snapshotRefreshAfterSourceChange(){
+    snapshotBuildFacilityList();
+    if(snapshotHasAnySource()){
+      document.getElementById('snapshotDropzone').classList.add('hidden');
+      document.getElementById('snapshotApp').style.display = 'flex';
+    }
+    snapshotRenderFacilityList(document.getElementById('snapshotFacSearch') ? document.getElementById('snapshotFacSearch').value : '');
+    snapshotRenderAll();
+  }
+
+  function snapshotInitDropzone(){
+    document.getElementById('snapshotDropzone').classList.remove('hidden');
+  }
+
+  function snapshotInitSearch(){
+    var searchEl = document.getElementById('snapshotFacSearch');
+    if(searchEl) searchEl.addEventListener('input', function(){ snapshotRenderFacilityList(searchEl.value); });
+    var allBtn = document.getElementById('snapshotFacAll');
+    if(allBtn) allBtn.addEventListener('click', function(){
+      snapshotState.selectedFacilities = new Set(snapshotState.facilities.map(function(f){return f.short;}));
+      snapshotRenderFacilityList(searchEl?searchEl.value:'');
+      snapshotRenderAll();
+    });
+    var noneBtn = document.getElementById('snapshotFacNone');
+    if(noneBtn) noneBtn.addEventListener('click', function(){
+      snapshotState.selectedFacilities = new Set();
+      snapshotRenderFacilityList(searchEl?searchEl.value:'');
+      snapshotRenderAll();
+    });
+    var printBtn = document.getElementById('snapshotPrintBtn');
+    if(printBtn) printBtn.addEventListener('click', function(){ window.print(); });
   }
 
   /* =========================================================
