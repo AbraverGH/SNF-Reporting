@@ -421,6 +421,7 @@
     text-align:center;padding:40px 20px;
   }
   #medicareDropzone.hidden{display:none;}
+  #snapshotDropzone.hidden{display:none;}
   .dz-wrap{
     width:min(820px,94vw);border:2px dashed var(--line);border-radius:16px;
     background:var(--surface);padding:44px 36px;box-shadow:var(--shadow);
@@ -536,19 +537,30 @@
     box-shadow:var(--shadow);padding:26px 28px;margin-bottom:28px;
   }
   .snap-card-head{border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:18px;}
-  .snap-card-head h2{font-family:'Space Grotesk';font-size:22px;margin:0;color:var(--ink);}
+  .snap-card-head h2{font-family:'Space Grotesk';font-size:24px;margin:0;color:var(--ink);}
   .snap-card-head .fc-code{font-size:13px;font-weight:400;color:var(--ink-faint);font-family:'IBM Plex Mono';margin-left:8px;}
   .snap-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
-  .snap-section{border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;background:var(--surface-2);}
-  .snap-section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line);}
-  .snap-section-title{font-family:'Space Grotesk';font-weight:600;font-size:13.5px;color:var(--ink);}
+  .snap-section{
+    border:1px solid var(--line);border-top:4px solid var(--accent, var(--ink-faint));border-radius:var(--radius-sm);
+    padding:16px 18px;background:var(--surface); position:relative;
+    transition:.14s; cursor:pointer;
+  }
+  .snap-section:hover{box-shadow:0 4px 16px -6px rgba(0,0,0,.18);transform:translateY(-1px);border-color:var(--accent, var(--line));}
+  .snap-section[data-app="ar"]{--accent:#17A673;}
+  .snap-section[data-app="census"]{--accent:#B98B4E;}
+  .snap-section[data-app="skilled"]{--accent:#6C63D6;}
+  .snap-section[data-app="medicare"]{--accent:#2E86AB;}
+  .snap-section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid var(--line);}
+  .snap-section-title{font-family:'Space Grotesk';font-weight:700;font-size:14.5px;color:var(--accent, var(--ink));}
   .snap-section-month{font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.03em;}
-  .snap-subgroup-label{font-size:9.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.03em;margin:8px 0 2px 0;}
+  .snap-section-hint{font-size:9.5px;color:var(--accent, var(--ink-faint));opacity:0;transition:.14s;font-weight:600;letter-spacing:.02em;}
+  .snap-section:hover .snap-section-hint{opacity:1;}
+  .snap-subgroup-label{font-size:9.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.03em;margin:10px 0 3px 0;}
   .snap-subgroup-label:first-child{margin-top:0;}
-  .snap-metric{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:5px 0;}
-  .snap-metric-label{font-size:12px;color:var(--ink-soft);}
-  .snap-metric-value{font-family:'IBM Plex Mono';font-size:14px;font-weight:600;color:var(--ink);text-align:right;white-space:nowrap;}
-  .snap-note{display:block;font-family:'Inter',sans-serif;font-size:9.5px;font-weight:400;color:var(--ink-faint);margin-top:1px;}
+  .snap-metric{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:7px 0;}
+  .snap-metric-label{font-size:12.5px;color:var(--ink-soft);}
+  .snap-metric-value{font-family:'IBM Plex Mono';font-size:23px;font-weight:700;color:var(--ink);text-align:right;white-space:nowrap;line-height:1.15;}
+  .snap-note{display:block;font-family:'Inter',sans-serif;font-size:10.5px;font-weight:500;color:var(--ink-faint);margin-top:2px;}
   .snap-note.up{color:var(--emerald);}
   .snap-note.down{color:var(--clay);}
   .snap-empty{font-size:12px;color:var(--ink-faint);font-style:italic;padding:6px 0;}
@@ -561,7 +573,9 @@
     #snapshotMainContent{padding:0;}
     .snap-card{box-shadow:none;border:none;page-break-after:always;padding:0 0 20px 0;margin-bottom:0;}
     .snap-card:last-child{page-break-after:auto;}
-    .snap-section{break-inside:avoid;}
+    .snap-section{break-inside:avoid;cursor:default;}
+    .snap-section:hover{box-shadow:none;transform:none;}
+    .snap-section-hint{display:none;}
     * {-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   }
 </style>
@@ -6156,34 +6170,72 @@
     var cohortKeys = Object.keys(facData).map(Number);
     if(!cohortKeys.length) return null;
     var payerKeys = snapshotAllARPayerKeys();
+    var sortedCohorts = cohortKeys.sort(function(a,b){return a-b;});
 
-    function forCohort(ck){
+    // maxAsOf, when given, restricts each cohort to its latest as-of
+    // snapshot that existed AT OR BEFORE that point — used to reconstruct
+    // what the cumulative totals looked like at an earlier point in time.
+    function forCohort(ck, maxAsOf){
       var asOfKeys = Object.keys(facData[ck] || {}).map(Number);
+      if(maxAsOf != null) asOfKeys = asOfKeys.filter(function(a){ return a <= maxAsOf; });
       if(!asOfKeys.length) return null;
       var latestAsOf = Math.max.apply(null, asOfKeys);
-      var rev = sumMetric(ck, latestAsOf, payerKeys, 'Revenue', [shortName]);
-      var cashRaw = sumMetric(ck, latestAsOf, payerKeys, 'Cash Receipts', [shortName]);
-      var aging = sumMetric(ck, latestAsOf, payerKeys, 'Aging Bals', [shortName]);
-      if(rev==null && cashRaw==null && aging==null) return null;
-      var cash = cashRaw==null ? null : -cashRaw;
-      var pct = (rev!=null && rev>0 && cashRaw!=null) ? (-cashRaw/rev*100) : null;
-      return {revenue: rev, cash: cash, aging: aging, pct: pct};
+      return {
+        revenue: sumMetric(ck, latestAsOf, payerKeys, 'Revenue', [shortName]),
+        cashRaw: sumMetric(ck, latestAsOf, payerKeys, 'Cash Receipts', [shortName]),
+        aging: sumMetric(ck, latestAsOf, payerKeys, 'Aging Bals', [shortName])
+      };
     }
 
-    var latestCohort = Math.max.apply(null, cohortKeys);
-    var current = forCohort(latestCohort);
-    if(!current){
-      // that latest cohort had no as-of snapshot at all (shouldn't normally
-      // happen, but fall back one month rather than showing nothing)
-      var remaining = cohortKeys.filter(function(c){ return c!==latestCohort; });
-      if(!remaining.length) return null;
-      latestCohort = Math.max.apply(null, remaining);
-      current = forCohort(latestCohort);
-      if(!current) return null;
+    // Full reporting range — every month of service this facility has, from
+    // its earliest through its latest, each valued at that month's own
+    // latest as-of snapshot (or, when maxAsOf is given, its latest as-of
+    // no newer than that). Revenue and Cash sum naturally across months;
+    // Aging sums too, since each month's aging figure is that month's own
+    // still-outstanding portion — added together, that's the facility's
+    // total current AR balance across everything ever billed.
+    function sumAll(maxAsOf){
+      var totalRev=0, totalCashRaw=0, totalAging=0, any=false;
+      sortedCohorts.forEach(function(ck){
+        var d = forCohort(ck, maxAsOf);
+        if(!d) return;
+        if(d.revenue!=null){ totalRev += d.revenue; any=true; }
+        if(d.cashRaw!=null){ totalCashRaw += d.cashRaw; any=true; }
+        if(d.aging!=null){ totalAging += d.aging; any=true; }
+      });
+      if(!any) return null;
+      return {revenue: totalRev, cash: -totalCashRaw, aging: totalAging, pct: totalRev>0 ? (-totalCashRaw/totalRev*100) : null};
     }
-    var prev = forCohort(latestCohort-1);
-    return {monthLabel: keyLabel(latestCohort), prevMonthLabel: prev ? keyLabel(latestCohort-1) : null, current: current, prev: prev};
+
+    var current = sumAll(null);
+    if(!current) return null;
+
+    // "A month ago" — the same cumulative totals, but reconstructed as of
+    // one as-of period earlier than this facility's own most recent
+    // snapshot. This captures genuine collections activity over the past
+    // month (new cash coming in on any month of service, not just the
+    // newest one), not merely the newest month's own numbers.
+    var globalLatestAsOf = null;
+    sortedCohorts.forEach(function(ck){
+      Object.keys(facData[ck] || {}).map(Number).forEach(function(a){
+        if(globalLatestAsOf==null || a>globalLatestAsOf) globalLatestAsOf = a;
+      });
+    });
+    var prior = globalLatestAsOf!=null ? sumAll(globalLatestAsOf-1) : null;
+
+    var startLabel = keyLabel(sortedCohorts[0]);
+    var endLabel = keyLabel(sortedCohorts[sortedCohorts.length-1]);
+    return {
+      rangeLabel: sortedCohorts.length>1 ? (startLabel+' – '+endLabel) : startLabel,
+      priorAsOfLabel: globalLatestAsOf!=null ? keyLabel(globalLatestAsOf-1) : null,
+      revenue: current.revenue,
+      cash: current.cash,
+      aging: current.aging,
+      pct: current.pct,
+      prev: prior
+    };
   }
+
 
   // ---- Census Trends: Average Length of Stay, Census Days, Occupancy % ----
   function snapshotGetCensusData(company){
@@ -6194,20 +6246,10 @@
     // combined approach was leaving Days/Occupancy blank under whatever
     // month LOS happened to be newest for, even when Days/Occupancy had
     // real data for an earlier month.
-    function losCohorts(){
-      var set = {};
-      censusState.rows.forEach(function(r){ if(r.facility===company) set[r.cohortKey]=true; });
-      return Object.keys(set).map(Number);
-    }
     function occCohorts(){
       var set = {};
       censusState.daysRows.concat(censusState.pctRows).forEach(function(r){ if(r.facility===company) set[r.cohortKey]=true; });
       return Object.keys(set).map(Number);
-    }
-    function losForCohort(ck){
-      var rows = censusState.rows.filter(function(r){ return r.facility===company && r.cohortKey===ck; });
-      if(!rows.length) return null;
-      return {avgLOS: rows.reduce(function(s,r){return s+r.days;},0)/rows.length};
     }
     function occForCohort(ck){
       var daysRows = censusState.daysRows.filter(function(r){ return r.facility===company && r.cohortKey===ck; });
@@ -6219,16 +6261,24 @@
       return {censusDays: totalDays, occupancyPct: occupancyPct};
     }
 
-    var losKeys = losCohorts(), occKeys = occCohorts();
-    if(!losKeys.length && !occKeys.length) return null;
-
+    // Average Length of Stay is an all-time average — every discharged
+    // stay this facility has on record, not just the latest month (a
+    // single month's average is volatile with a small sample; all-time is
+    // the stable, representative figure for a snapshot).
+    var allLosRows = censusState.rows.filter(function(r){ return r.facility===company; });
     var losOut = null;
-    if(losKeys.length){
-      var losCk = Math.max.apply(null, losKeys);
-      var losCur = losForCohort(losCk);
-      var losPrev = losForCohort(losCk-1);
-      losOut = {monthLabel: keyLabel(losCk), prevMonthLabel: losPrev?keyLabel(losCk-1):null, current: losCur, prev: losPrev};
+    if(allLosRows.length){
+      var losCohortNums = allLosRows.map(function(r){ return r.cohortKey; });
+      var losMinCk = Math.min.apply(null, losCohortNums), losMaxCk = Math.max.apply(null, losCohortNums);
+      losOut = {
+        rangeLabel: losMinCk===losMaxCk ? keyLabel(losMinCk) : (keyLabel(losMinCk)+' – '+keyLabel(losMaxCk)),
+        avgLOS: allLosRows.reduce(function(s,r){return s+r.days;},0)/allLosRows.length,
+        stayCount: allLosRows.length
+      };
     }
+
+    var occKeys = occCohorts();
+    if(!allLosRows.length && !occKeys.length) return null;
     var occOut = null;
     if(occKeys.length){
       var occCk = Math.max.apply(null, occKeys);
@@ -6307,11 +6357,12 @@
     return '<div class="snap-metric"><div class="snap-metric-label">'+label+'</div><div class="snap-metric-value">'+valueHtml+(noteHtml?noteHtml:'')+'</div></div>';
   }
 
-  function snapshotSectionHtml(title, monthLabel, bodyHtml, isEmpty){
-    return '<div class="snap-section">' +
+  function snapshotSectionHtml(title, monthLabel, bodyHtml, isEmpty, appKey, fac){
+    return '<div class="snap-section" data-app="'+appKey+'" data-fac-short="'+fac.short+'" data-fac-company="'+(fac.company||'')+'">' +
       '<div class="snap-section-head"><span class="snap-section-title">'+title+'</span>' +
       (monthLabel ? '<span class="snap-section-month">'+monthLabel+'</span>' : '') + '</div>' +
       (isEmpty ? '<div class="snap-empty">No data published yet</div>' : bodyHtml) +
+      (isEmpty ? '' : '<div class="snap-section-hint">View full detail →</div>') +
       '</div>';
   }
 
@@ -6324,19 +6375,18 @@
     var arBody = '';
     if(ar){
       arBody =
-        snapshotMetricRow('Revenue', fmtMoneyFull(ar.current.revenue), snapshotPctNote(ar.current.revenue, ar.prev&&ar.prev.revenue, ar.prevMonthLabel)) +
-        snapshotMetricRow('Cash Collected', fmtMoneyFull(ar.current.cash), snapshotPctNote(ar.current.cash, ar.prev&&ar.prev.cash, ar.prevMonthLabel)) +
-        snapshotMetricRow('Aging Balance', fmtMoneyFull(ar.current.aging), snapshotPctNote(ar.current.aging, ar.prev&&ar.prev.aging, ar.prevMonthLabel)) +
-        snapshotMetricRow('% Collected', ar.current.pct==null?'—':ar.current.pct.toFixed(1)+'%', snapshotPtNote(ar.current.pct, ar.prev&&ar.prev.pct, ar.prevMonthLabel));
+        snapshotMetricRow('Revenue', fmtMoneyFull(ar.revenue), snapshotPctNote(ar.revenue, ar.prev&&ar.prev.revenue, ar.priorAsOfLabel)) +
+        snapshotMetricRow('Cash Collected', fmtMoneyFull(ar.cash), snapshotPctNote(ar.cash, ar.prev&&ar.prev.cash, ar.priorAsOfLabel)) +
+        snapshotMetricRow('Aging Balance', fmtMoneyFull(ar.aging), snapshotPctNote(ar.aging, ar.prev&&ar.prev.aging, ar.priorAsOfLabel)) +
+        snapshotMetricRow('% Collected', ar.pct==null?'—':ar.pct.toFixed(1)+'%', snapshotPtNote(ar.pct, ar.prev&&ar.prev.pct, ar.priorAsOfLabel));
     }
 
     var cenBody = '';
-    var cenMonthLabel = null;
     if(cen && (cen.los || cen.occ)){
       var cenParts = [];
       if(cen.los){
-        cenParts.push('<div class="snap-subgroup-label">Length of Stay — '+cen.los.monthLabel+'</div>' +
-          snapshotMetricRow('Average Length of Stay', cen.los.current.avgLOS==null?'—':cen.los.current.avgLOS.toFixed(1)+' days', snapshotPctNote(cen.los.current.avgLOS, cen.los.prev&&cen.los.prev.avgLOS, cen.los.prevMonthLabel)));
+        cenParts.push('<div class="snap-subgroup-label">Length of Stay — all-time avg, '+cen.los.rangeLabel+'</div>' +
+          snapshotMetricRow('Average Length of Stay', cen.los.avgLOS==null?'—':cen.los.avgLOS.toFixed(1)+' days', ''));
       }
       if(cen.occ){
         cenParts.push('<div class="snap-subgroup-label">Census — '+cen.occ.monthLabel+'</div>' +
@@ -6367,10 +6417,10 @@
     return '<div class="snap-card">' +
       '<div class="snap-card-head"><h2>'+fac.short+' <span class="fc-code">'+(fac.code||'')+'</span></h2></div>' +
       '<div class="snap-grid">' +
-        snapshotSectionHtml('AR Collections', ar?ar.monthLabel:null, arBody, !ar) +
-        snapshotSectionHtml('Census Trends', null, cenBody, !cenBody) +
-        snapshotSectionHtml('Skilled Analysis', sk?sk.monthLabel:null, skBody, !sk) +
-        snapshotSectionHtml('Medicare Days', med?med.monthLabel:null, medBody, !med) +
+        snapshotSectionHtml('AR Collections', ar?ar.rangeLabel:null, arBody, !ar, 'ar', fac) +
+        snapshotSectionHtml('Census Trends', null, cenBody, !cenBody, 'census', fac) +
+        snapshotSectionHtml('Skilled Analysis', sk?sk.monthLabel:null, skBody, !sk, 'skilled', fac) +
+        snapshotSectionHtml('Medicare Days', med?med.monthLabel:null, medBody, !med, 'medicare', fac) +
       '</div>' +
     '</div>';
   }
@@ -6408,6 +6458,36 @@
     }
     el.innerHTML = selected.map(snapshotRenderCard).join('');
     document.getElementById('snapshotTopSub').textContent = selected.length + ' of ' + snapshotState.facilities.length + ' facilities selected';
+    Array.prototype.forEach.call(el.querySelectorAll('.snap-section[data-app]'), function(sectionEl){
+      sectionEl.addEventListener('click', function(){
+        snapshotDrillDown(sectionEl.getAttribute('data-app'), sectionEl.getAttribute('data-fac-short'), sectionEl.getAttribute('data-fac-company'));
+      });
+    });
+  }
+
+  // Clicking any section drills into that facility, alone, inside the
+  // corresponding full app — same pattern each app already uses for its
+  // own facility filter, just pre-set to one facility instead of left for
+  // the person to pick themselves.
+  function snapshotDrillDown(appKey, facShort, facCompany){
+    if(appKey==='ar'){
+      state.selectedFacilities = new Set([facShort]);
+      renderFacilityList(document.getElementById('facSearch') ? document.getElementById('facSearch').value : '');
+      renderAll();
+    } else if(appKey==='census'){
+      censusState.selectedFacilities = new Set([facCompany]);
+      censusRenderFacilityList(document.getElementById('censusFacSearch') ? document.getElementById('censusFacSearch').value : '');
+      censusRenderAll();
+    } else if(appKey==='skilled'){
+      skilledState.selectedFacilities = new Set([facCompany]);
+      skilledRenderFacilityList(document.getElementById('skilledFacSearch') ? document.getElementById('skilledFacSearch').value : '');
+      skilledRenderAll();
+    } else if(appKey==='medicare'){
+      medicareState.selectedFacilities = new Set([facCompany]);
+      medicareRenderFacilityList(document.getElementById('medicareFacSearch') ? document.getElementById('medicareFacSearch').value : '');
+      medicareRenderAll();
+    }
+    showScreen(appKey);
   }
 
   function snapshotHasAnySource(){
