@@ -6744,8 +6744,8 @@
         .then(function(d){
           if(d.error){ box.innerHTML = '<div style="color:#B0455B;">'+ncsEsc(d.error)+'</div>'; return; }
           var h = '<div style="margin:6px 0;color:var(--ink-soft);font-size:12px;">Comparing NCS-computed census days with your uploaded Census Report. "Excl." does not count the discharge day; "Incl." does. Nothing is saved.</div>';
-          h += '<table style="border-collapse:collapse;width:100%;font-size:12.5px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--line);"><th style="padding:5px;">Facility</th><th>Month</th><th style="text-align:right;">Uploaded days</th><th style="text-align:right;">NCS excl.</th><th style="text-align:right;">NCS incl.</th><th style="text-align:right;">Diff (excl.)</th><th style="text-align:right;">Diff (incl.)</th></tr></thead><tbody>';
-          var losH = '';
+          h += '<table style="border-collapse:collapse;width:100%;font-size:12.5px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--line);"><th style="padding:5px;">Facility</th><th>Month</th><th style="text-align:right;">Uploaded days</th><th style="text-align:right;">NCS excl.</th><th style="text-align:right;">NCS incl.</th><th style="text-align:right;">Diff (excl.)</th><th style="text-align:right;">Diff (incl.)</th><th style="text-align:right;">Bed-hold days</th><th style="text-align:right;">Diff (excl. + hold)</th><th style="text-align:right;">Days with no payor</th></tr></thead><tbody>';
+          var losH = ''; var unc = '';
           d.companies.forEach(function(c){
             var upCompany = c.name;
             c.months.forEach(function(m, i){
@@ -6754,14 +6754,20 @@
               var up = rows.length ? rows.reduce(function(s,r){return s+r.days;},0) : null;
               var de = up==null ? null : m.daysExcludingDischargeDay-up, di = up==null ? null : m.daysIncludingDischargeDay-up;
               function col(x){ return x==null ? '' : (x===0 ? 'color:#1d7a4d;font-weight:600;' : 'color:#B0455B;'); }
-              h += '<tr style="border-bottom:1px solid var(--line);"><td style="padding:5px;">'+ncsEsc(c.label)+'</td><td>'+ncsEsc(m.month)+'</td><td style="text-align:right;">'+fmt(up)+'</td><td style="text-align:right;">'+fmt(m.daysExcludingDischargeDay)+'</td><td style="text-align:right;">'+fmt(m.daysIncludingDischargeDay)+'</td><td style="text-align:right;'+col(de)+'">'+(de==null?'—':(de>0?'+':'')+de)+'</td><td style="text-align:right;'+col(di)+'">'+(di==null?'—':(di>0?'+':'')+di)+'</td></tr>';
+              h += '<tr style="border-bottom:1px solid var(--line);"><td style="padding:5px;">'+ncsEsc(c.label)+'</td><td>'+ncsEsc(m.month)+'</td><td style="text-align:right;">'+fmt(up)+'</td><td style="text-align:right;">'+fmt(m.daysExcludingDischargeDay)+'</td><td style="text-align:right;">'+fmt(m.daysIncludingDischargeDay)+'</td><td style="text-align:right;'+col(de)+'">'+(de==null?'—':(de>0?'+':'')+de)+'</td><td style="text-align:right;'+col(di)+'">'+(di==null?'—':(di>0?'+':'')+di)+'</td><td style="text-align:right;">'+fmt(m.bedHoldDays)+'</td><td style="text-align:right;'+col(up==null?null:m.daysExcludingDischargeDay+m.bedHoldDays-up)+'">'+(up==null?'—':(function(x){return (x>0?'+':'')+x;})(m.daysExcludingDischargeDay+m.bedHoldDays-up))+'</td><td style="text-align:right;">'+fmt(m.uncoveredDays)+'</td></tr>';
+              if(m.uncovered && m.uncovered.length && de!==0){ unc += '<div style="margin:3px 0;">'+ncsEsc(c.label)+' '+ncsEsc(m.month)+': '+m.uncovered.map(function(u){return 'resident '+u.residentId+' (stay '+u.stayId+', '+u.admit+' → '+u.discharge+', '+u.days+' days)';}).join('; ')+'</div>'; }
             });
             var upLos = (censusState.rows||[]).filter(function(r){ return r.facility===c.name; });
+            var winN=0, winSum=0;
+            upLos.forEach(function(r){ });
+            var cksSet = {}; upLos.forEach(function(r){ cksSet[r.cohortKey]=true; });
+            Object.keys(cksSet).forEach(function(k){ var e = (c.los.byDischargeMonth||{})[ck2iso(+k)]; if(e){ winN+=e.n; winSum+=e.sum; } });
             var upAvg = upLos.length ? upLos.reduce(function(s,r){return s+r.days;},0)/upLos.length : null;
-            losH += '<tr style="border-bottom:1px solid var(--line);"><td style="padding:5px;">'+ncsEsc(c.label)+'</td><td style="text-align:right;">'+(upAvg==null?'—':upAvg.toFixed(1))+'</td><td style="text-align:right;">'+(c.los.avgLOS==null?'—':c.los.avgLOS.toFixed(1))+'</td><td style="text-align:right;">'+fmt(c.los.completedStays)+'</td><td style="text-align:right;">'+fmt(upLos.length||null)+'</td><td style="text-align:right;">'+fmt(c.los.openStays)+'</td></tr>';
+            losH += '<tr style="border-bottom:1px solid var(--line);"><td style="padding:5px;">'+ncsEsc(c.label)+'</td><td style="text-align:right;">'+(upAvg==null?'—':upAvg.toFixed(1))+'</td><td style="text-align:right;">'+(c.los.avgLOS==null?'—':c.los.avgLOS.toFixed(1))+'</td><td style="text-align:right;">'+fmt(c.los.completedStays)+'</td><td style="text-align:right;">'+fmt(upLos.length||null)+'</td><td style="text-align:right;">'+fmt(c.los.openStays)+'</td><td style="text-align:right;">'+(winN?(winSum/winN).toFixed(1):'—')+'</td><td style="text-align:right;">'+fmt(winN||null)+'</td></tr>';
           });
           h += '</tbody></table>';
-          h += '<div style="margin-top:16px;font-weight:600;">Average length of stay (all time)</div><table style="border-collapse:collapse;width:100%;font-size:12.5px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--line);"><th style="padding:5px;">Facility</th><th style="text-align:right;">Uploaded avg</th><th style="text-align:right;">NCS avg</th><th style="text-align:right;">NCS completed stays</th><th style="text-align:right;">Uploaded stays</th><th style="text-align:right;">NCS open stays</th></tr></thead><tbody>'+losH+'</tbody></table>';
+          if(unc) h += '<div style="margin-top:14px;font-weight:600;">Residents in a mismatched month with days not covered by any payor</div><div style="font-size:12px;color:var(--ink-soft);">'+unc+'</div>';
+          h += '<div style="margin-top:16px;font-weight:600;">Average length of stay (all time)</div><table style="border-collapse:collapse;width:100%;font-size:12.5px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--line);"><th style="padding:5px;">Facility</th><th style="text-align:right;">Uploaded avg</th><th style="text-align:right;">NCS avg</th><th style="text-align:right;">NCS completed stays</th><th style="text-align:right;">Uploaded stays</th><th style="text-align:right;">NCS open stays</th><th style="text-align:right;">NCS avg (same months as upload)</th><th style="text-align:right;">NCS stays (same months)</th></tr></thead><tbody>'+losH+'</tbody></table>';
           h += '<div style="margin-top:16px;font-weight:600;">Payor days by facility (NCS)</div>';
           d.companies.forEach(function(c){
             var last = c.months[c.months.length-1];
