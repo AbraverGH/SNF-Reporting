@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1604,6 +1603,14 @@
       <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head"><div><h2>Skilled Analysis</h2><div class="note">The Sales Journal is imported monthly; the Payer Mapping (also used by Census Trends) only needs updating when payor contracts/rates change.</div></div></div>
         <div id="adminSkilledRows"></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head">
+          <div><h2>NCS Connection</h2><div class="note">Checks that Vantis can sign in to NCS and read your facility list. Needs NCS_API_KEY, NCS_CLIENT_SECRET and NCS_USER set on the server.</div></div>
+          <button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button>
+        </div>
+        <div id="adminNcsResult" style="margin-top:14px;font-size:13px;"></div>
       </div>
 
       <div class="panel">
@@ -6661,6 +6668,35 @@
      access links. TILE_LABELS/facility list are the same ones
      used elsewhere in the app, kept in one place here.
   --------------------------------------------------------- */
+  function ncsEsc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  (function(){
+    var btn = document.getElementById('adminNcsTestBtn');
+    if(!btn) return;
+    btn.addEventListener('click', function(){
+      var box = document.getElementById('adminNcsResult');
+      btn.disabled = true; box.textContent = 'Testing…';
+      fetch('/api/admin/ncs/test', {headers:{'x-admin-key': adminKey}})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          var h = '';
+          if(d.error) h += '<div style="color:#B0455B;">'+ncsEsc(d.error)+'</div>';
+          (d.steps||[]).forEach(function(st){
+            h += '<div style="margin:4px 0;color:'+(st.ok?'#1d7a4d':'#B0455B')+';">'+(st.ok?'✓ ':'✗ ')+ncsEsc(st.name)
+              +(st.count!=null?' — '+st.count+' records':'')+(st.error?' — '+ncsEsc(st.error):'')+'</div>';
+            if(st.fields && st.fields.length) h += '<div style="color:var(--ink-soft);font-size:12px;">Fields: '+ncsEsc(st.fields.join(', '))+'</div>';
+          });
+          if(d.companies && d.companies.length){
+            h += '<div style="margin-top:10px;font-weight:600;">Facilities found</div><ul style="margin:4px 0 0 18px;padding:0;">';
+            d.companies.forEach(function(c){ h += '<li>'+ncsEsc(Object.keys(c).map(function(k){return c[k];}).join(' · '))+'</li>'; });
+            h += '</ul>';
+          }
+          if(d.ok) h = '<div style="font-weight:600;color:#1d7a4d;margin-bottom:6px;">Connection works.</div>'+h;
+          box.innerHTML = h || 'No response.';
+        })
+        .catch(function(e){ box.textContent = 'Request failed: '+e.message; })
+        .then(function(){ btn.disabled = false; });
+    });
+  })();
   var ACCESS_TILE_LABELS = {ar:'AR Collections', census:'Census Trends', skilled:'Skilled Analysis', medicare:'Medicare Days'};
   var lastFetchedAccessProfiles = []; // cached so the Edit button can look up a profile's current values without a re-fetch
   var editingAccessProfileId = null; // null = create mode; set = editing that profile (same token, updated permissions)
