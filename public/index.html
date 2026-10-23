@@ -1608,7 +1608,7 @@
       <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head">
           <div><h2>NCS Connection</h2><div class="note">Checks that Vantis can sign in to NCS and read your facility list. Needs NCS_API_KEY, NCS_CLIENT_SECRET and NCS_USER set on the server.</div></div>
-          <div style="display:flex;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button></div>
+          <div style="display:flex;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><select id="adminNcsGrace" style="border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;"><option value="">Live NCS (today)</option><option value="asof">As of the date at right</option><option value="3">As of 3 days after month-end</option><option value="7">As of 7 days after month-end</option><option value="14">As of 14 days after month-end</option></select><input type="date" id="adminNcsAsOf" value="2026-08-10" style="border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;"><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button></div>
         </div>
         <div id="adminNcsResult" style="margin-top:14px;font-size:13px;"></div>
       </div>
@@ -6736,14 +6736,15 @@
     function ck2iso(k){ var y=Math.floor(k/12), m=k-y*12; return y+'-'+('0'+(m+1)).slice(-2); }
     function fmt(n){ return n==null ? '—' : Math.round(n).toLocaleString(); }
     b3.addEventListener('click', function(){
+      var gsel = document.getElementById('adminNcsGrace'); window.__ncsGrace = gsel && gsel.value!=='' && gsel.value!=='asof' ? gsel.value : null; window.__ncsAsOf = gsel && gsel.value==='asof' ? document.getElementById('adminNcsAsOf').value : null;
       var box = document.getElementById('adminNcsResult');
       b3.disabled = true; box.textContent = 'Pulling stays and payors from NCS (can take a minute)…';
       var cks = monthsToCompare();
-      fetch('/api/admin/ncs/census-preview?months='+cks.map(ck2iso).join(','), {headers:{'x-admin-key': adminKey}})
+      fetch('/api/admin/ncs/census-preview?months='+cks.map(ck2iso).join(',')+(window.__ncsGrace!=null?'&grace='+window.__ncsGrace:'')+(window.__ncsAsOf?'&asOf='+window.__ncsAsOf:''), {headers:{'x-admin-key': adminKey}})
         .then(function(r){ return r.json(); })
         .then(function(d){
           if(d.error){ box.innerHTML = '<div style="color:#B0455B;">'+ncsEsc(d.error)+'</div>'; return; }
-          var h = '<div style="margin:6px 0;color:var(--ink-soft);font-size:12px;">Comparing NCS-computed census days with your uploaded Census Report. "Excl." does not count the discharge day; "Incl." does. Nothing is saved.</div>';
+          var h = '<div style="margin:6px 0;color:var(--ink-soft);font-size:12px;">Stay rows: '+d.notes.staysRaw+' raw → '+d.notes.staysAfterDedupe+' after keeping latest version; payor rows: '+d.notes.payorRowsRaw+' → '+d.notes.payorRowsAfterDedupe+'. View: '+(d.notes.asOfDate?('NCS as it looked on '+d.notes.asOfDate):d.notes.asOfGraceDays==null?'live NCS today':('as NCS looked '+d.notes.asOfGraceDays+' days after each month ended'))+'.</div><div style="margin:6px 0;color:var(--ink-soft);font-size:12px;">Comparing NCS-computed census days with your uploaded Census Report. "Excl." does not count the discharge day; "Incl." does. Nothing is saved.</div>';
           h += '<table style="border-collapse:collapse;width:100%;font-size:12.5px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--line);"><th style="padding:5px;">Facility</th><th>Month</th><th style="text-align:right;">Uploaded days</th><th style="text-align:right;">NCS excl.</th><th style="text-align:right;">NCS incl.</th><th style="text-align:right;">Diff (excl.)</th><th style="text-align:right;">Diff (incl.)</th><th style="text-align:right;">Bed-hold days</th><th style="text-align:right;">Diff (excl. + hold)</th><th style="text-align:right;">Days with no payor</th><th style="text-align:right;">NCS payor-days total</th><th style="text-align:right;">Diff (payor-days)</th></tr></thead><tbody>';
           var losH = ''; var unc = ''; var payDiff = '';
           d.companies.forEach(function(c){
