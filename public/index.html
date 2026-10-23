@@ -1608,7 +1608,7 @@
       <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head">
           <div><h2>NCS Connection</h2><div class="note">Checks that Vantis can sign in to NCS and read your facility list. Needs NCS_API_KEY, NCS_CLIENT_SECRET and NCS_USER set on the server.</div></div>
-          <button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button>
+          <div style="display:flex;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button></div>
         </div>
         <div id="adminNcsResult" style="margin-top:14px;font-size:13px;"></div>
       </div>
@@ -6695,6 +6695,29 @@
         })
         .catch(function(e){ box.textContent = 'Request failed: '+e.message; })
         .then(function(){ btn.disabled = false; });
+    });
+  })();
+  (function(){
+    var b2 = document.getElementById('adminNcsInspectBtn');
+    if(!b2) return;
+    b2.addEventListener('click', function(){
+      var box = document.getElementById('adminNcsResult');
+      b2.disabled = true; box.textContent = 'Inspecting (can take a minute)…';
+      fetch('/api/admin/ncs/inspect', {headers:{'x-admin-key': adminKey}})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if(d.error){ box.innerHTML = '<div style="color:#B0455B;">'+ncsEsc(d.error)+'</div>'; return; }
+          var h = '';
+          (d.endpoints||[]).forEach(function(e){
+            h += '<div style="margin-top:12px;font-weight:600;">'+ncsEsc(e.endpoint)+(e.count!=null?' — '+e.count+' records':'')+(e.earliest?' ('+e.earliest+' to '+e.latest+')':'')+'</div>';
+            if(e.error) h += '<div style="color:#B0455B;">'+ncsEsc(e.error)+'</div>';
+            if(e.perCompany) h += '<div style="color:var(--ink-soft);font-size:12px;">By company: '+ncsEsc(Object.keys(e.perCompany).map(function(k){return (d.companies[k]||k)+' '+e.perCompany[k];}).join(', '))+'</div>';
+            if(e.fields) h += '<div style="color:var(--ink-soft);font-size:12px;">Fields: '+ncsEsc(e.fields.join(', '))+'</div>';
+          });
+          box.innerHTML = h;
+        })
+        .catch(function(e){ box.textContent = 'Request failed: '+e.message; })
+        .then(function(){ b2.disabled = false; });
     });
   })();
   var ACCESS_TILE_LABELS = {ar:'AR Collections', census:'Census Trends', skilled:'Skilled Analysis', medicare:'Medicare Days'};
