@@ -1608,7 +1608,7 @@
       <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head">
           <div><h2>NCS Connection</h2><div class="note">Checks that Vantis can sign in to NCS and read your facility list. Needs NCS_API_KEY, NCS_CLIENT_SECRET and NCS_USER set on the server.</div></div>
-          <div style="display:flex;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button></div>
+          <div style="display:flex;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button></div>
         </div>
         <div id="adminNcsResult" style="margin-top:14px;font-size:13px;"></div>
       </div>
@@ -6718,6 +6718,59 @@
         })
         .catch(function(e){ box.textContent = 'Request failed: '+e.message; })
         .then(function(){ b2.disabled = false; });
+    });
+  })();
+  (function(){
+    var b3 = document.getElementById('adminNcsPreviewBtn');
+    if(!b3) return;
+    function monthsToCompare(){
+      var set = {};
+      try{ censusState.daysRows.forEach(function(r){ set[r.cohortKey]=true; }); }catch(e){}
+      var ks = Object.keys(set).map(Number).sort(function(a,b){return b-a;}).slice(0,3);
+      if(!ks.length){
+        var now = new Date(), base = now.getFullYear()*12 + now.getMonth();
+        ks = [base-1, base-2, base-3];
+      }
+      return ks.reverse();
+    }
+    function ck2iso(k){ var y=Math.floor(k/12), m=k-y*12; return y+'-'+('0'+(m+1)).slice(-2); }
+    function fmt(n){ return n==null ? '—' : Math.round(n).toLocaleString(); }
+    b3.addEventListener('click', function(){
+      var box = document.getElementById('adminNcsResult');
+      b3.disabled = true; box.textContent = 'Pulling stays and payors from NCS (can take a minute)…';
+      var cks = monthsToCompare();
+      fetch('/api/admin/ncs/census-preview?months='+cks.map(ck2iso).join(','), {headers:{'x-admin-key': adminKey}})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if(d.error){ box.innerHTML = '<div style="color:#B0455B;">'+ncsEsc(d.error)+'</div>'; return; }
+          var h = '<div style="margin:6px 0;color:var(--ink-soft);font-size:12px;">Comparing NCS-computed census days with your uploaded Census Report. "Excl." does not count the discharge day; "Incl." does. Nothing is saved.</div>';
+          h += '<table style="border-collapse:collapse;width:100%;font-size:12.5px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--line);"><th style="padding:5px;">Facility</th><th>Month</th><th style="text-align:right;">Uploaded days</th><th style="text-align:right;">NCS excl.</th><th style="text-align:right;">NCS incl.</th><th style="text-align:right;">Diff (excl.)</th><th style="text-align:right;">Diff (incl.)</th></tr></thead><tbody>';
+          var losH = '';
+          d.companies.forEach(function(c){
+            var upCompany = c.name;
+            c.months.forEach(function(m, i){
+              var ck = cks[i];
+              var rows = (censusState.daysRows||[]).filter(function(r){ return r.facility===upCompany && r.cohortKey===ck; });
+              var up = rows.length ? rows.reduce(function(s,r){return s+r.days;},0) : null;
+              var de = up==null ? null : m.daysExcludingDischargeDay-up, di = up==null ? null : m.daysIncludingDischargeDay-up;
+              function col(x){ return x==null ? '' : (x===0 ? 'color:#1d7a4d;font-weight:600;' : 'color:#B0455B;'); }
+              h += '<tr style="border-bottom:1px solid var(--line);"><td style="padding:5px;">'+ncsEsc(c.label)+'</td><td>'+ncsEsc(m.month)+'</td><td style="text-align:right;">'+fmt(up)+'</td><td style="text-align:right;">'+fmt(m.daysExcludingDischargeDay)+'</td><td style="text-align:right;">'+fmt(m.daysIncludingDischargeDay)+'</td><td style="text-align:right;'+col(de)+'">'+(de==null?'—':(de>0?'+':'')+de)+'</td><td style="text-align:right;'+col(di)+'">'+(di==null?'—':(di>0?'+':'')+di)+'</td></tr>';
+            });
+            var upLos = (censusState.rows||[]).filter(function(r){ return r.facility===c.name; });
+            var upAvg = upLos.length ? upLos.reduce(function(s,r){return s+r.days;},0)/upLos.length : null;
+            losH += '<tr style="border-bottom:1px solid var(--line);"><td style="padding:5px;">'+ncsEsc(c.label)+'</td><td style="text-align:right;">'+(upAvg==null?'—':upAvg.toFixed(1))+'</td><td style="text-align:right;">'+(c.los.avgLOS==null?'—':c.los.avgLOS.toFixed(1))+'</td><td style="text-align:right;">'+fmt(c.los.completedStays)+'</td><td style="text-align:right;">'+fmt(upLos.length||null)+'</td><td style="text-align:right;">'+fmt(c.los.openStays)+'</td></tr>';
+          });
+          h += '</tbody></table>';
+          h += '<div style="margin-top:16px;font-weight:600;">Average length of stay (all time)</div><table style="border-collapse:collapse;width:100%;font-size:12.5px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--line);"><th style="padding:5px;">Facility</th><th style="text-align:right;">Uploaded avg</th><th style="text-align:right;">NCS avg</th><th style="text-align:right;">NCS completed stays</th><th style="text-align:right;">Uploaded stays</th><th style="text-align:right;">NCS open stays</th></tr></thead><tbody>'+losH+'</tbody></table>';
+          h += '<div style="margin-top:16px;font-weight:600;">Payor days by facility (NCS)</div>';
+          d.companies.forEach(function(c){
+            var last = c.months[c.months.length-1];
+            h += '<details style="margin:4px 0;"><summary>'+ncsEsc(c.label)+' — '+ncsEsc(last.month)+' ('+fmt(last.payorDaysTotal)+' payor days vs '+fmt(last.daysExcludingDischargeDay)+' census days)</summary><div style="font-size:12px;color:var(--ink-soft);padding:4px 0 4px 16px;">'+last.payors.map(function(p){return ncsEsc(p.payor)+': '+p.days;}).join('<br>')+'</div></details>';
+          });
+          box.innerHTML = h;
+        })
+        .catch(function(e){ box.textContent = 'Request failed: '+e.message; })
+        .then(function(){ b3.disabled = false; });
     });
   })();
   var ACCESS_TILE_LABELS = {ar:'AR Collections', census:'Census Trends', skilled:'Skilled Analysis', medicare:'Medicare Days'};
