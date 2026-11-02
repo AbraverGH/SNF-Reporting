@@ -54,6 +54,10 @@
     --sidebar: #24121A; --sidebar-2: #3A1F2C80; --sidebar-line: #4A2836;
     --emerald: #6E2436; --emerald-bright: #B0455B; --emerald-pale: #F5DEE3;
   }
+  #deckApp{
+    --sidebar: #0F1A2E; --sidebar-2: #1B2E4D80; --sidebar-line: #26406B;
+    --emerald: #1F3A5F; --emerald-bright: #3F6FB5; --emerald-pale: #DDE7F5;
+  }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;}
   body{
@@ -284,6 +288,13 @@
   .skilled-caret.open{transform:rotate(90deg);}
   tr.skilled-child-row th{padding-left:30px;font-weight:400;color:var(--ink-soft);font-size:11.5px;}
   tr.skilled-child-row td{color:var(--ink-soft);}
+  table.triangle tr.ar-payer-row td.cell{color:#fff;font-weight:600;}
+  table.triangle tr.ar-payer-row th{background:var(--sidebar-soft,rgba(0,0,0,.03));}
+  table.triangle tr.ar-payer-row td{background-clip:padding-box;}
+  .ar-fac-toggle{cursor:pointer;user-select:none;}
+  .ar-fac-toggle .ar-caret{display:inline-block;width:12px;margin-right:4px;font-size:10px;color:var(--ink-faint);transition:.15s;}
+  .ar-fac-toggle.open .ar-caret{transform:rotate(90deg);}
+  tr.ar-payer-empty td{font-style:italic;color:var(--ink-faint);padding-left:30px;}
 
   /* Popout filter buttons (Month of Service / As Of Month) */
   .popout-filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px;}
@@ -421,6 +432,7 @@
   }
   #medicareDropzone.hidden{display:none;}
   #snapshotDropzone.hidden{display:none;}
+  #deckDropzone.hidden{display:none;}
   .dz-wrap{
     width:min(820px,94vw);border:2px dashed var(--line);border-radius:16px;
     background:var(--surface);padding:44px 36px;box-shadow:var(--shadow);
@@ -497,6 +509,8 @@
   .home-card-icon.admin-icon{background:linear-gradient(140deg,#5B6B7A,#2E3A46 70%);}
   .home-card-icon.skilled-icon{background:linear-gradient(140deg,#6C63D6,#3D3684 70%);}
   .home-card-icon.medicare-icon{background:linear-gradient(140deg,#2E86AB,#1B4F66 70%);}
+  .home-card-icon.deck-icon{background:linear-gradient(140deg,#3F6FB5,#1F3A5F 70%);}
+  .brand-mark.deck-mark{background:linear-gradient(140deg,#3F6FB5,#1F3A5F 70%);}
   .home-card-icon.snapshot-icon{background:linear-gradient(140deg,#B0455B,#6E2436 70%);}
   .home-card-title{font-family:'Space Grotesk';font-weight:600;font-size:17px;color:var(--ink);}
   .home-card-desc{font-size:12.5px;color:var(--ink-soft);line-height:1.5;flex:1;}
@@ -538,7 +552,22 @@
   .snap-card-head{border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:18px;}
   .snap-card-head h2{font-family:'Space Grotesk';font-size:24px;margin:0;color:var(--ink);}
   .snap-card-head .fc-code{font-size:13px;font-weight:400;color:var(--ink-faint);font-family:'IBM Plex Mono';margin-left:8px;}
-  .snap-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .snap-grid{display:grid;grid-template-columns:1.7fr 1fr;gap:18px;align-items:start;}
+  .snap-col{display:flex;flex-direction:column;gap:18px;min-width:0;}
+  .snap-ar-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:6px;}
+  .snap-ar-kpi{background:rgba(23,166,115,.07);border-radius:8px;padding:10px 12px;}
+  .snap-ar-kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-soft);}
+  .snap-ar-kpi-value{font-family:'IBM Plex Mono';font-size:17px;font-weight:700;color:var(--ink);margin-top:3px;white-space:nowrap;}
+  table.snap-payer-table{width:100%;border-collapse:collapse;font-size:12px;}
+  table.snap-payer-table th, table.snap-payer-table td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;}
+  table.snap-payer-table thead th{font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-faint);font-weight:600;}
+  table.snap-payer-table thead th:first-child{text-align:left;}
+  table.snap-payer-table tbody th{text-align:left;font-weight:600;color:var(--ink);white-space:normal;}
+  table.snap-payer-table td{font-family:'IBM Plex Mono';color:var(--ink);}
+  .snap-pp{display:inline-block;min-width:54px;text-align:center;padding:3px 8px;border-radius:6px;color:#fff;font-weight:700;}
+  .snap-pp-delta{font-family:'Inter',sans-serif;font-size:9.5px;font-weight:600;margin-left:5px;color:var(--ink-faint);}
+  .snap-pp-delta.up{color:var(--emerald);} .snap-pp-delta.down{color:var(--clay);}
+  @media (max-width:1100px){ .snap-grid{grid-template-columns:1fr;} .snap-ar-kpis{grid-template-columns:repeat(2,1fr);} }
   .snap-section{
     border:1px solid var(--line);border-top:4px solid var(--accent, var(--ink-faint));border-radius:var(--radius-sm);
     padding:16px 18px;background:var(--surface); position:relative;
@@ -566,6 +595,62 @@
   .snap-note.down{color:var(--clay);}
   .snap-empty{font-size:12px;color:var(--ink-faint);font-style:italic;padding:6px 0;}
 
+
+  /* ---- Monthly Deck ---- */
+  #deckPages{display:flex;flex-direction:column;align-items:center;gap:26px;}
+  .deck-page{width:100%;max-width:1060px;background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);padding:30px 36px 22px;display:flex;flex-direction:column;color:#1B2433;}
+  .deck-page-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1F3A5F;padding-bottom:9px;margin-bottom:12px;}
+  .deck-eyebrow{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#3F6FB5;font-weight:700;}
+  .deck-page-head h2{font-family:'Space Grotesk';font-size:26px;margin:3px 0 0;color:#14233D;}
+  .deck-page-head h2 .fc-code{font-size:13px;font-weight:400;color:#8591A6;font-family:'IBM Plex Mono';margin-left:8px;}
+  .deck-sub{font-size:13px;color:#566177;margin-top:3px;}
+  .deck-logo{height:44px;width:auto;display:block;}
+  .deck-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:6px;}
+  .deck-kpi{background:#F1F5FB;border-left:4px solid #3F6FB5;border-radius:6px;padding:11px 14px;}
+  .deck-kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#566177;font-weight:600;}
+  .deck-kpi-value{font-family:'IBM Plex Mono';font-size:23px;font-weight:700;color:#14233D;margin-top:4px;white-space:nowrap;}
+  .deck-kpi-note{font-size:10.5px;color:#6B7689;margin-top:3px;}
+  .deck-block-title{font-family:'Space Grotesk';font-size:13px;font-weight:700;color:#1F3A5F;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.05em;}
+  .deck-legend{display:flex;gap:18px;font-size:11px;color:#566177;margin-bottom:2px;}
+  .deck-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;}
+  .deck-chart{display:block;}
+  table.deck-table{width:100%;border-collapse:collapse;font-size:10.5px;margin-top:8px;}
+  table.deck-table th, table.deck-table td{padding:5px 5px;border-bottom:1px solid #E3E8F0;text-align:right;white-space:nowrap;}
+  table.deck-table td{font-family:'IBM Plex Mono';font-size:10px;}
+  table.deck-table thead th{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#566177;font-weight:600;border-bottom:2px solid #1F3A5F;}
+  table.deck-table tbody th{text-align:left;font-weight:600;color:#14233D;font-size:11px;}
+  table.deck-table thead th:first-child{text-align:left;}
+  table.deck-table .fc-code{font-size:9.5px;font-weight:400;color:#8591A6;font-family:'IBM Plex Mono';margin-left:6px;}
+  .deck-tot-col{background:#F1F5FB;font-weight:700;}
+  tr.deck-total-row th, tr.deck-total-row td{border-top:2px solid #1F3A5F;font-weight:700;background:#F1F5FB;}
+  .deck-summary-table{font-size:12px;margin-top:14px;} .deck-summary-table td{font-size:12px;} .deck-summary-table th, .deck-summary-table td{padding:7px 8px;}
+  .deck-summary-table.compact{margin-top:8px;} .deck-summary-table.compact td, .deck-summary-table.compact tbody th{font-size:11px;} .deck-summary-table.compact th, .deck-summary-table.compact td{padding:3px 8px;}
+  .deck-summary-table.compact .deck-pill{padding:1px 6px;}
+  .deck-pill{display:inline-block;min-width:46px;text-align:center;padding:2px 6px;border-radius:5px;color:#fff;font-weight:700;font-family:'IBM Plex Mono';font-size:10px;}
+  .deck-pill-none{color:#9AA5B8;}
+  .deck-alos{display:grid;grid-template-columns:300px 1fr;gap:26px;align-items:center;}
+  .deck-alos-value{font-family:'IBM Plex Mono';font-size:48px;font-weight:700;color:#14233D;line-height:1.05;margin-top:4px;}
+  .deck-alos-value span{font-size:16px;font-weight:500;color:#566177;}
+  .deck-alos-sub{display:flex;gap:26px;margin-top:12px;font-size:12px;color:#14233D;} .deck-alos-sub b{font-family:'IBM Plex Mono';font-size:18px;} .deck-alos-sub span{font-size:10.5px;color:#6B7689;}
+  .deck-fine{font-size:10px;color:#6B7689;margin-top:8px;}
+  .deck-empty{font-size:12px;color:#8591A6;font-style:italic;padding:10px 0;}
+  .deck-foot{margin-top:auto;padding-top:8px;display:flex;justify-content:space-between;font-size:9.5px;color:#8591A6;border-top:1px solid #E3E8F0;}
+  .deck-page > .deck-block-title:first-of-type{margin-top:0;}
+  .deck-month-table, .deck-aging-table, .deck-paypct-table{margin-top:4px;}
+  .deck-paypct-table th, .deck-paypct-table td{padding:5px 5px;} .deck-paypct-table .deck-pill{padding:2px 6px;font-size:10.5px;}
+  .deck-month-table th, .deck-month-table td{padding:6px 5px;}
+  .deck-month-table td{font-size:10.5px;}
+  @media print{
+    body *{visibility:hidden;}
+    #deckApp, #deckApp *{visibility:visible;}
+    #deckApp{position:absolute;left:0;top:0;width:100%;}
+    #deckApp .sidebar, #deckApp .topbar{display:none !important;}
+    #deckMainContent{padding:0 !important;}
+    #deckPages{display:block;}
+    .deck-page{max-width:none;width:100%;height:7.75in;border:none;border-radius:0;box-shadow:none;padding:0 0 4px;page-break-after:always;break-after:page;overflow:hidden;}
+    .deck-page:last-child{page-break-after:auto;break-after:auto;}
+    * {-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
   @media print{
     body *{visibility:hidden;}
     #snapshotApp, #snapshotApp *{visibility:visible;}
@@ -577,6 +662,22 @@
     .snap-section{break-inside:avoid;cursor:default;}
     .snap-section:hover{box-shadow:none;transform:none;}
     .snap-section-hint{display:none;}
+    @page{size:letter landscape;margin:0.35in;}
+    .snap-card-head{padding-bottom:8px;margin-bottom:12px;}
+    .snap-card-head h2{font-size:22px;}
+    .snap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:start;}
+    .snap-col{display:contents;}
+    .snap-section[data-app="ar"]{grid-column:1 / -1;grid-row:1;}
+    .snap-section[data-app="census"]{grid-row:2;grid-column:1;}
+    .snap-section[data-app="skilled"]{grid-row:2;grid-column:2;}
+    .snap-section[data-app="medicare"]{grid-row:2;grid-column:3;}
+    .snap-section{padding:10px 14px;}
+    .snap-section-head{margin-bottom:6px;padding-bottom:6px;}
+    .snap-metric{padding:3px 0;}
+    .snap-metric-value{font-size:17px;}
+    .snap-ar-kpi-value{font-size:16px;}
+    .snap-ar-kpis{grid-template-columns:repeat(4,1fr);margin-bottom:2px;}
+    table.snap-payer-table th, table.snap-payer-table td{padding:4px 6px;}
     * {-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   }
 </style>
@@ -637,6 +738,15 @@
         </div>
         <div class="home-card-title">Facility Snapshot</div>
         <div class="home-card-desc">One-page summary per facility, pulled from every app — latest month, with month-over-month notes. Printable.</div>
+        <div class="home-card-cta">Open <span>→</span></div>
+      </button>
+
+      <button class="home-card" id="launchMonthlyDeck" type="button">
+        <div class="home-card-icon deck-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 13l3-3 3 2 4-5"/></svg>
+        </div>
+        <div class="home-card-title">Monthly Deck</div>
+        <div class="home-card-desc">Ownership-ready report: AR Collections for the trailing 12 months, Average Length of Stay, and Aging Detail by payer. Pick facilities, print to PDF.</div>
         <div class="home-card-cta">Open <span>→</span></div>
       </button>
 
@@ -1548,6 +1658,65 @@
 
 </div>
 
+<div id="monthlyDeckApp" style="display:none;">
+
+<div id="deckDropzone">
+  <div class="dz-wrap" style="text-align:center;position:relative;">
+    <button class="stub-back" id="deckBackFromEmptyBtn" type="button" style="position:static;margin-bottom:14px;display:inline-block;">← Back to Vantis</button>
+    <div class="dz-icon" style="margin-left:auto;margin-right:auto;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+    </div>
+    <h2>No data published yet</h2>
+    <p>Monthly Deck is built from AR Collections (and Census Trends for Length of Stay) — an admin needs to import those sources from the Admin tab first.</p>
+    <button class="dz-source-btn" id="deckGoToAdminBtn" type="button" style="width:auto;padding:9px 22px;">Go to Admin →</button>
+  </div>
+</div>
+
+<div id="deckApp" style="display:none;">
+  <aside class="sidebar">
+    <button class="brand" id="deckBackToHomeBtn" type="button" title="Back to Vantis home">
+      <div class="brand-mark deck-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></div>
+      <div class="brand-text">
+        <div class="t1">Monthly Deck</div>
+        <div class="t2">← Back to Vantis</div>
+      </div>
+    </button>
+
+    <div class="side-section">
+      <div class="side-label">Facilities <span class="count" id="deckFacCount"></span></div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="deckFacSearch" placeholder="Search facility…">
+      </div>
+      <div class="side-btn-row">
+        <button id="deckFacAll">Select all</button>
+        <button id="deckFacNone">Clear</button>
+      </div>
+      <div class="facility-list" id="deckFacilityList"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      Pick the facilities to include, then use Print / Save PDF. In the print dialog choose "Save as PDF", landscape, and turn on background graphics so the colors come through.
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <h1>Monthly Deck</h1>
+        <div class="sub" id="deckTopSub">No data loaded yet</div>
+      </div>
+      <button class="btn-ghost" id="deckPrintBtn" type="button">Print / Save PDF</button>
+    </div>
+
+    <div class="content" id="deckMainContent">
+      <div id="deckPages"></div>
+    </div>
+  </main>
+</div>
+
+</div>
+
 <div id="adminApp" style="display:none;">
   <div id="adminLoginScreen">
     <div class="admin-login-wrap">
@@ -1608,7 +1777,7 @@
       <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head">
           <div><h2>NCS Connection</h2><div class="note">Checks that Vantis can sign in to NCS and read your facility list. Needs NCS_API_KEY, NCS_CLIENT_SECRET and NCS_USER set on the server.</div></div>
-          <div style="display:flex;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><select id="adminNcsGrace" style="border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;"><option value="">Live NCS (today)</option><option value="asof">As of the date at right</option><option value="3">As of 3 days after month-end</option><option value="7">As of 7 days after month-end</option><option value="14">As of 14 days after month-end</option></select><input type="date" id="adminNcsAsOf" value="2026-08-10" style="border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;"><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button></div>
+          <div style="display:flex;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><select id="adminNcsGrace" style="border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;"><option value="">Live NCS (today)</option><option value="asof">As of the date at right</option><option value="3">As of 3 days after month-end</option><option value="7">As of 7 days after month-end</option><option value="14">As of 14 days after month-end</option></select><button class="btn-load" id="adminNcsSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync new months from NCS</button><input type="date" id="adminNcsAsOf" value="2026-08-10" style="border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;"><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button></div>
         </div>
         <div id="adminNcsResult" style="margin-top:14px;font-size:13px;"></div>
       </div>
@@ -1711,6 +1880,9 @@
     // whenever any one of them is, rather than requiring a separate grant.
     var snapshotBtn = document.getElementById('launchFacilitySnapshot');
     if(snapshotBtn) snapshotBtn.style.display = Object.keys(tileMap).some(vantisTileAllowed) ? '' : 'none';
+    // Monthly Deck is built from AR Collections (plus Census for Length of Stay), so it follows AR access.
+    var deckBtn = document.getElementById('launchMonthlyDeck');
+    if(deckBtn) deckBtn.style.display = vantisTileAllowed('ar') ? '' : 'none';
     // Purely cosmetic — Admin is still protected by the real admin
     // password no matter what this is set to, this just avoids showing a
     // link recipient a tile they have no use for.
@@ -1757,6 +1929,7 @@
     if(vantisTileAllowed('medicare')) medicareInitLiveMode();
 
     snapshotInitDropzone(); snapshotInitSearch();
+    deckInitSearch();
 
     initAdmin();
   }
@@ -2560,6 +2733,49 @@
   /* ---------------------------------------------------------
      RENDER: TRIANGLE (facility × months of service, for one as-of date)
   --------------------------------------------------------- */
+  /* ---------------------------------------------------------
+     PAYER DETAIL — click a facility row on Collections By Month,
+     Collections by As-Of-Date, Aging or Facility Summary to open
+     one child row per payer beneath it, using the same columns.
+     Respects the payer filter: only payers currently selected.
+  --------------------------------------------------------- */
+  state.arExpanded = {};
+  function arIsOpen(tab, fac){ return !!state.arExpanded[tab+'|'+fac]; }
+  function arFacToggleAttrs(tab, fac){
+    return ' class="ar-fac-toggle'+(arIsOpen(tab,fac)?' open':'')+'" data-tab="'+tab+'" data-fac="'+String(fac).replace(/"/g,'&quot;')+'" title="Click for payer detail"';
+  }
+  function arCaret(){ return '<span class="ar-caret">▶</span>'; }
+  function arPayerSelections(){
+    var out = [];
+    PAYER_OPTIONS.forEach(function(p){
+      var keys = [];
+      state.selectedPayers.forEach(function(k){
+        if(String(k).split('::')[1] === p.key) keys.push(k);
+      });
+      if(keys.length) out.push({label:p.label, keys:keys});
+    });
+    return out;
+  }
+  // cellsFn(keys) -> {html, any}; payers with no data in any column are skipped.
+  function arPayerRows(cellsFn, colCount){
+    var html = '';
+    arPayerSelections().forEach(function(sel){
+      var r = cellsFn(sel.keys);
+      if(!r || !r.any) return;
+      html += '<tr class="skilled-child-row ar-payer-row"><th>'+sel.label+'</th>'+r.html+'</tr>';
+    });
+    return html || '<tr class="skilled-child-row ar-payer-row ar-payer-empty"><td colspan="'+(colCount||2)+'">No payer detail for the current selection.</td></tr>';
+  }
+  var arRenderByTab = {};
+  document.addEventListener('click', function(e){
+    var el = e.target.closest ? e.target.closest('.ar-fac-toggle') : null;
+    if(!el) return;
+    var tab = el.getAttribute('data-tab'), fac = el.getAttribute('data-fac');
+    var key = tab+'|'+fac;
+    if(state.arExpanded[key]) delete state.arExpanded[key]; else state.arExpanded[key] = true;
+    if(arRenderByTab[tab]){ arRenderByTab[tab](); initSortableTablesAll(); }
+  });
+
   function renderTriangle(){
     var table = document.getElementById('triangleTable');
     var asOf = state.selectedAsOf;
@@ -2599,11 +2815,24 @@
         var cls = 'cell' + (ck===asOf ? ' cur' : '');
         return '<td class="'+cls+'" style="background:'+colorForPct(v)+'">'+v.toFixed(1)+'%</td>';
       }).join('');
-      return '<tr><th>'+f.facility+'<span class="fc-code">'+(f.code||'')+'</span></th>'+cells+'</tr>';
+      var detail = arIsOpen('triangle', f.facility) ? arPayerRows(function(keys){
+        var any = false;
+        var h = cohorts.map(function(ck){
+          if(ck > asOf) return '<td class="empty">·</td>';
+          var node = byFacCohortAsOf[f.facility] && byFacCohortAsOf[f.facility][ck] && byFacCohortAsOf[f.facility][ck][asOf];
+          var v = getPctForNode(node, keys);
+          if(v==null) return '<td class="empty">—</td>';
+          any = true;
+          return '<td class="cell'+(ck===asOf?' cur':'')+'" style="background:'+colorForPct(v)+'">'+v.toFixed(1)+'%</td>';
+        }).join('');
+        return {html:h, any:any};
+      }, cohorts.length+1) : '';
+      return '<tr><th'+arFacToggleAttrs('triangle', f.facility)+'>'+arCaret()+f.facility+'<span class="fc-code">'+(f.code||'')+'</span></th>'+cells+'</tr>'+detail;
     }).join('');
 
     table.innerHTML = thead + '<tbody>' + blendedRow + rows + '</tbody>';
   }
+  arRenderByTab.triangle = function(){ renderTriangle(); };
 
   /* ---------------------------------------------------------
      RENDER: COLLECTIONS BY AS-OF-DATE (facility × as-of date,
@@ -2689,11 +2918,23 @@
         var cls = 'cell' + (ak===month ? ' cur' : '');
         return '<td class="'+cls+'" style="background:'+colorForPct(v)+'">'+v.toFixed(1)+'%</td>';
       }).join('');
-      return '<tr><th>'+f.facility+'<span class="fc-code">'+(f.code||'')+'</span></th>'+cells+'</tr>';
+      var detail = arIsOpen('byasof', f.facility) ? arPayerRows(function(keys){
+        var any = false;
+        var h = asOfs.map(function(ak){
+          var node = byFacCohortAsOf[f.facility] && byFacCohortAsOf[f.facility][month] && byFacCohortAsOf[f.facility][month][ak];
+          var v = getPctForNode(node, keys);
+          if(v==null) return '<td class="empty">—</td>';
+          any = true;
+          return '<td class="cell'+(ak===month?' cur':'')+'" style="background:'+colorForPct(v)+'">'+v.toFixed(1)+'%</td>';
+        }).join('');
+        return {html:h, any:any};
+      }, asOfs.length+1) : '';
+      return '<tr><th'+arFacToggleAttrs('byasof', f.facility)+'>'+arCaret()+f.facility+'<span class="fc-code">'+(f.code||'')+'</span></th>'+cells+'</tr>'+detail;
     }).join('');
 
     table.innerHTML = thead + '<tbody>' + blendedRow + rows + '</tbody>';
   }
+  arRenderByTab.byasof = function(){ renderByAsOfDate(); };
 
   /* ---------------------------------------------------------
      RENDER: AGING — facility × month of service, dollar aging
@@ -2757,11 +2998,25 @@
         return '<td class="dollar-cell">'+fmtMoneyFull(v)+'</td>';
       }).join('');
       var totalCell = '<td class="dollar-cell total-col">'+(rowAny?fmtMoneyFull(rowTotal):'—')+'</td>';
-      return '<tr><th>'+f.facility+'<span class="fc-code">'+(f.code||'')+'</span></th>'+cells+totalCell+'</tr>';
+      var detail = arIsOpen('aging', f.facility) ? arPayerRows(function(keys){
+        var any = false, tot = 0;
+        var h = cohorts.map(function(ck){
+          if(ck > asOf) return '<td class="empty">·</td>';
+          var node = byFacCohortAsOf[f.facility] && byFacCohortAsOf[f.facility][ck] && byFacCohortAsOf[f.facility][ck][asOf];
+          var v = getDollarForNode(node, 'Aging Bals', keys);
+          if(v==null) return '<td class="empty">—</td>';
+          any = true; tot += v;
+          return '<td class="dollar-cell">'+fmtMoneyFull(v)+'</td>';
+        }).join('');
+        h += '<td class="dollar-cell total-col">'+(any?fmtMoneyFull(tot):'—')+'</td>';
+        return {html:h, any:any};
+      }, cohorts.length+2) : '';
+      return '<tr><th'+arFacToggleAttrs('aging', f.facility)+'>'+arCaret()+f.facility+'<span class="fc-code">'+(f.code||'')+'</span></th>'+cells+totalCell+'</tr>'+detail;
     }).join('');
 
     table.innerHTML = thead + '<tbody>' + blendedRow + rows + '</tbody>';
   }
+  arRenderByTab.aging = function(){ renderAging(); };
 
   /* ---------------------------------------------------------
      RENDER: 30 / 60 / 90 DAY COMPARISON — reuses the shared
@@ -3071,11 +3326,24 @@
     }).join('') + '</tr></thead>';
 
     var rows = data.map(function(d){
-      return '<tr><td>'+d.facility+'</td><td class="num">'+(d.code||'')+'</td>' +
+      var detail = arIsOpen('summary', d.facility) ? arPayerRows(function(keys){
+        var rev=0, cash=0, aging=0, any=false;
+        cohorts.forEach(function(ck){
+          var r = sumMetric(ck, asOf, keys, 'Revenue', [d.facility]);
+          var c = sumMetric(ck, asOf, keys, 'Cash Receipts', [d.facility]);
+          var a = sumMetric(ck, asOf, keys, 'Aging Bals', [d.facility]);
+          if(r!=null){ rev+=r; any=true; }
+          if(c!=null){ cash+=(-c); any=true; }
+          if(a!=null){ aging+=a; any=true; }
+        });
+        var pct = rev>0 ? (cash/rev*100) : null;
+        return {any:any, html:'<td class="num"></td><td class="num">'+fmtMoneyFull(rev)+'</td><td class="num">'+fmtMoneyFull(cash)+'</td><td class="num">'+fmtMoneyFull(aging)+'</td><td class="num">'+fmtPct(pct)+'</td>'};
+      }, 6) : '';
+      return '<tr><td'+arFacToggleAttrs('summary', d.facility)+'>'+arCaret()+d.facility+'</td><td class="num">'+(d.code||'')+'</td>' +
         '<td class="num">'+fmtMoneyFull(d.rev)+'</td>' +
         '<td class="num">'+fmtMoneyFull(d.cash)+'</td>' +
         '<td class="num">'+fmtMoneyFull(d.aging)+'</td>' +
-        '<td class="num">'+fmtPct(d.pct)+'</td></tr>';
+        '<td class="num">'+fmtPct(d.pct)+'</td></tr>'+detail;
     }).join('');
 
     var totalRow = '<tr class="total-row"><th>All selected facilities</th><th></th>' +
@@ -3095,6 +3363,7 @@
       });
     });
   }
+  arRenderByTab.summary = function(){ renderSummary(); };
 
   /* ---------------------------------------------------------
      TABS
@@ -3308,8 +3577,9 @@
     document.getElementById('skilledAnalysisApp').style.display = (name==='skilled') ? 'block' : 'none';
     document.getElementById('medicareDaysApp').style.display = (name==='medicare') ? 'block' : 'none';
     document.getElementById('facilitySnapshotApp').style.display = (name==='snapshot') ? 'block' : 'none';
+    document.getElementById('monthlyDeckApp').style.display = (name==='deck') ? 'block' : 'none';
     document.getElementById('adminApp').style.display = (name==='admin') ? 'block' : 'none';
-    var titles = {home:'Vantis - SNF Reporting', ar:'Vantis — AR Collections', census:'Vantis — Census Trends', skilled:'Vantis — Skilled Analysis', medicare:'Vantis — Medicare Days', snapshot:'Vantis — Facility Snapshot', admin:'Vantis — Admin'};
+    var titles = {home:'Vantis - SNF Reporting', ar:'Vantis — AR Collections', census:'Vantis — Census Trends', skilled:'Vantis — Skilled Analysis', medicare:'Vantis — Medicare Days', snapshot:'Vantis — Facility Snapshot', deck:'Vantis — Monthly Deck', admin:'Vantis — Admin'};
     document.title = titles[name] || 'Vantis';
     window.scrollTo(0,0);
     if(name==='admin') adminShowCorrectView();
@@ -3332,6 +3602,13 @@
       showScreen('snapshot');
       snapshotRefreshAfterSourceChange();
     });
+    document.getElementById('launchMonthlyDeck').addEventListener('click', function(){
+      showScreen('deck');
+      deckRefreshAfterSourceChange();
+    });
+    document.getElementById('deckBackToHomeBtn').addEventListener('click', function(){ showScreen('home'); });
+    document.getElementById('deckGoToAdminBtn').addEventListener('click', function(){ showScreen('admin'); });
+    document.getElementById('deckBackFromEmptyBtn').addEventListener('click', function(){ showScreen('home'); });
     document.getElementById('launchAdmin').addEventListener('click', function(){
       showScreen('admin');
     });
@@ -3796,11 +4073,14 @@
       var endDate = censusParseDateFlexible(row[idx.end]);
       var days = row[idx.days];
       if(!endDate || typeof days !== 'number') continue;
+      var beginD = idx.begin>=0 ? censusParseDateFlexible(row[idx.begin]) : null;
       records.push({
         company: row[idx.company],
         patientId: row[idx.id],
+        rid: (idx.id>=0 && row[idx.id]!=null) ? (row[idx.company]+'|'+row[idx.id]) : null,
         name: row[idx.name],
         days: days,
+        beginISO: beginD ? beginD.toISOString() : null,
         endISO: endDate.toISOString(),
         dischargeTo: row[idx.dischargeTo],
         payorCode: row[idx.payor]
@@ -4068,6 +4348,17 @@
     var uploadedMapping = censusBuildUploadedPayerMapping(); // built once, not per-row
 
     var losSrc = censusState.sources.losReport;
+    // The Length of Stay report is run "as of" a date, and every resident still
+    // in house shows up with an End Date equal to that run date (and no
+    // Discharge To). Those aren't discharges, so they're flagged open here —
+    // the Facility Snapshot leaves them out of its average.
+    var losRunDate = null;
+    if(losSrc && losSrc.records){
+      losSrc.records.forEach(function(rec){
+        var d = String(rec.endISO||'').slice(0,10);
+        if(d && (losRunDate==null || d>losRunDate)) losRunDate = d;
+      });
+    }
     censusState.rows = (losSrc && losSrc.records) ? losSrc.records.map(function(rec){
       var endDate = new Date(rec.endISO);
       var year = endDate.getUTCFullYear(), month = endDate.getUTCMonth(); // UTC — see note in hydrateServerRecords above
@@ -4077,6 +4368,7 @@
         year: year, month: month,
         days: rec.days,
         payorCode: rec.payorCode,
+        open: String(rec.endISO||'').slice(0,10) === losRunDate,
         payerType: censusResolvePayerType(uploadedMapping, rec.company, rec.payorCode, rec.payorCode)
       };
     }) : [];
@@ -6180,19 +6472,23 @@
     if(!cohortKeys.length) return null;
     var payerKeys = snapshotAllARPayerKeys();
     var sortedCohorts = cohortKeys.sort(function(a,b){return a-b;});
+    // Trailing 12 months of service, ending at this facility's latest month.
+    var latestCohort = sortedCohorts[sortedCohorts.length-1];
+    sortedCohorts = sortedCohorts.filter(function(ck){ return ck > latestCohort-12; });
 
     // maxAsOf, when given, restricts each cohort to its latest as-of
     // snapshot that existed AT OR BEFORE that point — used to reconstruct
     // what the cumulative totals looked like at an earlier point in time.
-    function forCohort(ck, maxAsOf){
+    function forCohort(ck, maxAsOf, keys){
+      keys = keys || payerKeys;
       var asOfKeys = Object.keys(facData[ck] || {}).map(Number);
       if(maxAsOf != null) asOfKeys = asOfKeys.filter(function(a){ return a <= maxAsOf; });
       if(!asOfKeys.length) return null;
       var latestAsOf = Math.max.apply(null, asOfKeys);
       return {
-        revenue: sumMetric(ck, latestAsOf, payerKeys, 'Revenue', [shortName]),
-        cashRaw: sumMetric(ck, latestAsOf, payerKeys, 'Cash Receipts', [shortName]),
-        aging: sumMetric(ck, latestAsOf, payerKeys, 'Aging Bals', [shortName])
+        revenue: sumMetric(ck, latestAsOf, keys, 'Revenue', [shortName]),
+        cashRaw: sumMetric(ck, latestAsOf, keys, 'Cash Receipts', [shortName]),
+        aging: sumMetric(ck, latestAsOf, keys, 'Aging Bals', [shortName])
       };
     }
 
@@ -6203,10 +6499,10 @@
     // Aging sums too, since each month's aging figure is that month's own
     // still-outstanding portion — added together, that's the facility's
     // total current AR balance across everything ever billed.
-    function sumAll(maxAsOf){
+    function sumAll(maxAsOf, keys){
       var totalRev=0, totalCashRaw=0, totalAging=0, any=false;
       sortedCohorts.forEach(function(ck){
-        var d = forCohort(ck, maxAsOf);
+        var d = forCohort(ck, maxAsOf, keys);
         if(!d) return;
         if(d.revenue!=null){ totalRev += d.revenue; any=true; }
         if(d.cashRaw!=null){ totalCashRaw += d.cashRaw; any=true; }
@@ -6232,10 +6528,25 @@
     });
     var prior = globalLatestAsOf!=null ? sumAll(globalLatestAsOf-1) : null;
 
+    // Same trailing-12-month window, split by payer. Every payer is listed
+    // (Budget included — it carries dollars that are in the total) so the
+    // rows add up to the totals above; each payer combines Part A, Part A
+    // Coinsurance, Part B and Part B Coinsurance.
+    var payers = [];
+    PAYER_OPTIONS.forEach(function(po){
+      var keys = [];
+      SOURCE_KEYS.forEach(function(src){ keys.push(src+'::'+po.key); });
+      var cur = sumAll(null, keys);
+      if(!cur || (!cur.revenue && !cur.aging && !cur.cash)) return;
+      var pr = globalLatestAsOf!=null ? sumAll(globalLatestAsOf-1, keys) : null;
+      payers.push({label: po.label, revenue: cur.revenue, cash: cur.cash, aging: cur.aging, pct: cur.pct, prevPct: pr ? pr.pct : null});
+    });
+
     var startLabel = keyLabel(sortedCohorts[0]);
     var endLabel = keyLabel(sortedCohorts[sortedCohorts.length-1]);
     return {
-      rangeLabel: sortedCohorts.length>1 ? (startLabel+' – '+endLabel) : startLabel,
+      payers: payers,
+      rangeLabel: 'Last 12 mo · '+(sortedCohorts.length>1 ? (startLabel+' – '+endLabel) : startLabel),
       priorAsOfLabel: globalLatestAsOf!=null ? keyLabel(globalLatestAsOf-1) : null,
       revenue: current.revenue,
       cash: current.cash,
@@ -6247,6 +6558,51 @@
 
 
   // ---- Census Trends: Average Length of Stay, Census Days, Occupancy % ----
+  // Completed stays for one facility, for the Snapshot's ALOS.
+  //  - Rows in the Length of Stay report split at every payor change and every
+  //    hospital discharge. A payor change always continues the same stay; a
+  //    hospital discharge continues it only if the resident is back in fewer
+  //    than 3 days (the "less than 3 days" rule) — 3 or more days away starts
+  //    a new stay. Stay length is the sum of the in-house days on the rows.
+  //  - A stay still in progress (its last row ends on the report's run date)
+  //    isn't complete, so it isn't counted.
+  //  - Reports uploaded before resident keys were stored can't be joined; for
+  //    those it falls back to one row per payor segment (merged:false).
+  function snapshotLosStays(company){
+    var src = censusState.sources.losReport;
+    var all = (src && src.records) ? src.records : [];
+    var runDate = null;
+    all.forEach(function(r){ var d = String(r.endISO||'').slice(0,10); if(d && (runDate==null || d>runDate)) runDate = d; });
+    var recs = all.filter(function(r){ return r.company===company; });
+    function dayNum(iso){ return Math.floor(Date.parse(String(iso).slice(0,10))/86400000); }
+    function ckOf(iso){ var d = new Date(iso); return d.getUTCFullYear()*12 + d.getUTCMonth(); }
+    var canMerge = recs.length>0 && recs.every(function(r){ return r.rid && r.beginISO; });
+    if(!canMerge){
+      return {merged:false, stays: recs.filter(function(r){ return String(r.endISO||'').slice(0,10)!==runDate; })
+        .map(function(r){ return {ck: ckOf(r.endISO), days: r.days}; })};
+    }
+    var byRes = {};
+    recs.forEach(function(r){ (byRes[r.rid] = byRes[r.rid] || []).push(r); });
+    var stays = [];
+    Object.keys(byRes).forEach(function(k){
+      var segs = byRes[k].slice().sort(function(a,b){ return dayNum(a.beginISO)-dayNum(b.beginISO); });
+      var cur = null;
+      function close(){ if(cur && String(cur.endISO).slice(0,10)!==runDate) stays.push({ck: ckOf(cur.endISO), days: cur.days}); }
+      segs.forEach(function(sg){
+        if(cur){
+          var gap = dayNum(sg.beginISO) - dayNum(cur.endISO);
+          var dt = String(cur.dischargeTo||'').trim().toLowerCase();
+          var continues = (dt==='payor change' && gap<=1) || (dt==='hospital' && gap<3);
+          if(continues){ cur.days += sg.days; cur.endISO = sg.endISO; cur.dischargeTo = sg.dischargeTo; return; }
+          close();
+        }
+        cur = {days: sg.days, endISO: sg.endISO, dischargeTo: sg.dischargeTo};
+      });
+      close();
+    });
+    return {merged:true, stays: stays};
+  }
+
   function snapshotGetCensusData(company){
     if(!company) return null;
     // LOS comes from a separate source file (Length of Stay Report) than
@@ -6274,20 +6630,21 @@
     // stay this facility has on record, not just the latest month (a
     // single month's average is volatile with a small sample; all-time is
     // the stable, representative figure for a snapshot).
-    var allLosRows = censusState.rows.filter(function(r){ return r.facility===company; });
+    var losStays = snapshotLosStays(company);
     var losOut = null;
-    if(allLosRows.length){
-      var losCohortNums = allLosRows.map(function(r){ return r.cohortKey; });
+    if(losStays.stays.length){
+      var losCohortNums = losStays.stays.map(function(r){ return r.ck; });
       var losMinCk = Math.min.apply(null, losCohortNums), losMaxCk = Math.max.apply(null, losCohortNums);
       losOut = {
         rangeLabel: losMinCk===losMaxCk ? keyLabel(losMinCk) : (keyLabel(losMinCk)+' – '+keyLabel(losMaxCk)),
-        avgLOS: allLosRows.reduce(function(s,r){return s+r.days;},0)/allLosRows.length,
-        stayCount: allLosRows.length
+        avgLOS: losStays.stays.reduce(function(s,r){return s+r.days;},0)/losStays.stays.length,
+        stayCount: losStays.stays.length,
+        merged: losStays.merged
       };
     }
 
     var occKeys = occCohorts();
-    if(!allLosRows.length && !occKeys.length) return null;
+    if(!losStays.stays.length && !occKeys.length) return null;
     var occOut = null;
     if(occKeys.length){
       var occCk = Math.max.apply(null, occKeys);
@@ -6397,19 +6754,34 @@
 
     var arBody = '';
     if(ar){
-      arBody =
-        snapshotMetricRow('Revenue', fmtMoneyFull(ar.revenue), snapshotPctNote(ar.revenue, ar.prev&&ar.prev.revenue, ar.priorAsOfLabel)) +
-        snapshotMetricRow('Cash Collected', fmtMoneyFull(ar.cash), snapshotPctNote(ar.cash, ar.prev&&ar.prev.cash, ar.priorAsOfLabel)) +
-        snapshotMetricRow('Aging Balance', fmtMoneyFull(ar.aging), snapshotPctNote(ar.aging, ar.prev&&ar.prev.aging, ar.priorAsOfLabel)) +
-        snapshotMetricRow('% Collected', ar.pct==null?'—':ar.pct.toFixed(1)+'%', snapshotPtNote(ar.pct, ar.prev&&ar.prev.pct, ar.priorAsOfLabel));
+      function arKpi(label, valueHtml, noteHtml){
+        return '<div class="snap-ar-kpi"><div class="snap-ar-kpi-label">'+label+'</div><div class="snap-ar-kpi-value">'+valueHtml+'</div>'+(noteHtml||'')+'</div>';
+      }
+      arBody = '<div class="snap-ar-kpis">' +
+        arKpi('Revenue', fmtMoneyFull(ar.revenue), snapshotPctNote(ar.revenue, ar.prev&&ar.prev.revenue, ar.priorAsOfLabel)) +
+        arKpi('Cash Collected', fmtMoneyFull(ar.cash), snapshotPctNote(ar.cash, ar.prev&&ar.prev.cash, ar.priorAsOfLabel)) +
+        arKpi('Aging Balance', fmtMoneyFull(ar.aging), snapshotPctNote(ar.aging, ar.prev&&ar.prev.aging, ar.priorAsOfLabel)) +
+        arKpi('% Collected', ar.pct==null?'—':ar.pct.toFixed(1)+'%', snapshotPtNote(ar.pct, ar.prev&&ar.prev.pct, ar.priorAsOfLabel)) +
+      '</div>';
+      if(ar.payers && ar.payers.length){
+        arBody += '<div class="snap-subgroup-label">By payer</div><table class="snap-payer-table"><thead><tr><th>Payer</th><th>Revenue</th><th>Cash</th><th>Aging</th><th>% Collected</th></tr></thead><tbody>' +
+          ar.payers.map(function(p){
+            var pctCell = p.pct==null ? '<span class="snap-pp-none">—</span>' : '<span class="snap-pp" style="background:'+colorForPct(p.pct)+'">'+p.pct.toFixed(1)+'%</span>';
+            var d = (p.pct!=null && p.prevPct!=null) ? (p.pct-p.prevPct) : null;
+            var dHtml = d==null ? '' : '<span class="snap-pp-delta '+(d>0?'up':(d<0?'down':''))+'">'+(d>=0?'+':'')+d.toFixed(1)+'</span>';
+            return '<tr><th>'+p.label+'</th><td>'+fmtMoneyFull(p.revenue)+'</td><td>'+fmtMoneyFull(p.cash)+'</td><td>'+fmtMoneyFull(p.aging)+'</td><td>'+pctCell+dHtml+'</td></tr>';
+          }).join('') + '</tbody></table>' +
+          '<div class="snap-note" style="margin-top:6px;">Payers combine Part A, Part A Coinsurance, Part B and Part B Coinsurance. Small figure beside % Collected = change in points vs '+(ar.priorAsOfLabel||'prior month')+'.</div>';
+      }
     }
 
     var cenBody = '';
     if(cen && (cen.los || cen.occ)){
       var cenParts = [];
       if(cen.los){
-        cenParts.push('<div class="snap-subgroup-label">Length of Stay — all-time avg, '+cen.los.rangeLabel+'</div>' +
-          snapshotMetricRow('Average Length of Stay', cen.los.avgLOS==null?'—':cen.los.avgLOS.toFixed(1)+' days', ''));
+        cenParts.push('<div class="snap-subgroup-label">Length of Stay — all-time avg of completed stays, '+cen.los.rangeLabel+'</div>' +
+          snapshotMetricRow('Average Length of Stay', cen.los.avgLOS==null?'—':cen.los.avgLOS.toFixed(1)+' days',
+            '<span class="snap-note">'+(cen.los.merged ? cen.los.stayCount.toLocaleString()+' stays · hospital returns under 3 days &amp; payor changes count as one stay' : 'per payor segment — re-upload the Length of Stay report to combine stays')+'</span>'));
       }
       if(cen.occ){
         cenParts.push('<div class="snap-subgroup-label">Census — '+cen.occ.monthLabel+'</div>' +
@@ -6440,10 +6812,14 @@
     return '<div class="snap-card">' +
       '<div class="snap-card-head"><h2>'+fac.short+' <span class="fc-code">'+(fac.code||'')+'</span></h2></div>' +
       '<div class="snap-grid">' +
-        snapshotSectionHtml('AR Collections', ar?ar.rangeLabel:null, arBody, !ar, 'ar', fac, arAllowed) +
-        snapshotSectionHtml('Census Trends', null, cenBody, !cenBody, 'census', fac, censusAllowed) +
-        snapshotSectionHtml('Skilled Analysis', sk?sk.monthLabel:null, skBody, !sk, 'skilled', fac, skilledAllowed) +
-        snapshotSectionHtml('Medicare Days', med?med.monthLabel:null, medBody, !med, 'medicare', fac, medicareAllowed) +
+        '<div class="snap-col">' +
+          snapshotSectionHtml('AR Collections', ar?ar.rangeLabel:null, arBody, !ar, 'ar', fac, arAllowed) +
+          snapshotSectionHtml('Medicare Days', med?med.monthLabel:null, medBody, !med, 'medicare', fac, medicareAllowed) +
+        '</div>' +
+        '<div class="snap-col">' +
+          snapshotSectionHtml('Census Trends', null, cenBody, !cenBody, 'census', fac, censusAllowed) +
+          snapshotSectionHtml('Skilled Analysis', sk?sk.monthLabel:null, skBody, !sk, 'skilled', fac, skilledAllowed) +
+        '</div>' +
       '</div>' +
     '</div>';
   }
@@ -6550,6 +6926,315 @@
       snapshotRenderAll();
     });
     var printBtn = document.getElementById('snapshotPrintBtn');
+    if(printBtn) printBtn.addEventListener('click', function(){ window.print(); });
+  }
+
+  /* =========================================================
+     MONTHLY DECK — a printable, presentation-style report for
+     ownership. Per selected facility: AR Collections for the
+     trailing 12 months, Average Length of Stay, and Aging Detail
+     by payer. With more than one facility selected, it opens with
+     a portfolio summary page. Landscape letter, one page per
+     section when printed.
+  ========================================================= */
+  var deckState = {facilities: [], selected: new Set()};
+  var DECK_LOGO_SRC = 'data:image/png;base64,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';
+
+  function deckAllPayerKeys(){
+    var keys = [];
+    PAYER_OPTIONS.forEach(function(po){ SOURCE_KEYS.forEach(function(src){ keys.push(src+'::'+po.key); }); });
+    return keys;
+  }
+
+  function deckBuildFacilityList(){
+    snapshotBuildFacilityList();
+    var list = snapshotState.facilities.filter(function(f){ return !!byFacCohortAsOf[f.short]; });
+    var hadSel = deckState.selected && deckState.selected.size > 0;
+    deckState.facilities = list;
+    if(!hadSel){
+      deckState.selected = new Set(list.map(function(f){ return f.short; }));
+    } else {
+      var valid = {}; list.forEach(function(f){ valid[f.short] = true; });
+      Array.from(deckState.selected).forEach(function(s){ if(!valid[s]) deckState.selected.delete(s); });
+    }
+  }
+
+  // The trailing-12 window ends at the latest month of service in the data
+  // (across every facility, so all pages line up), valued at each month's
+  // own latest as-of snapshot — the same basis as the Facility Snapshot.
+  function deckWindow(){
+    var latestCk = null, latestAsOf = null;
+    Object.keys(byFacCohortAsOf).forEach(function(fac){
+      var fd = byFacCohortAsOf[fac];
+      Object.keys(fd).forEach(function(ck){
+        ck = Number(ck);
+        if(latestCk==null || ck>latestCk) latestCk = ck;
+        Object.keys(fd[ck]).forEach(function(a){ a = Number(a); if(latestAsOf==null || a>latestAsOf) latestAsOf = a; });
+      });
+    });
+    if(latestCk==null) return null;
+    var months = [];
+    for(var k=latestCk-11; k<=latestCk; k++) months.push(k);
+    return {months: months, latestCk: latestCk, latestAsOf: latestAsOf};
+  }
+
+  function deckShortMonth(ck){
+    var y = Math.floor(ck/12), m = ck - y*12;
+    return MONTH_ABBR[m] + " '" + String(y).slice(2);
+  }
+
+  function deckComputeAR(short, months){
+    var facData = byFacCohortAsOf[short];
+    if(!facData) return null;
+    var allKeys = deckAllPayerKeys();
+    var rows = months.map(function(ck){
+      var asOfs = Object.keys(facData[ck] || {}).map(Number);
+      if(!asOfs.length) return {ck:ck, rev:null, cash:null, aging:null, pct:null, payerAging:{}, payerRev:{}, payerCash:{}};
+      var ao = Math.max.apply(null, asOfs);
+      var rev = sumMetric(ck, ao, allKeys, 'Revenue', [short]);
+      var cashRaw = sumMetric(ck, ao, allKeys, 'Cash Receipts', [short]);
+      var aging = sumMetric(ck, ao, allKeys, 'Aging Bals', [short]);
+      var payerAging = {}, payerRev = {}, payerCash = {};
+      PAYER_OPTIONS.forEach(function(po){
+        var keys = SOURCE_KEYS.map(function(src){ return src+'::'+po.key; });
+        payerAging[po.key] = sumMetric(ck, ao, keys, 'Aging Bals', [short]);
+        payerRev[po.key] = sumMetric(ck, ao, keys, 'Revenue', [short]);
+        var c = sumMetric(ck, ao, keys, 'Cash Receipts', [short]);
+        payerCash[po.key] = c==null ? null : -c;
+      });
+      return {ck:ck, rev:rev, cash: cashRaw==null?null:-cashRaw, aging:aging, pct:(rev!=null && rev>0 && cashRaw!=null) ? (-cashRaw/rev*100) : null, payerAging:payerAging, payerRev:payerRev, payerCash:payerCash};
+    });
+    var tot = {rev:0, cash:0, aging:0, any:false};
+    rows.forEach(function(r){
+      if(r.rev!=null){ tot.rev += r.rev; tot.any = true; }
+      if(r.cash!=null) tot.cash += r.cash;
+      if(r.aging!=null) tot.aging += r.aging;
+    });
+    if(!tot.any) return null;
+    tot.pct = tot.rev>0 ? (tot.cash/tot.rev*100) : null;
+    var payers = [], payerPct = [];
+    PAYER_OPTIONS.forEach(function(po){
+      var vals = rows.map(function(r){ return r.payerAging[po.key]; });
+      var any = vals.some(function(v){ return v!=null && Math.abs(v)>0.5; });
+      if(any){
+        var total = vals.reduce(function(s,v){ return s + (v||0); }, 0);
+        payers.push({label: po.label, vals: vals, total: total});
+      }
+      // % collected for this payer, month by month and over the 12 months
+      var pRev = 0, pCash = 0;
+      var pcts = rows.map(function(r){
+        var rv = r.payerRev[po.key], ch = r.payerCash[po.key];
+        if(rv!=null) pRev += rv;
+        if(ch!=null) pCash += ch;
+        return (rv!=null && rv>0 && ch!=null) ? (ch/rv*100) : null;
+      });
+      if(pRev>0) payerPct.push({label: po.label, vals: pcts, total: pCash/pRev*100, rev: pRev});
+    });
+    return {rows: rows, totals: tot, payers: payers, payerPct: payerPct};
+  }
+
+  function deckComputeALOS(company, months){
+    if(!company) return null;
+    var res = snapshotLosStays(company);
+    if(!res.stays.length) return null;
+    var all = res.stays;
+    var allAvg = all.reduce(function(s,x){ return s+x.days; },0) / all.length;
+    var lo = months[0], hi = months[months.length-1];
+    var win = all.filter(function(x){ return x.ck>=lo && x.ck<=hi; });
+    var monthly = months.map(function(ck){
+      var m = win.filter(function(x){ return x.ck===ck; });
+      return {ck:ck, n:m.length, avg: m.length ? m.reduce(function(s,x){return s+x.days;},0)/m.length : null};
+    });
+    var days = all.map(function(x){ return x.days; }).sort(function(a,b){return a-b;});
+    var median = days.length%2 ? days[(days.length-1)/2] : (days[days.length/2-1]+days[days.length/2])/2;
+    return {
+      merged: res.merged, allAvg: allAvg, allCount: all.length, median: median,
+      t12Avg: win.length ? win.reduce(function(s,x){return s+x.days;},0)/win.length : null,
+      t12Count: win.length, monthly: monthly,
+      winDays: win.reduce(function(s,x){return s+x.days;},0), allDays: all.reduce(function(s,x){return s+x.days;},0)
+    };
+  }
+
+  function deckPctPill(v){
+    if(v==null) return '<span class="deck-pill-none">—</span>';
+    return '<span class="deck-pill" style="background:'+colorForPct(v)+'">'+v.toFixed(1)+'%</span>';
+  }
+
+  function deckKpi(label, value, note){
+    return '<div class="deck-kpi"><div class="deck-kpi-label">'+label+'</div><div class="deck-kpi-value">'+value+'</div>'+(note?'<div class="deck-kpi-note">'+note+'</div>':'')+'</div>';
+  }
+
+  function deckMiniBars(monthly){
+    var W = 560, H = 120, padL = 4, padB = 18, padT = 16;
+    var vals = monthly.map(function(m){ return m.avg; });
+    var maxV = Math.max.apply(null, vals.filter(function(v){return v!=null;}).concat([1]));
+    var gW = (W-padL*2)/monthly.length, bW = Math.min(30, gW*0.62);
+    var svg = '<svg viewBox="0 0 '+W+' '+H+'" width="100%" preserveAspectRatio="xMidYMid meet" class="deck-chart">';
+    monthly.forEach(function(m, i){
+      var cx = padL + i*gW + gW/2;
+      if(m.avg!=null){
+        var h = (m.avg/maxV)*(H-padT-padB);
+        svg += '<rect x="'+(cx-bW/2).toFixed(1)+'" y="'+(H-padB-h).toFixed(1)+'" width="'+bW.toFixed(1)+'" height="'+h.toFixed(1)+'" fill="#3F6FB5" rx="2"/>';
+        svg += '<text x="'+cx.toFixed(1)+'" y="'+(H-padB-h-4).toFixed(1)+'" font-size="10" text-anchor="middle" fill="#1F3A5F" font-weight="600">'+Math.round(m.avg)+'</text>';
+      } else {
+        svg += '<text x="'+cx.toFixed(1)+'" y="'+(H-padB-4)+'" font-size="10" text-anchor="middle" fill="#9AA5B8">—</text>';
+      }
+      svg += '<text x="'+cx.toFixed(1)+'" y="'+(H-5)+'" font-size="9.5" text-anchor="middle" fill="#3A4558">'+deckShortMonth(m.ck)+'</text>';
+    });
+    svg += '</svg>';
+    return svg;
+  }
+
+  function deckPageShell(title, subtitle, bodyHtml, win){
+    return '<section class="deck-page">' +
+      '<header class="deck-page-head"><div><div class="deck-eyebrow">Monthly Deck · '+(win?keyLabel(win.latestAsOf):'')+'</div><h2>'+title+'</h2>'+(subtitle?'<div class="deck-sub">'+subtitle+'</div>':'')+'</div><img class="deck-logo" alt="Limestone Fiscal Services" src="'+DECK_LOGO_SRC+'"></header>' +
+      bodyHtml +
+      '<footer class="deck-foot"><span>Prepared by Limestone Fiscal Services · Confidential</span><span>Trailing 12 months of service · '+(win?keyLabel(win.months[0])+' – '+keyLabel(win.latestCk):'')+' · AR as of '+(win?keyLabel(win.latestAsOf):'')+'</span></footer>' +
+    '</section>';
+  }
+
+  function deckPayerPctTable(ar, win){
+    if(!ar.payerPct || !ar.payerPct.length) return '';
+    var head = '<tr><th>Payer</th>'+ar.rows.map(function(r){ return '<th>'+deckShortMonth(r.ck)+'</th>'; }).join('')+'<th class="deck-tot-col">12 mo</th></tr>';
+    var rows = ar.payerPct.map(function(p){
+      return '<tr><th>'+p.label+'</th>'+p.vals.map(function(v){ return '<td>'+deckPctPill(v)+'</td>'; }).join('')+'<td class="deck-tot-col">'+deckPctPill(p.total)+'</td></tr>';
+    }).join('');
+    return '<div class="deck-block-title">% Collected by payer</div><table class="deck-table deck-paypct-table"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table>';
+  }
+
+  function deckArPage(fac, d, win, arAllowed){
+    var ar = d.ar;
+    var title = fac.short+' <span class="fc-code">'+(fac.code||'')+'</span>';
+    if(!ar) return deckPageShell(title, 'AR Collections', '<div class="deck-empty">No AR Collections data for this facility.</div>', win);
+    var head = '<tr><th></th>'+ar.rows.map(function(r){ return '<th>'+deckShortMonth(r.ck)+'</th>'; }).join('')+'<th class="deck-tot-col">12 mo</th></tr>';
+    function line(label, key, fmt, totalVal){
+      return '<tr><th>'+label+'</th>'+ar.rows.map(function(r){ return '<td>'+fmt(r[key])+'</td>'; }).join('')+'<td class="deck-tot-col">'+fmt(totalVal)+'</td></tr>';
+    }
+    var body = '<div class="deck-kpis">' +
+      deckKpi('Revenue (12 mo)', fmtMoneyFull(ar.totals.rev)) +
+      deckKpi('Cash Collected', fmtMoneyFull(ar.totals.cash)) +
+      deckKpi('% Collected', ar.totals.pct==null?'—':ar.totals.pct.toFixed(1)+'%') +
+      deckKpi('Aging Balance (as of '+keyLabel(win.latestAsOf)+')', fmtMoneyFull(ar.totals.aging)) + '</div>' +
+      '<div class="deck-block-title">Revenue, cash and aging by month of service</div>' +
+      '<table class="deck-table deck-month-table"><thead>'+head+'</thead><tbody>' +
+        line('Revenue','rev',fmtMoneyFull,ar.totals.rev) +
+        line('Cash collected','cash',fmtMoneyFull,ar.totals.cash) +
+        line('Aging balance','aging',fmtMoneyFull,ar.totals.aging) +
+        '<tr><th>% Collected</th>'+ar.rows.map(function(r){ return '<td>'+deckPctPill(r.pct)+'</td>'; }).join('')+'<td class="deck-tot-col">'+deckPctPill(ar.totals.pct)+'</td></tr>' +
+      '</tbody></table>' + deckPayerPctTable(ar, win);
+    return deckPageShell(title, 'AR Collections — trailing 12 months', body, win);
+  }
+
+  function deckAlosAgingPage(fac, d, win, censusAllowed){
+    var title = fac.short+' <span class="fc-code">'+(fac.code||'')+'</span>';
+    var alos = d.alos, ar = d.ar;
+    var alosHtml;
+    if(!censusAllowed){
+      alosHtml = '<div class="deck-empty">Length of Stay is not included in your access.</div>';
+    } else if(!alos){
+      alosHtml = '<div class="deck-empty">No Length of Stay data for this facility.</div>';
+    } else {
+      alosHtml = '<div class="deck-alos">' +
+        '<div class="deck-alos-main">' +
+          '<div class="deck-kpi-label">Average Length of Stay</div><div class="deck-alos-value">'+alos.allAvg.toFixed(1)+'<span> days</span></div>' +
+          '<div class="deck-kpi-note">all-time · '+alos.allCount.toLocaleString()+' completed stays</div>' +
+          '<div class="deck-alos-sub"><div><b>'+(alos.t12Avg==null?'—':alos.t12Avg.toFixed(1))+'</b> days<br><span>trailing 12 mo · '+alos.t12Count.toLocaleString()+' stays</span></div><div><b>'+Math.round(alos.median)+'</b> days<br><span>median, all-time</span></div></div>' +
+        '</div>' +
+        '<div class="deck-alos-chart"><div class="deck-block-title" style="margin-top:0;">Average length of stay by discharge month (days)</div>'+deckMiniBars(alos.monthly)+'</div>' +
+      '</div>' +
+      '<div class="deck-fine">'+(alos.merged ? 'A stay continues through payor changes and hospital returns of under 3 days; stays still in progress are excluded.' : 'Counted per payor segment — the Length of Stay report needs to be re-uploaded to combine stays.')+'</div>';
+    }
+    var agingHtml;
+    if(!ar || !ar.payers.length){
+      agingHtml = '<div class="deck-empty">No aging balances for this facility.</div>';
+    } else {
+      var totalAging = ar.payers.reduce(function(s,p){ return s+p.total; },0);
+      var head = '<tr><th>Payer</th>'+ar.rows.map(function(r){ return '<th>'+deckShortMonth(r.ck)+'</th>'; }).join('')+'<th class="deck-tot-col">Total</th><th class="deck-tot-col">% of aging</th></tr>';
+      var rows = ar.payers.map(function(p){
+        return '<tr><th>'+p.label+'</th>'+p.vals.map(function(v){ return '<td>'+(v==null?'—':fmtMoneyFull(v))+'</td>'; }).join('')+'<td class="deck-tot-col">'+fmtMoneyFull(p.total)+'</td><td class="deck-tot-col">'+(totalAging?(p.total/totalAging*100).toFixed(1)+'%':'—')+'</td></tr>';
+      }).join('');
+      var totRow = '<tr class="deck-total-row"><th>All payers</th>'+ar.rows.map(function(r){ return '<td>'+fmtMoneyFull(r.aging)+'</td>'; }).join('')+'<td class="deck-tot-col">'+fmtMoneyFull(ar.totals.aging)+'</td><td class="deck-tot-col">100%</td></tr>';
+      agingHtml = '<table class="deck-table deck-aging-table"><thead>'+head+'</thead><tbody>'+rows+totRow+'</tbody></table>' +
+        '<div class="deck-fine">Balance still outstanding as of '+keyLabel(win.latestAsOf)+', by month of service. Each payer combines Part A, Part A Coinsurance, Part B and Part B Coinsurance.</div>';
+    }
+    var body = '<div class="deck-block-title" style="margin-top:0;">Aging detail by payer</div>'+agingHtml+'<div class="deck-block-title">Length of stay</div>'+alosHtml;
+    return deckPageShell(title, '', body, win);
+  }
+
+  function deckRenderAll(){
+    var el = document.getElementById('deckPages');
+    if(!el) return;
+    var selected = deckState.facilities.filter(function(f){ return deckState.selected.has(f.short); });
+    document.getElementById('deckFacCount').textContent = '('+deckState.selected.size+'/'+deckState.facilities.length+')';
+    var sub = document.getElementById('deckTopSub');
+    if(!vantisTileAllowed('ar')){
+      el.innerHTML = '<div class="empty-note">Monthly Deck needs access to AR Collections.</div>';
+      return;
+    }
+    var win = deckWindow();
+    if(!win || !selected.length){
+      el.innerHTML = '<div class="empty-note">'+(win?'Pick at least one facility on the left.':'No AR Collections data has been published yet.')+'</div>';
+      if(sub) sub.textContent = win ? 'No facilities selected' : 'No data loaded yet';
+      return;
+    }
+    var censusAllowed = vantisTileAllowed('census');
+    var data = {};
+    selected.forEach(function(f){
+      data[f.short] = {ar: deckComputeAR(f.short, win.months), alos: censusAllowed ? deckComputeALOS(f.company, win.months) : null};
+    });
+    var html = '';
+    selected.forEach(function(f){
+      html += deckArPage(f, data[f.short], win, true) + deckAlosAgingPage(f, data[f.short], win, censusAllowed);
+    });
+    el.innerHTML = html;
+    if(sub) sub.textContent = selected.length+' of '+deckState.facilities.length+' facilities · '+keyLabel(win.months[0])+' – '+keyLabel(win.latestCk)+' · AR as of '+keyLabel(win.latestAsOf);
+  }
+
+  function deckRenderFacilityList(filterText){
+    var el = document.getElementById('deckFacilityList');
+    if(!el) return;
+    el.innerHTML = '';
+    var ft = (filterText||'').toLowerCase();
+    deckState.facilities.forEach(function(f){
+      var hay = (f.short+' '+(f.code||'')+' '+(f.company||'')).toLowerCase();
+      if(ft && hay.indexOf(ft)===-1) return;
+      var row = document.createElement('label');
+      row.className = 'facility-row';
+      row.innerHTML = '<input type="checkbox"'+(deckState.selected.has(f.short)?' checked':'')+'><span class="fname">'+f.short+'</span><span class="fcode">'+(f.code||'')+'</span>';
+      row.querySelector('input').addEventListener('change', function(e){
+        if(e.target.checked) deckState.selected.add(f.short); else deckState.selected.delete(f.short);
+        deckRenderAll();
+      });
+      el.appendChild(row);
+    });
+    document.getElementById('deckFacCount').textContent = '('+deckState.selected.size+'/'+deckState.facilities.length+')';
+  }
+
+  function deckRefreshAfterSourceChange(){
+    deckBuildFacilityList();
+    if(anySourceLoaded()){
+      document.getElementById('deckDropzone').classList.add('hidden');
+      document.getElementById('deckApp').style.display = 'flex';
+    }
+    deckRenderFacilityList(document.getElementById('deckFacSearch') ? document.getElementById('deckFacSearch').value : '');
+    deckRenderAll();
+  }
+
+  function deckInitSearch(){
+    document.getElementById('deckDropzone').classList.remove('hidden');
+    var searchEl = document.getElementById('deckFacSearch');
+    if(searchEl) searchEl.addEventListener('input', function(){ deckRenderFacilityList(searchEl.value); });
+    var allBtn = document.getElementById('deckFacAll');
+    if(allBtn) allBtn.addEventListener('click', function(){
+      deckState.selected = new Set(deckState.facilities.map(function(f){return f.short;}));
+      deckRenderFacilityList(searchEl?searchEl.value:''); deckRenderAll();
+    });
+    var noneBtn = document.getElementById('deckFacNone');
+    if(noneBtn) noneBtn.addEventListener('click', function(){
+      deckState.selected = new Set();
+      deckRenderFacilityList(searchEl?searchEl.value:''); deckRenderAll();
+    });
+    var printBtn = document.getElementById('deckPrintBtn');
     if(printBtn) printBtn.addEventListener('click', function(){ window.print(); });
   }
 
@@ -6786,6 +7471,60 @@
         })
         .catch(function(e){ box.textContent = 'Request failed: '+e.message; })
         .then(function(){ b3.disabled = false; });
+    });
+  })();
+  (function(){
+    var b4 = document.getElementById('adminNcsSyncBtn');
+    if(!b4) return;
+    function ck2iso(k){ var y=Math.floor(k/12), m=k-y*12; return y+'-'+('0'+(m+1)).slice(-2); }
+    function newMonths(){
+      var now = new Date(), thisK = now.getFullYear()*12 + now.getMonth(), last = thisK-1;
+      var maxK = null;
+      try{ censusState.daysRows.forEach(function(r){ if(maxK==null || r.cohortKey>maxK) maxK=r.cohortKey; }); }catch(e){}
+      var start = maxK==null ? last : maxK+1, out = [];
+      for(var k=start; k<=last; k++) out.push(ck2iso(k));
+      return out;
+    }
+    function post(months, apply){
+      return fetch('/api/admin/ncs/sync-census', {method:'POST', headers:{'x-admin-key':adminKey,'Content-Type':'application/json'}, body: JSON.stringify({months:months, apply:apply})}).then(function(r){ return r.json(); });
+    }
+    function render(d, months){
+      var box = document.getElementById('adminNcsResult');
+      if(d.error){ box.innerHTML = '<div style="color:#B0455B;">'+ncsEsc(d.error)+'</div>'; return; }
+      var h = '<div style="font-weight:600;margin-bottom:6px;">'+(d.applied?'Saved to Vantis':'Preview — nothing saved yet')+'</div>';
+      h += '<table style="border-collapse:collapse;width:100%;font-size:12.5px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--line);"><th style="padding:5px;">Facility</th><th>Month</th><th style="text-align:right;">Census days</th><th style="text-align:right;">Beds</th><th style="text-align:right;">Occupancy</th><th>Result</th></tr></thead><tbody>';
+      var addable = 0;
+      d.plan.forEach(function(it){
+        if(it.status==='add') addable++;
+        var c = it.status==='added'||it.status==='add' ? '#1d7a4d' : 'var(--ink-soft)';
+        h += '<tr style="border-bottom:1px solid var(--line);"><td style="padding:5px;">'+ncsEsc(it.label)+'</td><td>'+ncsEsc(it.month)+'</td><td style="text-align:right;">'+(it.censusDays!=null?it.censusDays.toLocaleString():'—')+'</td><td style="text-align:right;">'+(it.beds==null?'—':it.beds)+'</td><td style="text-align:right;">'+(it.occupancyPct==null?'—':it.occupancyPct+'%')+'</td><td style="color:'+c+';">'+(it.status==='add'?'Will add':it.status==='added'?'Added':'Skipped — '+ncsEsc(it.reason||''))+'</td></tr>';
+      });
+      h += '</tbody></table>';
+      if(!d.applied && addable){
+        h += '<div style="margin-top:12px;"><button class="btn-load" id="adminNcsApplyBtn" type="button">Save '+addable+' facility-month'+(addable>1?'s':'')+' to Vantis</button></div>';
+      } else if(!d.applied){
+        h += '<div style="margin-top:10px;color:var(--ink-soft);">Nothing new to add.</div>';
+      } else {
+        h += '<div style="margin-top:10px;color:var(--ink-soft);">Census Trends, Skilled Analysis and the Snapshot now include these months.</div>';
+      }
+      box.innerHTML = h;
+      var ab = document.getElementById('adminNcsApplyBtn');
+      if(ab) ab.addEventListener('click', function(){
+        ab.disabled = true; ab.textContent = 'Saving…';
+        post(months, true).then(function(r){
+          render(r, months);
+          if(r.applied){ Promise.all([censusInitLiveMode(), skilledInitLiveMode(), medicareInitLiveMode()]).then(function(){ try{ adminRenderRows(); }catch(e){} }); }
+        }).catch(function(e){ box.textContent = 'Request failed: '+e.message; });
+      });
+    }
+    b4.addEventListener('click', function(){
+      var box = document.getElementById('adminNcsResult');
+      var months = newMonths();
+      if(!months.length){ box.textContent = 'No new completed months to sync — Vantis already has the latest completed month.'; return; }
+      b4.disabled = true; box.textContent = 'Reading '+months.join(', ')+' from NCS (can take a minute)…';
+      post(months, false).then(function(d){ render(d, months); })
+        .catch(function(e){ box.textContent = 'Request failed: '+e.message; })
+        .then(function(){ b4.disabled = false; });
     });
   })();
   var ACCESS_TILE_LABELS = {ar:'AR Collections', census:'Census Trends', skilled:'Skilled Analysis', medicare:'Medicare Days'};
