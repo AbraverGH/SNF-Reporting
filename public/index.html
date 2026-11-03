@@ -6615,7 +6615,7 @@
         if(cur){
           var gap = dayNum(sg.beginISO) - dayNum(cur.endISO);
           var dt = String(cur.dischargeTo||'').trim().toLowerCase();
-          var continues = (dt==='payor change' && gap<=1) || (dt==='hospital' && gap<3);
+          var continues = (dt==='payor change' && gap<=1) || (dt==='hospital' && gap<=3);
           if(continues){ cur.days += sg.days; cur.endISO = sg.endISO; cur.dischargeTo = sg.dischargeTo; cur.open = isOpen(sg); return; }
           close();
         }
@@ -7084,7 +7084,7 @@
           if(cur){
             var gap = dayNum(sg.beginISO) - dayNum(cur.endISO);
             var dt = String(cur.dischargeTo||'').trim().toLowerCase();
-            if(sg.payerType===cur.type && dt==='hospital' && gap<3){ cur.days += sg.days; cur.endISO = sg.endISO; cur.dischargeTo = sg.dischargeTo; cur.open = sg.open; return; }
+            if(sg.payerType===cur.type && dt==='hospital' && gap<=3){ cur.days += sg.days; cur.endISO = sg.endISO; cur.dischargeTo = sg.dischargeTo; cur.open = sg.open; return; }
             close();
           }
           cur = {type:sg.payerType, days:sg.days, endISO:sg.endISO, dischargeTo:sg.dischargeTo, open:sg.open};
@@ -7216,7 +7216,7 @@
           (payRows ? '<table class="deck-table deck-lospay-table"><thead><tr><th>Payer</th><th>Stays</th><th>Avg days</th><th>Trailing 12 mo</th></tr></thead><tbody>'+payRows+'</tbody></table>' : '<div class="deck-empty">No payer detail.</div>') +
         '</div>' +
       '</div>' +
-      '<div class="deck-fine">'+(alos.merged ? 'Overall: a stay continues through payor changes and hospital returns of under 3 days. ' : '')+'By payer: days on that payer — a payor change ends the episode. Stays still in progress are excluded.</div>';
+      '<div class="deck-fine">'+(alos.merged ? 'Overall: a stay continues through payor changes and hospital returns after less than 3 days away. ' : '')+'By payer: days on that payer — a payor change ends the episode. Stays still in progress are excluded.</div>';
     }
     var body = '<div class="deck-block-title" style="margin-top:0;">Length of stay</div>'+alosHtml+deckLosMonthBlock(d, win, censusAllowed);
     return deckPageShell(title, '', body, win).replace('<section class="deck-page">','<section class="deck-page deck-los">');
@@ -7236,7 +7236,7 @@
     });
     return '<div class="deck-block-title">Average length of stay by month (days)</div>' +
       '<table class="deck-table deck-aging-table"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table>' +
-      '<div class="deck-fine">Stays are placed in the month they ended. '+(alos.merged ? 'All payers: a stay continues through payor changes and hospital returns of under 3 days. ' : '')+'By payer: days on that payer. Stays still in progress are excluded.</div>';
+      '<div class="deck-fine">Stays are placed in the month they ended. '+(alos.merged ? 'All payers: a stay continues through payor changes and hospital returns after less than 3 days away. ' : '')+'By payer: days on that payer. Stays still in progress are excluded.</div>';
   }
 
   function deckRenderAll(){
@@ -7627,14 +7627,15 @@
         h += '<tr style="border-bottom:1px solid var(--line);"><td style="padding:5px;">'+ncsEsc(it.label)+'</td><td style="text-align:right;">'+fmtN(it.ncs.segments)+'</td><td style="text-align:right;">'+fmtN(it.ncs.openSegments)+'</td><td>'+ncsEsc((it.ncs.from||'')+' → '+(it.ncs.to||''))+'</td><td style="text-align:right;">'+(it.existing?fmtN(it.existing.segments):'—')+'</td><td>'+(it.existing?ncsEsc(it.existing.from+' → '+it.existing.to):'—')+'</td><td style="text-align:right;">'+(sw?fmtN(sw.ncsSegments)+' / '+fmtN(sw.uploadSegments):'—')+'</td><td style="text-align:right;">'+(sw?fmtN(sw.ncsAvgDays)+' / '+fmtN(sw.uploadAvgDays):'—')+'</td><td style="color:'+(it.status==='skip'?'var(--ink-soft)':'#1d7a4d')+';">'+(it.status==='replace'?'Will replace':it.status==='replaced'?'Replaced':'Skipped — '+ncsEsc(it.reason||''))+'</td></tr>';
       });
       h += '</tbody></table>';
+      if(d.facilityLearned) h += '<div style="font-size:12px;color:var(--ink-soft);margin-top:6px;">'+d.facilityLearned.toLocaleString()+' discharges were labeled from the destination facility, matching what your upload shows for that facility.</div>';
       if(!d.since) h += '<div style="font-size:12px;color:var(--ink-soft);margin-top:8px;">All dates of service NCS has are included. Residents still in the building are marked open.</div>';
-      var mt = d.plan.filter(function(it){ return it.matching; }).map(function(it){ var m=it.matching; return ncsEsc(it.label)+': '+m.matchedSegments.toLocaleString()+' matched ('+m.sameDaysCount.toLocaleString()+' with identical days), '+m.unmatched.toLocaleString()+' NCS-only ('+m.unmatchedShortStays.toLocaleString()+' of 1–2 days; top payors '+ncsEsc(m.unmatchedTopPayors.join(', '))+')'; });
-      if(mt.length) h += '<details style="margin-top:6px;"><summary>Matching detail by facility</summary><div style="font-size:12px;color:var(--ink-soft);padding:4px 0 4px 16px;">'+mt.join('<br>')+'</div></details>';
+      var mt = d.plan.filter(function(it){ return it.matching; }).map(function(it){ var m=it.matching; return ncsEsc(it.label)+': '+m.matchedSegments.toLocaleString()+' matched ('+m.sameDaysCount.toLocaleString()+' with identical days), '+m.unmatched.toLocaleString()+' NCS-only (avg '+(m.unmatchedAvgDays==null?'—':m.unmatchedAvgDays)+' days; '+m.unmatchedShortStays.toLocaleString()+' of 1–2 days; '+m.unmatchedPayorChange.toLocaleString()+' end in a payor change; top payors '+ncsEsc(m.unmatchedTopPayors.join(', '))+'), '+m.uploadOnly.toLocaleString()+' upload-only (avg '+(m.uploadOnlyAvgDays==null?'—':m.uploadOnlyAvgDays)+' days)'; });
+      if(mt.length) h += '<details open style="margin-top:6px;"><summary>Matching detail by facility</summary><div style="font-size:12px;color:var(--ink-soft);padding:4px 0 4px 16px;">'+mt.join('<br>')+'</div></details>';
       if(d.since) h += '<div style="font-size:12px;color:var(--ink-soft);margin-top:8px;">Stays that ended before '+ncsEsc(d.since)+' are left out. Residents still in the building are marked open.</div>';
       var dc = d.dateCheck || {}, dk = Object.keys(dc).sort(function(x,y){return dc[y]-dc[x];});
       if(dk.length) h += '<div style="font-size:12px;color:var(--ink-soft);margin-top:6px;">Date check — end date in your upload minus end date in NCS, for matched segments: '+dk.slice(0,4).map(function(k){ return (k==0?'same day':(k>0?'+':'')+k+' day')+': '+dc[k].toLocaleString(); }).join(' · ')+'</div>';
       if(d.reasons && d.reasons.length){
-        h += '<details open style="margin-top:10px;"><summary>Discharge reasons ('+d.reasons.length+') and how each is treated</summary><table style="border-collapse:collapse;font-size:12px;margin:6px 0 0 16px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--line);"><th style="padding:3px 8px;">Reason</th><th style="padding:3px 8px;text-align:right;">Stays</th><th style="padding:3px 8px;text-align:right;">Avg stay days</th><th style="padding:3px 8px;text-align:right;">No gap</th><th style="padding:3px 8px;text-align:right;">1 day away</th><th style="padding:3px 8px;text-align:right;">2–6 days away</th><th style="padding:3px 8px;text-align:right;">Later</th><th style="padding:3px 8px;text-align:right;">Never</th><th style="padding:3px 8px;">Treated as</th><th style="padding:3px 8px;">Because</th><th style="padding:3px 8px;">Upload labels</th></tr></thead><tbody>'+
+        h += '<details open style="margin-top:10px;"><summary>Discharge reasons ('+d.reasons.length+') and how each is treated</summary><table style="border-collapse:collapse;font-size:12px;margin:6px 0 0 16px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--line);"><th style="padding:3px 8px;">Reason</th><th style="padding:3px 8px;text-align:right;">Stays</th><th style="padding:3px 8px;text-align:right;">Avg stay days</th><th style="padding:3px 8px;text-align:right;">No gap</th><th style="padding:3px 8px;text-align:right;">1 day away</th><th style="padding:3px 8px;text-align:right;">2 days away</th><th style="padding:3px 8px;text-align:right;">3+ days away</th><th style="padding:3px 8px;text-align:right;">Never</th><th style="padding:3px 8px;">Treated as</th><th style="padding:3px 8px;">Because</th><th style="padding:3px 8px;">Upload labels</th></tr></thead><tbody>'+
           d.reasons.map(function(r){ return '<tr style="border-bottom:1px solid var(--line);"><td style="padding:3px 8px;">'+ncsEsc(r.name||('Reason '+r.reasonId))+' (id '+r.reasonId+')</td><td style="padding:3px 8px;text-align:right;">'+fmtN(r.stays)+'</td><td style="padding:3px 8px;text-align:right;">'+fmtN(r.avgStayDays)+'</td><td style="padding:3px 8px;text-align:right;">'+fmtN(r.back1day)+'</td><td style="padding:3px 8px;text-align:right;">'+fmtN(r.back2days)+'</td><td style="padding:3px 8px;text-align:right;">'+fmtN(r.back3to7)+'</td><td style="padding:3px 8px;text-align:right;">'+fmtN(r.backLater)+'</td><td style="padding:3px 8px;text-align:right;">'+fmtN(r.neverBack)+'</td><td style="padding:3px 8px;font-weight:600;">'+ncsEsc(r.mappedTo)+'</td><td style="padding:3px 8px;color:var(--ink-soft);">'+ncsEsc(r.how)+'</td><td style="padding:3px 8px;color:var(--ink-soft);">'+ncsEsc(Object.keys(r.uploadLabels||{}).map(function(k){return k+' '+r.uploadLabels[k];}).join(' · '))+'</td></tr>'; }).join('')+'</tbody></table></details>';
       }
       if(!d.applied && ok){
