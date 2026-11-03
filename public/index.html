@@ -1793,7 +1793,7 @@
       <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head">
           <div><h2>NCS Connection</h2><div class="note">Checks that Vantis can sign in to NCS and read your facility list. Needs NCS_API_KEY, NCS_CLIENT_SECRET and NCS_USER set on the server.</div></div>
-          <div style="display:flex;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><select id="adminNcsGrace" style="border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;"><option value="">Live NCS (today)</option><option value="asof">As of the date at right</option><option value="3">As of 3 days after month-end</option><option value="7">As of 7 days after month-end</option><option value="14">As of 14 days after month-end</option></select><button class="btn-load" id="adminNcsSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync new months from NCS</button><input type="date" id="adminNcsAsOf" value="2026-08-10" style="border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;"><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button></div>
+          <div style="display:flex;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><select id="adminNcsGrace" style="border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;"><option value="">Live NCS (today)</option><option value="asof">As of the date at right</option><option value="3">As of 3 days after month-end</option><option value="7">As of 7 days after month-end</option><option value="14">As of 14 days after month-end</option></select><button class="btn-load" id="adminNcsSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync new months from NCS</button><input type="date" id="adminNcsAsOf" value="2026-08-10" style="border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;"><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button><button class="btn-load" id="adminNcsLosBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync Length of Stay from NCS</button></div>
         </div>
         <div id="adminNcsResult" style="margin-top:14px;font-size:13px;"></div>
       </div>
@@ -4368,13 +4368,7 @@
     // in house shows up with an End Date equal to that run date (and no
     // Discharge To). Those aren't discharges, so they're flagged open here —
     // the Facility Snapshot leaves them out of its average.
-    var losRunDate = null;
-    if(losSrc && losSrc.records){
-      losSrc.records.forEach(function(rec){
-        var d = String(rec.endISO||'').slice(0,10);
-        if(d && (losRunDate==null || d>losRunDate)) losRunDate = d;
-      });
-    }
+    var losIsOpen = losOpenTester(losSrc && losSrc.records);
     censusState.rows = (losSrc && losSrc.records) ? losSrc.records.map(function(rec){
       var endDate = new Date(rec.endISO);
       var year = endDate.getUTCFullYear(), month = endDate.getUTCMonth(); // UTC — see note in hydrateServerRecords above
@@ -4384,7 +4378,7 @@
         year: year, month: month,
         days: rec.days,
         payorCode: rec.payorCode,
-        open: String(rec.endISO||'').slice(0,10) === losRunDate,
+        open: losIsOpen(rec),
         rid: rec.rid || null, beginISO: rec.beginISO || null, endISO: rec.endISO, dischargeTo: rec.dischargeTo,
         payerType: censusResolvePayerType(uploadedMapping, rec.company, rec.payorCode, rec.payorCode)
       };
@@ -6585,17 +6579,29 @@
   //    isn't complete, so it isn't counted.
   //  - Reports uploaded before resident keys were stored can't be joined; for
   //    those it falls back to one row per payor segment (merged:false).
+  // In-house test for Length of Stay records. Report rows (uploads) are open
+  // when they end on the report's run date; rows synced from NCS carry an
+  // explicit open flag, and are ignored when working out the run date.
+  function losOpenTester(records){
+    var runDate = null;
+    (records||[]).forEach(function(r){
+      if(r.open!==undefined) return;
+      var d = String(r.endISO||'').slice(0,10);
+      if(d && (runDate==null || d>runDate)) runDate = d;
+    });
+    return function(r){ return r.open!==undefined ? !!r.open : String(r.endISO||'').slice(0,10)===runDate; };
+  }
+
   function snapshotLosStays(company){
     var src = censusState.sources.losReport;
     var all = (src && src.records) ? src.records : [];
-    var runDate = null;
-    all.forEach(function(r){ var d = String(r.endISO||'').slice(0,10); if(d && (runDate==null || d>runDate)) runDate = d; });
+    var isOpen = losOpenTester(all);
     var recs = all.filter(function(r){ return r.company===company; });
     function dayNum(iso){ return Math.floor(Date.parse(String(iso).slice(0,10))/86400000); }
     function ckOf(iso){ var d = new Date(iso); return d.getUTCFullYear()*12 + d.getUTCMonth(); }
     var canMerge = recs.length>0 && recs.every(function(r){ return r.rid && r.beginISO; });
     if(!canMerge){
-      return {merged:false, stays: recs.filter(function(r){ return String(r.endISO||'').slice(0,10)!==runDate; })
+      return {merged:false, stays: recs.filter(function(r){ return !isOpen(r); })
         .map(function(r){ return {ck: ckOf(r.endISO), days: r.days}; })};
     }
     var byRes = {};
@@ -6604,16 +6610,16 @@
     Object.keys(byRes).forEach(function(k){
       var segs = byRes[k].slice().sort(function(a,b){ return dayNum(a.beginISO)-dayNum(b.beginISO); });
       var cur = null;
-      function close(){ if(cur && String(cur.endISO).slice(0,10)!==runDate) stays.push({ck: ckOf(cur.endISO), days: cur.days}); }
+      function close(){ if(cur && !cur.open) stays.push({ck: ckOf(cur.endISO), days: cur.days}); }
       segs.forEach(function(sg){
         if(cur){
           var gap = dayNum(sg.beginISO) - dayNum(cur.endISO);
           var dt = String(cur.dischargeTo||'').trim().toLowerCase();
           var continues = (dt==='payor change' && gap<=1) || (dt==='hospital' && gap<3);
-          if(continues){ cur.days += sg.days; cur.endISO = sg.endISO; cur.dischargeTo = sg.dischargeTo; return; }
+          if(continues){ cur.days += sg.days; cur.endISO = sg.endISO; cur.dischargeTo = sg.dischargeTo; cur.open = isOpen(sg); return; }
           close();
         }
-        cur = {days: sg.days, endISO: sg.endISO, dischargeTo: sg.dischargeTo};
+        cur = {days: sg.days, endISO: sg.endISO, dischargeTo: sg.dischargeTo, open: isOpen(sg)};
       });
       close();
     });
@@ -7597,6 +7603,51 @@
       post(months, false).then(function(d){ render(d, months); })
         .catch(function(e){ box.textContent = 'Request failed: '+e.message; })
         .then(function(){ b4.disabled = false; });
+    });
+  })();
+  (function(){
+    var bl = document.getElementById('adminNcsLosBtn');
+    if(!bl) return;
+    function post(apply){
+      return fetch('/api/admin/ncs/sync-los', {method:'POST', headers:{'x-admin-key':adminKey,'Content-Type':'application/json'}, body: JSON.stringify({apply:apply})}).then(function(r){ return r.json(); });
+    }
+    function fmtN(v){ return v==null ? '—' : (+v).toLocaleString(); }
+    function render(d){
+      var box = document.getElementById('adminNcsResult');
+      if(d.error){ box.innerHTML = '<div style="color:#B0455B;">'+ncsEsc(d.error)+'</div>'; return; }
+      var h = '<div style="font-weight:600;margin-bottom:6px;">'+(d.applied?'Saved to Vantis':'Preview — nothing saved yet')+'</div>';
+      h += '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;">'+(d.reasonLookup.endpoint ? 'Discharge reasons read from NCS ('+d.reasonLookup.reasons+' reasons).' : ncsEsc(d.reasonLookup.note))+' Each facility listed below is replaced with NCS data; other facilities are untouched.</div>';
+      h += '<table style="border-collapse:collapse;width:100%;font-size:12.5px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--line);"><th style="padding:5px;">Facility</th><th style="text-align:right;">NCS segments</th><th style="text-align:right;">In house</th><th>NCS range</th><th style="text-align:right;">Upload segments</th><th>Upload range</th><th style="text-align:right;">Same window: NCS / upload segs</th><th style="text-align:right;">Avg days NCS / upload</th><th>Result</th></tr></thead><tbody>';
+      var ok = 0;
+      d.plan.forEach(function(it){
+        if(it.status==='replace') ok++;
+        var sw = it.sameWindow;
+        h += '<tr style="border-bottom:1px solid var(--line);"><td style="padding:5px;">'+ncsEsc(it.label)+'</td><td style="text-align:right;">'+fmtN(it.ncs.segments)+'</td><td style="text-align:right;">'+fmtN(it.ncs.openSegments)+'</td><td>'+ncsEsc((it.ncs.from||'')+' → '+(it.ncs.to||''))+'</td><td style="text-align:right;">'+(it.existing?fmtN(it.existing.segments):'—')+'</td><td>'+(it.existing?ncsEsc(it.existing.from+' → '+it.existing.to):'—')+'</td><td style="text-align:right;">'+(sw?fmtN(sw.ncsSegments)+' / '+fmtN(sw.uploadSegments):'—')+'</td><td style="text-align:right;">'+(sw?fmtN(sw.ncsAvgDays)+' / '+fmtN(sw.uploadAvgDays):'—')+'</td><td style="color:'+(it.status==='skip'?'var(--ink-soft)':'#1d7a4d')+';">'+(it.status==='replace'?'Will replace':it.status==='replaced'?'Replaced':'Skipped — '+ncsEsc(it.reason||''))+'</td></tr>';
+      });
+      h += '</tbody></table>';
+      var rs = {};
+      d.plan.forEach(function(it){ (it.dischargeReasons||[]).forEach(function(r){ var k=r.reasonId+'|'+r.name+'|'+r.mappedTo; rs[k]=(rs[k]||0)+r.count; }); });
+      var rl = Object.keys(rs).map(function(k){ var p=k.split('|'); return {id:p[0],name:p[1],to:p[2],n:rs[k]}; }).sort(function(a,b){return b.n-a.n;});
+      if(rl.length) h += '<details style="margin-top:10px;"><summary>Discharge reasons found ('+rl.length+') and how they\'re treated</summary><div style="font-size:12px;color:var(--ink-soft);padding:4px 0 4px 16px;">'+rl.map(function(r){ return ncsEsc(r.name)+' (id '+ncsEsc(r.id)+') → '+ncsEsc(r.to)+': '+r.n.toLocaleString(); }).join('<br>')+'</div></details>';
+      if(!d.applied && ok){
+        h += '<div style="margin-top:12px;"><button class="btn-load" id="adminNcsLosApplyBtn" type="button">Replace '+ok+' facilit'+(ok>1?'ies':'y')+' with NCS data</button></div>';
+      } else if(d.applied){
+        h += '<div style="margin-top:10px;color:var(--ink-soft);">Census Trends, the Snapshot and the Monthly Deck now use these Length of Stay figures.</div>';
+      }
+      box.innerHTML = h;
+      var ab = document.getElementById('adminNcsLosApplyBtn');
+      if(ab) ab.addEventListener('click', function(){
+        ab.disabled = true; ab.textContent = 'Saving…';
+        post(true).then(function(r){
+          render(r);
+          if(r.applied){ censusInitLiveMode().then(function(){ try{ adminRenderRows(); }catch(e){} }); }
+        }).catch(function(e){ box.textContent = 'Request failed: '+e.message; });
+      });
+    }
+    bl.addEventListener('click', function(){
+      var box = document.getElementById('adminNcsResult');
+      bl.disabled = true; box.textContent = 'Reading stays and payors from NCS (can take a minute)…';
+      post(false).then(render).catch(function(e){ box.textContent = 'Request failed: '+e.message; }).then(function(){ bl.disabled = false; });
     });
   })();
   var ACCESS_TILE_LABELS = {ar:'AR Collections', census:'Census Trends', skilled:'Skilled Analysis', medicare:'Medicare Days'};
