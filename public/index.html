@@ -7564,20 +7564,23 @@
       return out;
     }
     function post(months, apply){
-      return fetch('/api/admin/ncs/sync-census', {method:'POST', headers:{'x-admin-key':adminKey,'Content-Type':'application/json'}, body: JSON.stringify({months:months, apply:apply})}).then(function(r){ return r.json(); });
+      return fetch('/api/admin/ncs/sync-census', {method:'POST', headers:{'x-admin-key':adminKey,'Content-Type':'application/json'}, body: JSON.stringify({all:true, apply:apply})}).then(function(r){ return r.json(); });
     }
     function render(d, months){
       var box = document.getElementById('adminNcsResult');
       if(d.error){ box.innerHTML = '<div style="color:#B0455B;">'+ncsEsc(d.error)+'</div>'; return; }
       var h = '<div style="font-weight:600;margin-bottom:6px;">'+(d.applied?'Saved to Vantis':'Preview — nothing saved yet')+'</div>';
-      h += '<table style="border-collapse:collapse;width:100%;font-size:12.5px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--line);"><th style="padding:5px;">Facility</th><th>Month</th><th style="text-align:right;">Census days</th><th style="text-align:right;">Beds</th><th style="text-align:right;">Occupancy</th><th>Result</th></tr></thead><tbody>';
+      h += '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;">Every month NCS has, not just months after your last upload. Months already in Vantis are never changed; older months, gaps and new months are added. Occupancy for past months uses your current Available Beds.</div>';
+      h += '<table style="border-collapse:collapse;width:100%;font-size:12.5px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--line);"><th style="padding:5px;">Facility</th><th style="text-align:right;">Months '+(d.applied?'added':'to add')+'</th><th>From</th><th>To</th><th style="text-align:right;">Census days</th><th style="text-align:right;">Already in Vantis</th><th style="text-align:right;">No days in NCS</th><th style="text-align:right;">Skipped</th></tr></thead><tbody>';
       var addable = 0;
-      d.plan.forEach(function(it){
-        if(it.status==='add') addable++;
-        var c = it.status==='added'||it.status==='add' ? '#1d7a4d' : 'var(--ink-soft)';
-        h += '<tr style="border-bottom:1px solid var(--line);"><td style="padding:5px;">'+ncsEsc(it.label)+'</td><td>'+ncsEsc(it.month)+'</td><td style="text-align:right;">'+(it.censusDays!=null?it.censusDays.toLocaleString():'—')+'</td><td style="text-align:right;">'+(it.beds==null?'—':it.beds)+'</td><td style="text-align:right;">'+(it.occupancyPct==null?'—':it.occupancyPct+'%')+'</td><td style="color:'+c+';">'+(it.status==='add'?'Will add':it.status==='added'?'Added':'Skipped — '+ncsEsc(it.reason||''))+'</td></tr>';
+      (d.summary||[]).forEach(function(g){
+        var n = d.applied ? g.added : g.add; addable += g.add;
+        h += '<tr style="border-bottom:1px solid var(--line);"><td style="padding:5px;">'+ncsEsc(g.label)+'</td><td style="text-align:right;">'+n.toLocaleString()+'</td><td>'+ncsEsc(g.from||'—')+'</td><td>'+ncsEsc(g.to||'—')+'</td><td style="text-align:right;">'+g.daysAdded.toLocaleString()+'</td><td style="text-align:right;">'+g.frozen.toLocaleString()+'</td><td style="text-align:right;">'+g.empty.toLocaleString()+'</td><td style="text-align:right;">'+g.other.toLocaleString()+'</td></tr>';
       });
       h += '</tbody></table>';
+      if(d.plan && d.plan.length){
+        h += '<details style="margin-top:8px;"><summary>Latest '+d.plan.length+' of '+(d.planTotal||d.plan.length).toLocaleString()+' facility-months</summary><table style="border-collapse:collapse;width:100%;font-size:12.5px;margin-top:6px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--line);"><th style="padding:5px;">Facility</th><th>Month</th><th style="text-align:right;">Census days</th><th style="text-align:right;">Occupancy</th></tr></thead><tbody>'+d.plan.map(function(it){ return '<tr style="border-bottom:1px solid var(--line);"><td style="padding:5px;">'+ncsEsc(it.label)+'</td><td>'+ncsEsc(it.month)+'</td><td style="text-align:right;">'+(it.censusDays!=null?it.censusDays.toLocaleString():'—')+'</td><td style="text-align:right;">'+(it.occupancyPct==null?'—':it.occupancyPct+'%')+'</td></tr>'; }).join('')+'</tbody></table></details>';
+      }
       if(!d.applied && addable){
         h += '<div style="margin-top:12px;"><button class="btn-load" id="adminNcsApplyBtn" type="button">Save '+addable+' facility-month'+(addable>1?'s':'')+' to Vantis</button></div>';
       } else if(!d.applied){
@@ -7597,9 +7600,8 @@
     }
     b4.addEventListener('click', function(){
       var box = document.getElementById('adminNcsResult');
-      var months = newMonths();
-      if(!months.length){ box.textContent = 'No new completed months to sync — Vantis already has the latest completed month.'; return; }
-      b4.disabled = true; box.textContent = 'Reading '+months.join(', ')+' from NCS (can take a minute)…';
+      var months = [];
+      b4.disabled = true; box.textContent = 'Reading all months from NCS (can take a minute)…';
       post(months, false).then(function(d){ render(d, months); })
         .catch(function(e){ box.textContent = 'Request failed: '+e.message; })
         .then(function(){ b4.disabled = false; });
@@ -7625,10 +7627,14 @@
         h += '<tr style="border-bottom:1px solid var(--line);"><td style="padding:5px;">'+ncsEsc(it.label)+'</td><td style="text-align:right;">'+fmtN(it.ncs.segments)+'</td><td style="text-align:right;">'+fmtN(it.ncs.openSegments)+'</td><td>'+ncsEsc((it.ncs.from||'')+' → '+(it.ncs.to||''))+'</td><td style="text-align:right;">'+(it.existing?fmtN(it.existing.segments):'—')+'</td><td>'+(it.existing?ncsEsc(it.existing.from+' → '+it.existing.to):'—')+'</td><td style="text-align:right;">'+(sw?fmtN(sw.ncsSegments)+' / '+fmtN(sw.uploadSegments):'—')+'</td><td style="text-align:right;">'+(sw?fmtN(sw.ncsAvgDays)+' / '+fmtN(sw.uploadAvgDays):'—')+'</td><td style="color:'+(it.status==='skip'?'var(--ink-soft)':'#1d7a4d')+';">'+(it.status==='replace'?'Will replace':it.status==='replaced'?'Replaced':'Skipped — '+ncsEsc(it.reason||''))+'</td></tr>';
       });
       h += '</tbody></table>';
-      var rs = {};
-      d.plan.forEach(function(it){ (it.dischargeReasons||[]).forEach(function(r){ var k=r.reasonId+'|'+r.name+'|'+r.mappedTo; rs[k]=(rs[k]||0)+r.count; }); });
-      var rl = Object.keys(rs).map(function(k){ var p=k.split('|'); return {id:p[0],name:p[1],to:p[2],n:rs[k]}; }).sort(function(a,b){return b.n-a.n;});
-      if(rl.length) h += '<details style="margin-top:10px;"><summary>Discharge reasons found ('+rl.length+') and how they\'re treated</summary><div style="font-size:12px;color:var(--ink-soft);padding:4px 0 4px 16px;">'+rl.map(function(r){ return ncsEsc(r.name)+' (id '+ncsEsc(r.id)+') → '+ncsEsc(r.to)+': '+r.n.toLocaleString(); }).join('<br>')+'</div></details>';
+      if(!d.since) h += '<div style="font-size:12px;color:var(--ink-soft);margin-top:8px;">All dates of service NCS has are included. Residents still in the building are marked open.</div>';
+      if(d.since) h += '<div style="font-size:12px;color:var(--ink-soft);margin-top:8px;">Stays that ended before '+ncsEsc(d.since)+' are left out. Residents still in the building are marked open.</div>';
+      var dc = d.dateCheck || {}, dk = Object.keys(dc).sort(function(x,y){return dc[y]-dc[x];});
+      if(dk.length) h += '<div style="font-size:12px;color:var(--ink-soft);margin-top:6px;">Date check — end date in your upload minus end date in NCS, for matched segments: '+dk.slice(0,4).map(function(k){ return (k==0?'same day':(k>0?'+':'')+k+' day')+': '+dc[k].toLocaleString(); }).join(' · ')+'</div>';
+      if(d.reasons && d.reasons.length){
+        h += '<details open style="margin-top:10px;"><summary>Discharge reasons ('+d.reasons.length+') and how each is treated</summary><table style="border-collapse:collapse;font-size:12px;margin:6px 0 0 16px;"><thead><tr style="text-align:left;border-bottom:1px solid var(--line);"><th style="padding:3px 8px;">Reason</th><th style="padding:3px 8px;text-align:right;">Stays</th><th style="padding:3px 8px;text-align:right;">Avg stay days</th><th style="padding:3px 8px;text-align:right;">Back in 1 day</th><th style="padding:3px 8px;text-align:right;">2 days</th><th style="padding:3px 8px;text-align:right;">3–7 days</th><th style="padding:3px 8px;text-align:right;">Later</th><th style="padding:3px 8px;text-align:right;">Never</th><th style="padding:3px 8px;">Treated as</th><th style="padding:3px 8px;">Because</th></tr></thead><tbody>'+
+          d.reasons.map(function(r){ return '<tr style="border-bottom:1px solid var(--line);"><td style="padding:3px 8px;">'+ncsEsc(r.name||('Reason '+r.reasonId))+' (id '+r.reasonId+')</td><td style="padding:3px 8px;text-align:right;">'+fmtN(r.stays)+'</td><td style="padding:3px 8px;text-align:right;">'+fmtN(r.avgStayDays)+'</td><td style="padding:3px 8px;text-align:right;">'+fmtN(r.back1day)+'</td><td style="padding:3px 8px;text-align:right;">'+fmtN(r.back2days)+'</td><td style="padding:3px 8px;text-align:right;">'+fmtN(r.back3to7)+'</td><td style="padding:3px 8px;text-align:right;">'+fmtN(r.backLater)+'</td><td style="padding:3px 8px;text-align:right;">'+fmtN(r.neverBack)+'</td><td style="padding:3px 8px;font-weight:600;">'+ncsEsc(r.mappedTo)+'</td><td style="padding:3px 8px;color:var(--ink-soft);">'+ncsEsc(r.how)+'</td></tr>'; }).join('')+'</tbody></table></details>';
+      }
       if(!d.applied && ok){
         h += '<div style="margin-top:12px;"><button class="btn-load" id="adminNcsLosApplyBtn" type="button">Replace '+ok+' facilit'+(ok>1?'ies':'y')+' with NCS data</button></div>';
       } else if(d.applied){
