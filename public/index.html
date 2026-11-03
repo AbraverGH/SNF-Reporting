@@ -1793,7 +1793,7 @@
       <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head">
           <div><h2>NCS Connection</h2><div class="note">Checks that Vantis can sign in to NCS and read your facility list. Needs NCS_API_KEY, NCS_CLIENT_SECRET and NCS_USER set on the server.</div></div>
-          <div style="display:flex;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><select id="adminNcsGrace" style="border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;"><option value="">Live NCS (today)</option><option value="asof">As of the date at right</option><option value="3">As of 3 days after month-end</option><option value="7">As of 7 days after month-end</option><option value="14">As of 14 days after month-end</option></select><button class="btn-load" id="adminNcsSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync new months from NCS</button><input type="date" id="adminNcsAsOf" value="2026-08-10" style="border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;"><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button><button class="btn-load" id="adminNcsLosBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync Length of Stay from NCS</button></div>
+          <div style="display:flex;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><select id="adminNcsGrace" style="border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;"><option value="">Live NCS (today)</option><option value="asof">As of the date at right</option><option value="3">As of 3 days after month-end</option><option value="7">As of 7 days after month-end</option><option value="14">As of 14 days after month-end</option></select><button class="btn-load" id="adminNcsSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync new months from NCS</button><input type="date" id="adminNcsAsOf" value="2026-08-10" style="border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;"><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button><button class="btn-load" id="adminNcsExtractBtn" type="button" style="white-space:nowrap;">Download LOS comparison file</button><button class="btn-load" id="adminNcsLosBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync Length of Stay from NCS</button></div>
         </div>
         <div id="adminNcsResult" style="margin-top:14px;font-size:13px;"></div>
       </div>
@@ -7663,6 +7663,19 @@
       var box = document.getElementById('adminNcsResult');
       bl.disabled = true; box.textContent = 'Reading stays and payors from NCS (can take a minute)…';
       post(false).then(render).catch(function(e){ box.textContent = 'Request failed: '+e.message; }).then(function(){ bl.disabled = false; });
+    });
+  })();
+  (function(){
+    var be = document.getElementById('adminNcsExtractBtn');
+    if(!be) return;
+    be.addEventListener('click', function(){
+      var box = document.getElementById('adminNcsResult');
+      be.disabled = true; box.textContent = 'Building the comparison file…';
+      fetch('/api/admin/ncs/los-extract', {headers:{'x-admin-key':adminKey}}).then(function(r){ return r.text(); }).then(function(t){
+        try{ var j = JSON.parse(t); if(j.error){ box.textContent = j.error; return; } }catch(e){}
+        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t], {type:'application/json'})); a.download = 'vantis-los-extract.json'; document.body.appendChild(a); a.click(); a.remove();
+        box.textContent = 'Downloaded vantis-los-extract.json — dates, payor codes and reason ids only, no names or resident IDs.';
+      }).catch(function(e){ box.textContent = 'Request failed: '+e.message; }).then(function(){ be.disabled = false; });
     });
   })();
   var ACCESS_TILE_LABELS = {ar:'AR Collections', census:'Census Trends', skilled:'Skilled Analysis', medicare:'Medicare Days'};
