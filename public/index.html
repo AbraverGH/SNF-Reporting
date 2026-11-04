@@ -1709,6 +1709,7 @@
         <button id="deckFacNone">Clear</button>
       </div>
       <div class="facility-list" id="deckFacilityList"></div>
+      <label style="display:block;font-size:12px;color:var(--ink-soft);margin-top:8px;"><input type="checkbox" id="deckShowSold"> Show facilities sold 11/1/2026</label>
     </div>
 
     <div class="sidebar-footer">
@@ -1793,7 +1794,7 @@
       <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head">
           <div><h2>NCS Connection</h2><div class="note">Checks that Vantis can sign in to NCS and read your facility list. Needs NCS_API_KEY, NCS_CLIENT_SECRET and NCS_USER set on the server.</div></div>
-          <div style="display:flex;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><select id="adminNcsGrace" style="border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;"><option value="">Live NCS (today)</option><option value="asof">As of the date at right</option><option value="3">As of 3 days after month-end</option><option value="7">As of 7 days after month-end</option><option value="14">As of 14 days after month-end</option></select><button class="btn-load" id="adminNcsSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync new months from NCS</button><input type="date" id="adminNcsAsOf" value="2026-08-10" style="border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;"><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button><button class="btn-load" id="adminNcsExtractBtn" type="button" style="white-space:nowrap;">Download LOS comparison file</button><button class="btn-load" id="adminNcsLosBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync Length of Stay from NCS</button></div>
+          <div style="display:flex;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><select id="adminNcsGrace" style="border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;"><option value="">Live NCS (today)</option><option value="asof">As of the date at right</option><option value="3">As of 3 days after month-end</option><option value="7">As of 7 days after month-end</option><option value="14">As of 14 days after month-end</option></select><button class="btn-load" id="adminNcsSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync new months from NCS</button><input type="date" id="adminNcsAsOf" value="2026-08-10" style="border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;"><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button><button class="btn-load" id="adminNcsProbeBtn" type="button" style="white-space:nowrap;">Find AR data in NCS</button><button class="btn-load" id="adminNcsExtractBtn" type="button" style="white-space:nowrap;">Download LOS comparison file</button><button class="btn-load" id="adminNcsLosBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync Length of Stay from NCS</button></div>
         </div>
         <div id="adminNcsResult" style="margin-top:14px;font-size:13px;"></div>
       </div>
@@ -6969,9 +6970,12 @@
     return keys;
   }
 
+  var DECK_SOLD_CODES = ['NEMT','NEMM','NEHL','NEOM','NELP','NEME']; // sold 11/1/2026
   function deckBuildFacilityList(){
     snapshotBuildFacilityList();
     var list = snapshotState.facilities.filter(function(f){ return !!byFacCohortAsOf[f.short]; });
+    // Sold facilities (as of 11/1/2026) are left out of the Deck unless the box under the list is ticked.
+    if(!deckState.showSold) list = list.filter(function(f){ return DECK_SOLD_CODES.indexOf(String(f.code||'').split(' ')[0]) === -1; });
     var hadSel = deckState.selected && deckState.selected.size > 0;
     deckState.facilities = list;
     if(!hadSel){
@@ -7302,6 +7306,13 @@
     document.getElementById('deckDropzone').classList.remove('hidden');
     var searchEl = document.getElementById('deckFacSearch');
     if(searchEl) searchEl.addEventListener('input', function(){ deckRenderFacilityList(searchEl.value); });
+    var soldEl = document.getElementById('deckShowSold');
+    if(soldEl) soldEl.addEventListener('change', function(){
+      deckState.showSold = soldEl.checked;
+      deckBuildFacilityList();
+      if(soldEl.checked) deckState.facilities.forEach(function(f){ if(DECK_SOLD_CODES.indexOf(String(f.code||'').split(' ')[0]) !== -1) deckState.selected.add(f.short); });
+      deckRenderFacilityList(searchEl?searchEl.value:''); deckRenderAll();
+    });
     var allBtn = document.getElementById('deckFacAll');
     if(allBtn) allBtn.addEventListener('click', function(){
       deckState.selected = new Set(deckState.facilities.map(function(f){return f.short;}));
@@ -7676,6 +7687,24 @@
         var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t], {type:'application/json'})); a.download = 'vantis-los-extract.json'; document.body.appendChild(a); a.click(); a.remove();
         box.textContent = 'Downloaded vantis-los-extract.json — dates, payor codes and reason ids only, no names or resident IDs.';
       }).catch(function(e){ box.textContent = 'Request failed: '+e.message; }).then(function(){ be.disabled = false; });
+    });
+  })();
+  (function(){
+    var bp = document.getElementById('adminNcsProbeBtn');
+    if(!bp) return;
+    bp.addEventListener('click', function(){
+      var box = document.getElementById('adminNcsResult');
+      bp.disabled = true; box.textContent = 'Looking for AR / billing data in NCS (about a minute)…';
+      fetch('/api/admin/ncs/probe', {headers:{'x-admin-key':adminKey}}).then(function(r){ return r.json(); }).then(function(d){
+        if(d.error){ box.innerHTML = '<div style="color:#B0455B;">'+ncsEsc(d.error)+'</div>'; return; }
+        var h = '<div style="font-weight:600;margin-bottom:6px;">NCS AR / billing search</div>';
+        h += d.swagger ? '<div style="font-size:12px;margin-bottom:8px;"><b>API documentation found</b> ('+ncsEsc(d.swagger.url)+'). Endpoints:<br><span style="color:var(--ink-soft);">'+d.swagger.paths.map(ncsEsc).join('<br>')+'</span></div>' : '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;">No API documentation page was reachable, so likely endpoint names were tried instead.</div>';
+        var found = d.endpoints.filter(function(e){ return e.ok; }), miss = d.endpoints.filter(function(e){ return !e.ok; });
+        h += '<div style="font-weight:600;">Found ('+found.length+')</div>';
+        h += found.length ? found.map(function(e){ return '<div style="margin:6px 0;font-size:12.5px;"><b>'+ncsEsc(e.endpoint)+'</b> — '+(e.count||0).toLocaleString()+' records'+(e.earliest?' ('+ncsEsc(e.earliest)+' → '+ncsEsc(e.latest)+')':'')+'<br><span style="color:var(--ink-soft);">'+e.fields.map(ncsEsc).join(', ')+'</span></div>'; }).join('') : '<div style="font-size:12px;color:var(--ink-soft);">None of the likely names exist.</div>';
+        h += '<details style="margin-top:8px;"><summary>Not available ('+miss.length+')</summary><div style="font-size:12px;color:var(--ink-soft);padding:4px 0 4px 16px;">'+miss.map(function(e){ return ncsEsc(e.endpoint)+': '+ncsEsc(e.error); }).join('<br>')+'</div></details>';
+        box.innerHTML = h;
+      }).catch(function(e){ box.textContent = 'Request failed: '+e.message; }).then(function(){ bp.disabled = false; });
     });
   })();
   var ACCESS_TILE_LABELS = {ar:'AR Collections', census:'Census Trends', skilled:'Skilled Analysis', medicare:'Medicare Days'};
