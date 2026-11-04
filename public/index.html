@@ -7695,11 +7695,27 @@
     ba.addEventListener('click', function(){
       var box = document.getElementById('adminNcsResult');
       ba.disabled = true; box.textContent = 'Building the AR comparison file — this reads every facility\'s bills and receipts and can take a few minutes…';
-      fetch('/api/admin/ncs/ar-extract?since=2025-01', {headers:{'x-admin-key':adminKey}}).then(function(r){ return r.text(); }).then(function(t){
-        try{ var j = JSON.parse(t); if(j.error){ box.textContent = j.error; return; } }catch(e){}
+      var ids = ['943','945','947','948','952','958','949','609','610','611','612','616','678','679','681','942','944','950','953','954','955','957'];
+      var all = {bills:{},ancBills:{},receipts:{},nonAr:{},depositsWriteOff:{},payors:[],billingGroups:[],uploaded:{}}, failed = [];
+      function merge(d, first){
+        ['bills','ancBills','receipts','nonAr','depositsWriteOff'].forEach(function(k){ Object.keys(d[k]||{}).forEach(function(key){ all[k][key] = d[k][key]; }); });
+        all.payors = all.payors.concat(d.payors||[]); all.billingGroups = all.billingGroups.concat(d.billingGroups||[]);
+        if(first){ all.since = d.since; all.generatedAt = d.generatedAt; all.resourceValues = d.resourceValues; all.resourceValuesError = d.resourceValuesError; all.uploaded = d.uploaded; }
+      }
+      function one(i){
+        if(i >= ids.length) return Promise.resolve();
+        box.textContent = 'Building the AR comparison file — facility '+(i+1)+' of '+ids.length+(failed.length?' ('+failed.length+' failed so far)':'')+'…';
+        return fetch('/api/admin/ncs/ar-extract?since=2025-01&companies='+ids[i]+(i===0?'&meta=1':''), {headers:{'x-admin-key':adminKey}}).then(function(r){ return r.text(); }).then(function(t){
+          var j; try{ j = JSON.parse(t); }catch(e){ throw new Error('Unexpected response'); }
+          if(j.error) throw new Error(j.error);
+          merge(j, i===0);
+        }).catch(function(e){ failed.push(ids[i]+': '+e.message); }).then(function(){ return one(i+1); });
+      }
+      one(0).then(function(){
+        var t = JSON.stringify(all);
         var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t], {type:'application/json'})); a.download = 'vantis-ar-extract.json'; document.body.appendChild(a); a.click(); a.remove();
-        box.textContent = 'Downloaded vantis-ar-extract.json ('+Math.round(t.length/1024).toLocaleString()+' KB) — totals by facility, month and payor only; no names or resident IDs.';
-      }).catch(function(e){ box.textContent = 'Request failed: '+e.message; }).then(function(){ ba.disabled = false; });
+        box.innerHTML = 'Downloaded vantis-ar-extract.json ('+Math.round(t.length/1024).toLocaleString()+' KB) — totals only, no names or resident IDs.'+(failed.length?'<div style="color:#B0455B;margin-top:6px;">These facilities failed and are missing from the file:<br>'+failed.map(ncsEsc).join('<br>')+'</div>':'');
+      }).then(function(){ ba.disabled = false; });
     });
   })();
   (function(){
