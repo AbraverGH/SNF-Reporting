@@ -1794,7 +1794,7 @@
       <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head">
           <div><h2>NCS Connection</h2><div class="note">Checks that Vantis can sign in to NCS and read your facility list. Needs NCS_API_KEY, NCS_CLIENT_SECRET and NCS_USER set on the server.</div></div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><select id="adminNcsGrace" style="border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;"><option value="">Live NCS (today)</option><option value="asof">As of the date at right</option><option value="3">As of 3 days after month-end</option><option value="7">As of 7 days after month-end</option><option value="14">As of 14 days after month-end</option></select><button class="btn-load" id="adminNcsSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync new months from NCS</button><input type="date" id="adminNcsAsOf" value="2026-08-10" style="border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;"><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button><button class="btn-load" id="adminNcsArSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync AR from NCS</button><button class="btn-load" id="adminNcsArDiagBtn" type="button" style="white-space:nowrap;">AR Part B diagnostic</button><button class="btn-load" id="adminNcsArExtractBtn" type="button" style="white-space:nowrap;">Download AR comparison file</button><button class="btn-load" id="adminNcsProbeBtn" type="button" style="white-space:nowrap;">Find AR data in NCS</button><button class="btn-load" id="adminNcsExtractBtn" type="button" style="white-space:nowrap;">Download LOS comparison file</button><button class="btn-load" id="adminNcsLosBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync Length of Stay from NCS</button></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><select id="adminNcsGrace" style="border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;"><option value="">Live NCS (today)</option><option value="asof">As of the date at right</option><option value="3">As of 3 days after month-end</option><option value="7">As of 7 days after month-end</option><option value="14">As of 14 days after month-end</option></select><button class="btn-load" id="adminNcsSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync new months from NCS</button><input type="date" id="adminNcsAsOf" value="2026-08-10" style="border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;"><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button><button class="btn-load" id="adminNcsArSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync AR from NCS</button><button class="btn-load" id="adminNcsArDiagBtn" type="button" style="white-space:nowrap;">AR Part B diagnostic</button><button class="btn-load" id="adminNcsSjExtractBtn" type="button" style="white-space:nowrap;">Download Sales Journal comparison file</button><button class="btn-load" id="adminNcsArExtractBtn" type="button" style="white-space:nowrap;">Download AR comparison file</button><button class="btn-load" id="adminNcsProbeBtn" type="button" style="white-space:nowrap;">Find AR data in NCS</button><button class="btn-load" id="adminNcsExtractBtn" type="button" style="white-space:nowrap;">Download LOS comparison file</button><button class="btn-load" id="adminNcsLosBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync Length of Stay from NCS</button></div>
         </div>
         <div id="adminNcsResult" style="margin-top:14px;font-size:13px;"></div>
       </div>
@@ -7750,6 +7750,28 @@
         var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t], {type:'application/json'})); a.download = 'vantis-ar-diag.json'; document.body.appendChild(a); a.click(); a.remove();
         box.textContent = 'Downloaded vantis-ar-diag.json (totals only, no names or IDs).';
       }).catch(function(e){ box.textContent = 'Request failed: '+e.message; }).then(function(){ bd.disabled = false; });
+    });
+  })();
+  (function(){
+    var bj = document.getElementById('adminNcsSjExtractBtn');
+    if(!bj) return;
+    bj.addEventListener('click', function(){
+      var box = document.getElementById('adminNcsResult');
+      bj.disabled = true;
+      var ids = ['943','945','947','948','952','958','949','609','610','611','612','616','678','679','681','942','944','950','953','954','955','957'];
+      var all = {companies:[], failed:[]};
+      function one(i){
+        if(i >= ids.length) return Promise.resolve();
+        box.textContent = 'Building the Sales Journal comparison file — facility '+(i+1)+' of '+ids.length+'…';
+        return fetch('/api/admin/ncs/sj-extract?since=2025-01&company='+ids[i], {headers:{'x-admin-key':adminKey}}).then(function(r){ return r.json(); }).then(function(j){
+          if(j.error) throw new Error(j.error); all.companies.push(j);
+        }).catch(function(e){ all.failed.push(ids[i]+': '+e.message); }).then(function(){ return one(i+1); });
+      }
+      one(0).then(function(){
+        var t = JSON.stringify(all);
+        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t], {type:'application/json'})); a.download = 'vantis-sj-extract.json'; document.body.appendChild(a); a.click(); a.remove();
+        box.innerHTML = 'Downloaded vantis-sj-extract.json ('+Math.round(t.length/1024).toLocaleString()+' KB) — totals by month, payor and rate code only.'+(all.failed.length?'<div style="color:#B0455B;margin-top:6px;">Failed:<br>'+all.failed.map(ncsEsc).join('<br>')+'</div>':'');
+      }).then(function(){ bj.disabled = false; });
     });
   })();
   (function(){
