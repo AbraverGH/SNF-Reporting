@@ -1794,7 +1794,7 @@
       <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head">
           <div><h2>NCS Connection</h2><div class="note">Checks that Vantis can sign in to NCS and read your facility list. Needs NCS_API_KEY, NCS_CLIENT_SECRET and NCS_USER set on the server.</div></div>
-          <div style="display:flex;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><select id="adminNcsGrace" style="border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;"><option value="">Live NCS (today)</option><option value="asof">As of the date at right</option><option value="3">As of 3 days after month-end</option><option value="7">As of 7 days after month-end</option><option value="14">As of 14 days after month-end</option></select><button class="btn-load" id="adminNcsSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync new months from NCS</button><input type="date" id="adminNcsAsOf" value="2026-08-10" style="border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;"><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button><button class="btn-load" id="adminNcsArExtractBtn" type="button" style="white-space:nowrap;">Download AR comparison file</button><button class="btn-load" id="adminNcsProbeBtn" type="button" style="white-space:nowrap;">Find AR data in NCS</button><button class="btn-load" id="adminNcsExtractBtn" type="button" style="white-space:nowrap;">Download LOS comparison file</button><button class="btn-load" id="adminNcsLosBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync Length of Stay from NCS</button></div>
+          <div style="display:flex;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><select id="adminNcsGrace" style="border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;"><option value="">Live NCS (today)</option><option value="asof">As of the date at right</option><option value="3">As of 3 days after month-end</option><option value="7">As of 7 days after month-end</option><option value="14">As of 14 days after month-end</option></select><button class="btn-load" id="adminNcsSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync new months from NCS</button><input type="date" id="adminNcsAsOf" value="2026-08-10" style="border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;"><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button><button class="btn-load" id="adminNcsArSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync AR from NCS</button><button class="btn-load" id="adminNcsArExtractBtn" type="button" style="white-space:nowrap;">Download AR comparison file</button><button class="btn-load" id="adminNcsProbeBtn" type="button" style="white-space:nowrap;">Find AR data in NCS</button><button class="btn-load" id="adminNcsExtractBtn" type="button" style="white-space:nowrap;">Download LOS comparison file</button><button class="btn-load" id="adminNcsLosBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync Length of Stay from NCS</button></div>
         </div>
         <div id="adminNcsResult" style="margin-top:14px;font-size:13px;"></div>
       </div>
@@ -7687,6 +7687,57 @@
         var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t], {type:'application/json'})); a.download = 'vantis-los-extract.json'; document.body.appendChild(a); a.click(); a.remove();
         box.textContent = 'Downloaded vantis-los-extract.json — dates, payor codes and reason ids only, no names or resident IDs.';
       }).catch(function(e){ box.textContent = 'Request failed: '+e.message; }).then(function(){ be.disabled = false; });
+    });
+  })();
+  (function(){
+    var bs = document.getElementById('adminNcsArSyncBtn');
+    if(!bs) return;
+    var IDS = ['943','945','947','948','952','958','949','609','610','611','612','616','678','679','681','942','944','950','953','954','955','957'];
+    var SRC = {partA:'Part A', partACoinsurance:'Part A Coins', partB:'Part B', partBCoinsurance:'Part B Coins'};
+    function fmt(n){ return n==null ? '—' : Math.round(n).toLocaleString(); }
+    function post(id, apply){
+      return fetch('/api/admin/ncs/sync-ar', {method:'POST', headers:{'Content-Type':'application/json','x-admin-key':adminKey}, body:JSON.stringify({company:id, since:'2025-01', apply:!!apply})}).then(function(r){ return r.json(); });
+    }
+    function run(apply, results){
+      var box = document.getElementById('adminNcsResult'); var failed = [];
+      function step(i){
+        if(i >= IDS.length) return Promise.resolve();
+        box.textContent = (apply ? 'Replacing AR data' : 'Reading AR from NCS')+' — facility '+(i+1)+' of '+IDS.length+'…';
+        return post(IDS[i], apply).then(function(d){ if(d.error) failed.push((d.label||IDS[i])+': '+d.error); else results[IDS[i]] = d; }).catch(function(e){ failed.push(IDS[i]+': '+e.message); }).then(function(){ return step(i+1); });
+      }
+      return step(0).then(function(){ return failed; });
+    }
+    function render(results, failed){
+      var box = document.getElementById('adminNcsResult');
+      var h = '<div style="font-weight:600;margin-bottom:4px;">AR from NCS vs your uploads (latest as-of date in each upload, cohorts since Jan 2025; All Groups totals, $)</div>';
+      h += '<div style="overflow:auto;max-height:420px;"><table style="border-collapse:collapse;font-size:12px;"><tr style="text-align:right;"><th style="text-align:left;padding:2px 8px;">Facility</th><th style="text-align:left;padding:2px 8px;">Source</th><th>As of</th><th style="padding:2px 8px;">Revenue NCS</th><th style="padding:2px 8px;">upload</th><th style="padding:2px 8px;">Cash NCS</th><th style="padding:2px 8px;">upload</th><th style="padding:2px 8px;">Aging NCS</th><th style="padding:2px 8px;">upload</th><th style="padding:2px 8px;">Cells matching</th></tr>';
+      var banks = {}, unm = {}, miss = 0;
+      Object.keys(results).forEach(function(id){
+        var d = results[id]; miss += d.diag.missingParents||0;
+        (d.diag.unmappedGroups||[]).forEach(function(g){ unm[g]=1; });
+        Object.keys(d.diag.writeOffBanks||{}).forEach(function(b){ banks[b] = (banks[b]||0) + d.diag.writeOffBanks[b]; });
+        d.compare.forEach(function(c){
+          if(c.noUpload){ h += '<tr><td style="padding:2px 8px;">'+ncsEsc(d.facility)+'</td><td style="padding:2px 8px;">'+SRC[c.src]+'</td><td colspan="8" style="color:var(--ink-soft);padding:2px 8px;">no uploaded rows to compare</td></tr>'; return; }
+          function pair(m){ var x = c.sums[m]||{ncs:0,up:0}; var bad = Math.abs(x.ncs-x.up) > Math.max(5, Math.abs(x.up)*0.005); return '<td style="text-align:right;padding:2px 8px;'+(bad?'color:#B0455B;font-weight:600;':'')+'">'+fmt(x.ncs)+'</td><td style="text-align:right;padding:2px 8px;color:var(--ink-soft);">'+fmt(x.up)+'</td>'; }
+          h += '<tr><td style="padding:2px 8px;">'+ncsEsc(d.facility)+'</td><td style="padding:2px 8px;">'+SRC[c.src]+'</td><td style="padding:2px 8px;">'+ncsEsc(c.asOf)+'</td>'+pair('Revenue')+pair('Cash Receipts')+pair('Aging Bals')+'<td style="text-align:right;padding:2px 8px;">'+(c.cells?Math.round(c.same/c.cells*100)+'% of '+c.cells.toLocaleString():'—')+'</td></tr>';
+        });
+      });
+      h += '</table></div>';
+      var bk = Object.keys(banks);
+      h += '<details style="margin-top:8px;"><summary>Write-off accounts seen ('+bk.length+')</summary><div style="font-size:12px;padding:4px 0 4px 16px;color:var(--ink-soft);">'+(bk.map(function(b){ return ncsEsc(b)+': '+fmt(banks[b]); }).join('<br>')||'none')+'</div></details>';
+      h += '<div style="font-size:12px;color:var(--ink-soft);margin-top:6px;">Payor groups not in the standard columns (counted in All Groups only): '+(Object.keys(unm).map(ncsEsc).join(', ')||'none')+'. Child bills with no parent found: '+miss+'.</div>';
+      if(failed.length) h += '<div style="color:#B0455B;margin-top:6px;">Not read:<br>'+failed.map(ncsEsc).join('<br>')+'</div>';
+      h += '<div style="margin-top:10px;"><button class="btn-load" id="adminNcsArApplyBtn" type="button" style="background:#B0455B;">Replace AR for '+Object.keys(results).length+' facilities with NCS data (since Jan 2025)</button> <span style="font-size:12px;color:var(--ink-soft);">Keeps a backup of each current file the first time. Other facilities and earlier months are untouched.</span></div>';
+      box.innerHTML = h;
+      document.getElementById('adminNcsArApplyBtn').addEventListener('click', function(){
+        if(!confirm('Replace AR Collections data for these facilities (Jan 2025 onward) with NCS data?')) return;
+        this.disabled = true; var res2 = {};
+        run(true, res2).then(function(f2){ box.innerHTML = '<div style="font-weight:600;">Replaced AR data for '+Object.keys(res2).length+' facilities.</div><div style="font-size:12px;">Reload the page to see it.</div>'+(f2.length?'<div style="color:#B0455B;">Failed:<br>'+f2.map(ncsEsc).join('<br>')+'</div>':''); });
+      });
+    }
+    bs.addEventListener('click', function(){
+      bs.disabled = true; var results = {};
+      run(false, results).then(function(failed){ render(results, failed); }).then(function(){ bs.disabled = false; });
     });
   })();
   (function(){
