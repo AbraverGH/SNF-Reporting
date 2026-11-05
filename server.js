@@ -2181,46 +2181,6 @@ app.post('/api/admin/ncs/sync-ar', express.json({ limit: '1mb' }), async (req, r
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Admin-only: groups one facility's ancillary bills by features, to find which ones the uploaded Part B counts.
-app.get('/api/admin/ncs/ar-diag', async (req, res) => {
-  if (!isAdminRequest(req)) return res.status(401).json({ error: 'Invalid admin key.' });
-  try {
-    const cid = String(req.query.company || '945');
-    if (!NCS_CENSUS_COMPANIES[cid]) return res.status(400).json({ error: 'Unknown company.' });
-    const one = [cid];
-    const bills = ncsLatest(ncsAsArray(await ncsGet('ResidentBills', one)));
-    const anc = ncsLatest(ncsAsArray(await ncsGet('ResidentAncillaryBills', one)));
-    const recs = ncsLatest(ncsAsArray(await ncsGet('Receipts', one)));
-    const ents = ncsLatest(ncsAsArray(await ncsGet('BillableEntities', one)));
-    const groups = ncsLatest(ncsAsArray(await ncsGet('BillingGroups', one)));
-    const gn = {}; groups.forEach(function (g) { gn[g.id] = g.name; });
-    const eg = {}; ents.forEach(function (e) { eg[e.id] = gn[e.billingGroupId] || '?'; });
-    const recByBill = {}; recs.forEach(function (r) { if (r.residentBillAncillaryDetailId != null) (recByBill[r.residentBillAncillaryDetailId] = recByBill[r.residentBillAncillaryDetailId] || 0); recByBill[r.residentBillAncillaryDetailId] += (r.net || 0); });
-    const mon = function (v) { return typeof v === 'string' ? v.slice(0, 7) : null; };
-    const stayKey = {}; // resident|month -> set of groups with a stay bill (primary, non-void)
-    bills.forEach(function (b) { if (b.typeId === 33 && !b.voidedDate && b.parentBillId == null) { const k = b.residentId + '|' + mon(b.startDate); (stayKey[k] = stayKey[k] || {})[eg[b.payorId]] = 1; } });
-    const out = { groups: {}, uploadedPartB: {}, uploadedPartBCash: {} };
-    anc.forEach(function (b) {
-      const m = mon(b.startDate); if (!m || m < '2025-01' || b.voidedDate || b.parentBillId != null) return;
-      const sk = stayKey[b.residentId + '|' + m] || {};
-      const key = [eg[b.payorId], b.typeId, b.serviceDescription, 'wo=' + (b.writeOff ? 1 : 0), 'ab=' + (b.partABId != null ? 1 : 0), 'rcpt=' + (recByBill[b.id] != null ? 1 : 0), 'stayAny=' + (Object.keys(sk).length ? 1 : 0), 'staySame=' + (sk[eg[b.payorId]] ? 1 : 0), 'du=' + b.distinctUnitId, 'mod=' + b.serviceDescriptionModifierId, 'pn=' + (b.payorNumber || 0)].join('|');
-      const o = out.groups[key] || (out.groups[key] = { n: 0, gross: 0 }); o.n++; o.gross = Math.round((o.gross + (b.gross || 0)) * 100) / 100;
-    });
-    const label = String(NCS_CENSUS_COMPANIES[cid]).toLowerCase();
-    ['partB', 'partBCoinsurance'].forEach(function (src) {
-      const f = dataFileFor(src); if (!fs.existsSync(f)) return;
-      const recsU = (JSON.parse(fs.readFileSync(f, 'utf8')).records || []).filter(function (r) { return String(r.facility).toLowerCase() === label; });
-      let mx = ''; recsU.forEach(function (r) { if (r.asOfISO > mx) mx = r.asOfISO; });
-      out.uploadedPartB[src] = {}; out.uploadedPartBCash[src] = {};
-      recsU.filter(function (r) { return r.asOfISO === mx; }).forEach(function (r) {
-        const tgt = r.metric === 'Revenue' ? out.uploadedPartB[src] : (r.metric === 'Cash Receipts' ? out.uploadedPartBCash[src] : null); if (!tgt) return;
-        Object.keys(r.values).forEach(function (c) { if (r.values[c]) tgt[c] = Math.round(((tgt[c] || 0) + r.values[c]) * 100) / 100; });
-      });
-    });
-    res.json(out);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
 // Admin-only: de-identified AR summary for validating an NCS AR sync against the uploaded Part A/B files.
 // Only totals grouped by facility / month of service / payor / bill type — no residents, no names.
 app.get('/api/admin/ncs/ar-extract', async (req, res) => {
