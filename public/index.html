@@ -7228,6 +7228,12 @@
     return {rows: rows, totals: tot, payers: payers, payerPct: payerPct, bTot: bTot};
   }
 
+  // Length of Stay is shown in three groups: Medicare, other skilled payers, and everything else.
+  var DECK_LOS_GROUPS = [
+    {label:'Medicare', types:['MEDICARE']},
+    {label:'Other Skilled', note:'Managed Medicare, Commercial, Managed Medicaid', types:['MANAGED MCR','COMMERCIAL','MANAGED MCD']},
+    {label:'Other', note:'Medicaid, Private, Hospice, Veterans, Respite, Other', types:[], other:true}
+  ];
   var DECK_LOS_PAYER_ORDER = ['MEDICARE','MANAGED MCR','MEDICAID','MANAGED MCD','PRIVATE','COMMERCIAL','HOSPICE','VA','RSPITE','Unmapped'];
   var DECK_LOS_PAYER_LABEL = {'MEDICARE':'Medicare','MANAGED MCR':'Managed Medicare','MEDICAID':'Medicaid','MANAGED MCD':'Managed Medicaid','PRIVATE':'Private Pay','COMMERCIAL':'Commercial','HOSPICE':'Hospice','VA':'Veterans','RSPITE':'Respite','Unmapped':'Other'};
   function deckPayerLabel(label){ return String(label).replace(' (NE + KY + OK + KS)',''); }
@@ -7266,14 +7272,14 @@
     }
     var lo = months[0], hi = months[months.length-1];
     var out = [];
-    DECK_LOS_PAYER_ORDER.forEach(function(t){
-      var e = eps.filter(function(x){ return x.type===t; });
+    DECK_LOS_GROUPS.forEach(function(g){
+      var e = eps.filter(function(x){ return g.types.indexOf(x.type) >= 0 || (g.other && DECK_LOS_GROUPS.slice(0,2).every(function(o){ return o.types.indexOf(x.type) === -1; })); });
       if(!e.length) return;
       var bk = deckPeriodRanges(months).map(function(rg){
         var m = e.filter(function(x){ return x.ck>=rg[0] && x.ck<=rg[1]; });
         return {n: m.length, avg: m.length ? m.reduce(function(sm,x){return sm+x.days;},0)/m.length : null};
       });
-      out.push({label: DECK_LOS_PAYER_LABEL[t] || t, n: e.length, bk: bk});
+      out.push({label: g.label, note: g.note, n: e.length, bk: bk});
     });
     return out;
   }
@@ -7387,11 +7393,11 @@
           '<div class="deck-kpi-note">trailing 12 months · '+alos.bk[0].n.toLocaleString()+' completed stays</div>' +
           '<div class="deck-alos-sub">'+sub+'</div>' +
         '</div>' +
-        '<div class="deck-alos-chart"><div class="deck-block-title" style="margin-top:0;">Average length of stay by payer (days)</div>' +
+        '<div class="deck-alos-chart"><div class="deck-block-title" style="margin-top:0;">Average length of stay by payer group (days)</div>' +
           '<table class="deck-table deck-bk deck-lospay-table"><thead>'+deckPeriodHead(win, 'Payer')+'</thead><tbody>'+rows+'</tbody></table>' +
         '</div>' +
       '</div>' +
-      '<div class="deck-fine">Stays are placed in the period in which they ended; the number of stays is in brackets. Periods count back from the last closed month, '+keyLabel(win.latestCk)+'. '+(alos.merged ? 'All payers: a stay continues through payor changes and hospital returns after less than 3 days away. ' : '')+'By payer: days on that payer — a payor change ends the episode. Stays still in progress are excluded.</div>';
+      '<div class="deck-fine">Stays are placed in the period in which they ended; the number of stays is in brackets. Periods count back from the last closed month, '+keyLabel(win.latestCk)+'. '+(alos.merged ? 'All payers: a stay continues through payor changes and hospital returns after less than 3 days away. ' : '')+'Other Skilled = Managed Medicare, Commercial and Managed Medicaid. Other = Medicaid, Private Pay, Hospice, Veterans, Respite and any payer not matched. By payer group: days on that payer — a payor change ends the episode. Stays still in progress are excluded.</div>';
     }
     var body = '<div class="deck-block-title" style="margin-top:0;">Length of stay</div>'+alosHtml;
     return deckPageShell(title, '', body, win).replace('<section class="deck-page">','<section class="deck-page deck-los">');
