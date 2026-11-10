@@ -384,6 +384,16 @@
   .cohort-chip.no-data{opacity:.4;}
   .cohort-chip.on.no-data{opacity:.55;}
   .popout-panel-head .hint.warn{color:var(--clay);}
+  .cy-wrap{display:block !important;}
+  .cy-group{border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:var(--surface);}
+  .cy-group.has-sel{border-color:var(--emerald);}
+  .cy-head{display:flex;align-items:center;gap:10px;padding:6px 10px;}
+  .cy-toggle{border:0;background:none;font-family:'IBM Plex Mono';font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;padding:2px 4px;}
+  .cy-caret{display:inline-block;width:12px;color:var(--ink-soft);}
+  .cy-count{font-size:11px;color:var(--ink-soft);flex:1;}
+  .cy-all{border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);font-size:10.5px;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:inherit;}
+  .cy-all:hover{border-color:var(--emerald);color:var(--emerald);}
+  .cy-months{flex-wrap:wrap;gap:6px;padding:2px 10px 10px;}
   .cohort-picker-controls{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
   .cohort-picker-controls button{
     border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
@@ -621,6 +631,11 @@
   table.deck-table tbody th{text-align:left;font-weight:600;color:#14233D;font-size:11px;}
   table.deck-table thead th:first-child{text-align:left;}
   table.deck-table .fc-code{font-size:9.5px;font-weight:400;color:#8591A6;font-family:'IBM Plex Mono';margin-left:6px;}
+  .deck-range{font-weight:400;text-transform:none;letter-spacing:0;font-size:9px;color:#8591A6;margin-top:1px;}
+  .deck-n{font-family:'IBM Plex Mono';font-size:9px;color:#8591A6;}
+  table.deck-bk th, table.deck-bk td{padding:7px 10px;}
+  table.deck-bk td{font-size:12px;} table.deck-bk .deck-pill{font-size:12px;padding:3px 9px;}
+  table.deck-bk tbody th{font-size:12px;}
   .deck-tot-col{background:#F1F5FB;font-weight:700;}
   tr.deck-total-row th, tr.deck-total-row td{border-top:2px solid #1F3A5F;font-weight:700;background:#F1F5FB;}
   .deck-summary-table{font-size:12px;margin-top:14px;} .deck-summary-table td{font-size:12px;} .deck-summary-table th, .deck-summary-table td{padding:7px 8px;}
@@ -663,6 +678,12 @@
     .deck-page table.deck-table td{font-size:9px;}
     .deck-page table.deck-table tbody th{font-size:10px;width:15%;white-space:nowrap;}
     .deck-page table.deck-table thead th:first-child{width:15%;}
+    .deck-page table.deck-bk th, .deck-page table.deck-bk td{padding-top:4px !important;padding-bottom:4px !important;}
+    .deck-page table.deck-bk td{font-size:10.5px;}
+    .deck-page table.deck-bk thead th{font-size:9px;}
+    .deck-page table.deck-bk .deck-range{font-size:8px;}
+    .deck-page table.deck-bk tbody th, .deck-page table.deck-bk thead th:first-child{width:28%;font-size:11px;}
+
     .deck-page .deck-pill{min-width:0;padding:0 3px !important;font-size:9px !important;}
     .deck-page .deck-kpi-value{font-size:18px !important;}
     * {-webkit-print-color-adjust:exact;print-color-adjust:exact;}
@@ -1794,7 +1815,7 @@
       <div class="panel" style="margin-bottom:22px;">
         <div class="panel-head">
           <div><h2>NCS Connection</h2><div class="note">Checks that Vantis can sign in to NCS and read your facility list. Needs NCS_API_KEY, NCS_CLIENT_SECRET and NCS_USER set on the server.</div></div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><select id="adminNcsGrace" style="border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;"><option value="">Live NCS (today)</option><option value="asof">As of the date at right</option><option value="3">As of 3 days after month-end</option><option value="7">As of 7 days after month-end</option><option value="14">As of 14 days after month-end</option></select><button class="btn-load" id="adminNcsSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync new months from NCS</button><input type="date" id="adminNcsAsOf" value="2026-08-10" style="border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;"><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button><button class="btn-load" id="adminNcsArSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync AR from NCS</button><button class="btn-load" id="adminNcsArDiagBtn" type="button" style="white-space:nowrap;">AR Part B diagnostic</button><button class="btn-load" id="adminNcsSjExtractBtn" type="button" style="white-space:nowrap;">Download Sales Journal comparison file</button><button class="btn-load" id="adminNcsArExtractBtn" type="button" style="white-space:nowrap;">Download AR comparison file</button><button class="btn-load" id="adminNcsProbeBtn" type="button" style="white-space:nowrap;">Find AR data in NCS</button><button class="btn-load" id="adminNcsExtractBtn" type="button" style="white-space:nowrap;">Download LOS comparison file</button><button class="btn-load" id="adminNcsLosBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync Length of Stay from NCS</button></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;"><button class="btn-load" id="adminNcsTestBtn" type="button" style="white-space:nowrap;">Test NCS connection</button><button class="btn-load" id="adminNcsInspectBtn" type="button" style="white-space:nowrap;">Inspect Census data</button><select id="adminNcsGrace" style="border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;"><option value="">Live NCS (today)</option><option value="asof">As of the date at right</option><option value="3">As of 3 days after month-end</option><option value="7">As of 7 days after month-end</option><option value="14">As of 14 days after month-end</option></select><button class="btn-load" id="adminNcsSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync new months from NCS</button><input type="date" id="adminNcsAsOf" value="2026-08-10" style="border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;"><button class="btn-load" id="adminNcsPreviewBtn" type="button" style="white-space:nowrap;">Preview Census vs uploads</button><button class="btn-load" id="adminNcsArSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync AR from NCS</button><button class="btn-load" id="adminNcsArDiagBtn" type="button" style="white-space:nowrap;">AR Part B diagnostic</button><button class="btn-load" id="adminStorageBtn" type="button" style="white-space:nowrap;">Data storage</button><button class="btn-load" id="adminNcsSjSyncBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync Sales Journal from NCS</button><button class="btn-load" id="adminNcsSjExtractBtn" type="button" style="white-space:nowrap;">Download Sales Journal comparison file</button><button class="btn-load" id="adminNcsArExtractBtn" type="button" style="white-space:nowrap;">Download AR comparison file</button><button class="btn-load" id="adminNcsProbeBtn" type="button" style="white-space:nowrap;">Find AR data in NCS</button><button class="btn-load" id="adminNcsExtractBtn" type="button" style="white-space:nowrap;">Download LOS comparison file</button><button class="btn-load" id="adminNcsLosBtn" type="button" style="white-space:nowrap;background:#1d7a4d;">Sync Length of Stay from NCS</button></div>
         </div>
         <div id="adminNcsResult" style="margin-top:14px;font-size:13px;"></div>
       </div>
@@ -2137,6 +2158,98 @@
   }
   var MONTH_IDX = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
   var MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+
+  /* ---------------------------------------------------------
+     SHARED YEAR-GROUPED MONTH PICKER — each year is a folded row (open it to pick months, or take the
+     whole year in one click), plus a "Last 12 months" shortcut. Used by Skilled Analysis, Medicare Days and
+     AR Collections; Census Trends has its own copy of the same idea.
+     cfg: {el, cohorts, selected(Set), holder({expanded:Set}), minOne, toast(fn), onChange(fn)}
+  --------------------------------------------------------- */
+  function trailing12Of(cohorts){
+    if(!cohorts.length) return [];
+    var latest = Math.max.apply(null, cohorts);
+    return cohorts.filter(function(ck){ return ck > latest - 12 && ck <= latest; });
+  }
+  function sameKeySet(a, b){
+    if(a.length !== b.length) return false;
+    var m = {}; b.forEach(function(x){ m[x] = 1; });
+    return a.every(function(x){ return m[x]; });
+  }
+  function describeYearPicked(selected, cohorts){
+    var arr = Array.from(selected).sort(function(a,b){return a-b;});
+    if(!arr.length) return '—';
+    if(arr.length === cohorts.length) return 'All';
+    if(sameKeySet(arr, trailing12Of(cohorts))) return 'Last 12 months';
+    return arr.length <= 3 ? arr.map(keyLabel).join(', ') : arr.length + ' selected';
+  }
+  // First load: trailing 12 months. Later loads: keep what the person picked.
+  function applyTrailing12Default(st, cohorts){
+    if(!st.monthsDefaulted && cohorts.length){
+      st.selectedCohorts.clear();
+      trailing12Of(cohorts).forEach(function(ck){ st.selectedCohorts.add(ck); });
+      st.monthsDefaulted = true;
+    } else {
+      Array.from(st.selectedCohorts).forEach(function(ck){ if(cohorts.indexOf(ck) === -1) st.selectedCohorts.delete(ck); });
+      if(!st.selectedCohorts.size) trailing12Of(cohorts).forEach(function(ck){ st.selectedCohorts.add(ck); });
+    }
+  }
+  function renderYearGroupedPicker(cfg){
+    var el = cfg.el, cohorts = cfg.cohorts, sel = cfg.selected, holder = cfg.holder;
+    var byYear = {};
+    cohorts.forEach(function(ck){ var y = Math.floor(ck/12); (byYear[y] = byYear[y] || []).push(ck); });
+    var yearList = Object.keys(byYear).map(Number).sort(function(a,b){ return b-a; });
+    if(!holder.expanded) holder.expanded = new Set();
+    if(!holder.init){
+      holder.init = true;
+      var sa = Array.from(sel);
+      if(sa.length) holder.expanded.add(Math.floor(Math.max.apply(null, sa)/12)); else if(yearList.length) holder.expanded.add(yearList[0]);
+    }
+    el.className = 'cohort-picker cy-wrap';
+    el.innerHTML = yearList.map(function(y){
+      var cks = byYear[y].slice().sort(function(a,b){ return a-b; });
+      var nSel = cks.filter(function(ck){ return sel.has(ck); }).length;
+      var open = holder.expanded.has(y), whole = nSel === cks.length;
+      var chips = cks.map(function(ck){ return '<button class="cohort-chip'+(sel.has(ck)?' on':'')+'" data-ck="'+ck+'">'+MONTH_ABBR[ck - y*12]+'</button>'; }).join('');
+      return '<div class="cy-group'+(nSel?' has-sel':'')+'"><div class="cy-head"><button type="button" class="cy-toggle" data-y="'+y+'" aria-expanded="'+(open?'true':'false')+'"><span class="cy-caret">'+(open?'▾':'▸')+'</span> '+y+'</button>'
+        + '<span class="cy-count">'+(nSel ? nSel+' of '+cks.length+' months' : 'none selected')+'</span>'
+        + '<button type="button" class="cy-all" data-y="'+y+'">'+(whole ? 'Clear year' : 'Whole year')+'</button></div>'
+        + '<div class="cy-months" style="display:'+(open?'flex':'none')+'">'+chips+'</div></div>';
+    }).join('');
+    Array.prototype.forEach.call(el.querySelectorAll('.cy-toggle'), function(btn){
+      btn.addEventListener('click', function(){
+        var y = Number(btn.getAttribute('data-y'));
+        if(holder.expanded.has(y)) holder.expanded.delete(y); else holder.expanded.add(y);
+        cfg.rerender();
+      });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('.cy-all'), function(btn){
+      btn.addEventListener('click', function(){
+        var cks = byYear[Number(btn.getAttribute('data-y'))];
+        if(cks.every(function(ck){ return sel.has(ck); })){
+          if(cfg.minOne && !Array.from(sel).some(function(ck){ return cks.indexOf(ck) === -1; })){ cfg.toast('At least one month must stay selected.'); return; }
+          cks.forEach(function(ck){ sel.delete(ck); });
+        } else cks.forEach(function(ck){ sel.add(ck); });
+        cfg.onChange();
+      });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('.cohort-chip'), function(btn){
+      btn.addEventListener('click', function(){
+        var ck = Number(btn.getAttribute('data-ck'));
+        if(sel.has(ck)){
+          if(cfg.minOne && sel.size <= 1){ cfg.toast('At least one month must stay selected.'); return; }
+          sel.delete(ck);
+        } else sel.add(ck);
+        cfg.onChange();
+      });
+    });
+  }
+  function addLast12Button(controlsId, cohorts, selected, onChange){
+    var ctl = document.getElementById(controlsId); if(!ctl) return;
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = 'Last 12 months';
+    b.addEventListener('click', function(){ selected.clear(); trailing12Of(cohorts).forEach(function(ck){ selected.add(ck); }); onChange(); });
+    ctl.insertBefore(b, ctl.firstChild);
+  }
 
   /* ---------------------------------------------------------
      SHARED PICKER CONTROLS — "Select all / Clear all" plus, for
@@ -2715,27 +2828,16 @@
 
     var cohorts = allCohortKeys();
     if(!state.monthsDefaulted && state.selectedMonths.size === 0 && cohorts.length){
-      cohorts.slice(-6).forEach(function(c){ state.selectedMonths.add(c); });
+      trailing12Of(cohorts).forEach(function(c){ state.selectedMonths.add(c); });
       state.monthsDefaulted = true;
     }
-    var moEl = document.getElementById('globalMonthsPicker');
-    moEl.innerHTML = cohorts.map(function(ck){
-      var on = state.selectedMonths.has(ck);
-      return '<button class="cohort-chip'+(on?' on':'')+'" data-ck="'+ck+'">'+keyLabel(ck)+'</button>';
-    }).join('');
-    Array.prototype.forEach.call(moEl.querySelectorAll('.cohort-chip'), function(btn){
-      btn.addEventListener('click', function(){
-        var ck = Number(btn.getAttribute('data-ck'));
-        if(state.selectedMonths.has(ck)) state.selectedMonths.delete(ck);
-        else state.selectedMonths.add(ck);
-        renderAll();
-      });
-    });
-    document.getElementById('monthsTriggerValue').textContent = describeMonthSelection(state.selectedMonths);
+    renderYearGroupedPicker({ el: document.getElementById('globalMonthsPicker'), cohorts: cohorts, selected: state.selectedMonths, holder: state.monthsHolder || (state.monthsHolder = {}), minOne: false, toast: function(){}, onChange: renderAll, rerender: renderGlobalPickers });
+    document.getElementById('monthsTriggerValue').textContent = (state.selectedMonths.size && sameKeySet(Array.from(state.selectedMonths), trailing12Of(cohorts))) ? 'Last 12 months' : describeMonthSelection(state.selectedMonths);
     renderPickerControls('globalMonthsPickerControls', {
       selectedSet: state.selectedMonths, allValues: cohorts, minOne: false, presets: 'cohortKey',
       onChange: renderAll
     });
+    addLast12Button('globalMonthsPickerControls', cohorts, state.selectedMonths, renderAll);
   }
 
   // Shared helper: turns a Set of cohort keys into a compact trigger label,
@@ -4005,6 +4107,8 @@
     // replacing the old separate Year and Month-of-any-year pickers below.
     cohorts: [],
     selectedCohorts: new Set(),
+    expandedYears: new Set(),
+    monthsDefaulted: false,
     years: [],
     selectedYears: new Set(),
     monthsPresent: [],         // calendar months (0-11) that actually appear anywhere
@@ -4017,6 +4121,7 @@
   // it just keeps independent frontend state from Census Trends, same as
   // any other two apps in Vantis.
   var skilledState = {
+    monthsDefaulted: false,
     sources: {},               // salesJournal/payerMap -> {fileName, rowCount, uploadedAt, records|dataRows+typeRows}
     rows: [],                  // flat computed rows: {facility, cohortKey, year, month, family, label, payerType, payorName, units, gross, net}
     facilities: [],
@@ -4446,7 +4551,27 @@
     censusState.cohorts = Object.keys(cohortSet).map(Number).sort(function(a,b){return a-b;});
     syncSelection(censusState.years, censusState.selectedYears);
     syncSelection(censusState.monthsPresent, censusState.selectedMonthsCal);
-    syncSelection(censusState.cohorts, censusState.selectedCohorts);
+    // Opens on the trailing 12 months (ending at the latest month that has Census Report data, else any data);
+    // after that first time, whatever the person picked is kept as-is.
+    if(!censusState.monthsDefaulted && censusState.cohorts.length){
+      censusState.selectedCohorts.clear();
+      censusTrailing12().forEach(function(ck){ censusState.selectedCohorts.add(ck); });
+      censusState.monthsDefaulted = true;
+    } else {
+      Array.from(censusState.selectedCohorts).forEach(function(ck){ if(censusState.cohorts.indexOf(ck) === -1) censusState.selectedCohorts.delete(ck); });
+      if(!censusState.selectedCohorts.size) censusTrailing12().forEach(function(ck){ censusState.selectedCohorts.add(ck); });
+    }
+  }
+
+  // The 12 calendar months ending at the latest month that has data (Census Report preferred).
+  function censusTrailing12(){
+    var withDays = {};
+    censusState.daysRows.forEach(function(r){ withDays[r.cohortKey] = true; });
+    var pool = censusState.cohorts.filter(function(ck){ return withDays[ck]; });
+    if(!pool.length) pool = censusState.cohorts;
+    if(!pool.length) return [];
+    var latest = Math.max.apply(null, pool);
+    return censusState.cohorts.filter(function(ck){ return ck > latest - 12 && ck <= latest; });
   }
 
   // Rebuilds skilledState.rows from the Sales Journal, same shape/logic as
@@ -4576,7 +4701,7 @@
     skilledState.cohorts = Object.keys(cohortSet).map(Number).sort(function(a,b){return a-b;});
     syncSelection(skilledState.years, skilledState.selectedYears);
     syncSelection(skilledState.monthsPresent, skilledState.selectedMonthsCal);
-    syncSelection(skilledState.cohorts, skilledState.selectedCohorts);
+    applyTrailing12Default(skilledState, skilledState.cohorts);
   }
 
   function skilledFilteredRows(){
@@ -4711,11 +4836,54 @@
     var anyCohortMissing = censusState.cohorts.some(function(ck){ return !cohortsWithData[ck]; });
 
     var el = document.getElementById('censusMonthPicker');
-    el.innerHTML = censusState.cohorts.map(function(ck){
-      var on = censusState.selectedCohorts.has(ck);
-      var noData = !cohortsWithData[ck];
-      return '<button class="cohort-chip'+(on?' on':'')+(noData?' no-data':'')+'" data-ck="'+ck+'"'+(noData?' title="No data for '+censusActiveTabLabel()+' in '+keyLabel(ck)+'"':'')+'>'+keyLabel(ck)+'</button>';
+    // Group the months by year, newest year first. Each year folds open to show its months, or can be
+    // picked whole with one click.
+    var byYear = {};
+    censusState.cohorts.forEach(function(ck){ var y = Math.floor(ck/12); (byYear[y] = byYear[y] || []).push(ck); });
+    var yearList = Object.keys(byYear).map(Number).sort(function(a,b){ return b-a; });
+    if(!censusState.yearsOpenInit){
+      censusState.yearsOpenInit = true;
+      var selArr = Array.from(censusState.selectedCohorts);
+      if(selArr.length) censusState.expandedYears.add(Math.floor(Math.max.apply(null, selArr)/12)); else if(yearList.length) censusState.expandedYears.add(yearList[0]);
+    }
+    el.className = 'cohort-picker cy-wrap';
+    el.innerHTML = yearList.map(function(y){
+      var cks = byYear[y].slice().sort(function(a,b){ return a-b; });
+      var nSel = cks.filter(function(ck){ return censusState.selectedCohorts.has(ck); }).length;
+      var open = censusState.expandedYears.has(y);
+      var whole = nSel === cks.length;
+      var chips = cks.map(function(ck){
+        var on = censusState.selectedCohorts.has(ck);
+        var noData = !cohortsWithData[ck];
+        return '<button class="cohort-chip'+(on?' on':'')+(noData?' no-data':'')+'" data-ck="'+ck+'"'+(noData?' title="No data for '+censusActiveTabLabel()+' in '+keyLabel(ck)+'"':'')+'>'+MONTH_ABBR[ck - y*12]+'</button>';
+      }).join('');
+      return '<div class="cy-group'+(nSel?' has-sel':'')+'"><div class="cy-head"><button type="button" class="cy-toggle" data-y="'+y+'" aria-expanded="'+(open?'true':'false')+'"><span class="cy-caret">'+(open?'▾':'▸')+'</span> '+y+'</button>'
+        + '<span class="cy-count">'+(nSel ? nSel+' of '+cks.length+' months' : 'none selected')+'</span>'
+        + '<button type="button" class="cy-all" data-y="'+y+'">'+(whole ? 'Clear year' : 'Whole year')+'</button></div>'
+        + '<div class="cy-months" style="display:'+(open?'flex':'none')+'">'+chips+'</div></div>';
     }).join('');
+    Array.prototype.forEach.call(el.querySelectorAll('.cy-toggle'), function(btn){
+      btn.addEventListener('click', function(){
+        var y = Number(btn.getAttribute('data-y'));
+        if(censusState.expandedYears.has(y)) censusState.expandedYears.delete(y); else censusState.expandedYears.add(y);
+        censusRenderYearMonthPickers();
+      });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('.cy-all'), function(btn){
+      btn.addEventListener('click', function(){
+        var y = Number(btn.getAttribute('data-y'));
+        var cks = byYear[y];
+        var allOn = cks.every(function(ck){ return censusState.selectedCohorts.has(ck); });
+        if(allOn){
+          var rest = Array.from(censusState.selectedCohorts).filter(function(ck){ return cks.indexOf(ck) === -1; });
+          if(!rest.length){ censusShowToast('At least one month must stay selected.'); return; }
+          cks.forEach(function(ck){ censusState.selectedCohorts.delete(ck); });
+        } else {
+          cks.forEach(function(ck){ censusState.selectedCohorts.add(ck); });
+        }
+        censusRenderAll();
+      });
+    });
     Array.prototype.forEach.call(el.querySelectorAll('.cohort-chip'), function(btn){
       btn.addEventListener('click', function(){
         var ck = Number(btn.getAttribute('data-ck'));
@@ -4727,7 +4895,7 @@
     });
     var arr = Array.from(censusState.selectedCohorts).sort(function(a,b){return a-b;});
     document.getElementById('censusMonthTriggerValue').textContent =
-      arr.length===0 ? '—' : (arr.length===censusState.cohorts.length ? 'All' : (arr.length<=3 ? arr.map(keyLabel).join(', ') : arr.length+' selected'));
+      arr.length===0 ? '—' : (arr.length===censusState.cohorts.length ? 'All' : (censusSameSet(arr, censusTrailing12()) ? 'Last 12 months' : (arr.length<=3 ? arr.map(keyLabel).join(', ') : arr.length+' selected')));
     var hintEl = document.getElementById('censusMonthHint');
     if(hintEl){
       hintEl.textContent = anyCohortMissing ? ('— dimmed months have no data for '+censusActiveTabLabel()) : '— pick one or more, each year+month independent';
@@ -4738,6 +4906,21 @@
       selectedSet: censusState.selectedCohorts, allValues: censusState.cohorts, minOne: true, presets: 'cohortKey',
       onChange: censusRenderAll
     });
+    var ctl = document.getElementById('censusMonthPickerControls');
+    if(ctl){
+      var b12 = document.createElement('button'); b12.type = 'button'; b12.textContent = 'Last 12 months';
+      b12.addEventListener('click', function(){
+        censusState.selectedCohorts.clear();
+        censusTrailing12().forEach(function(ck){ censusState.selectedCohorts.add(ck); });
+        censusRenderAll();
+      });
+      ctl.insertBefore(b12, ctl.firstChild);
+    }
+  }
+  function censusSameSet(a, b){
+    if(a.length !== b.length) return false;
+    var m = {}; b.forEach(function(x){ m[x] = 1; });
+    return a.every(function(x){ return m[x]; });
   }
 
   /* =========================================================
@@ -4785,28 +4968,14 @@
   }
 
   function skilledRenderYearMonthPickers(){
-    var el = document.getElementById('skilledMonthPicker');
-    el.innerHTML = skilledState.cohorts.map(function(ck){
-      var on = skilledState.selectedCohorts.has(ck);
-      return '<button class="cohort-chip'+(on?' on':'')+'" data-ck="'+ck+'">'+keyLabel(ck)+'</button>';
-    }).join('');
-    Array.prototype.forEach.call(el.querySelectorAll('.cohort-chip'), function(btn){
-      btn.addEventListener('click', function(){
-        var ck = Number(btn.getAttribute('data-ck'));
-        if(skilledState.selectedCohorts.has(ck) && skilledState.selectedCohorts.size>1) skilledState.selectedCohorts.delete(ck);
-        else if(!skilledState.selectedCohorts.has(ck)) skilledState.selectedCohorts.add(ck);
-        else { skilledShowToast('At least one month must stay selected.'); return; }
-        skilledRenderAll();
-      });
-    });
-    var arr = Array.from(skilledState.selectedCohorts).sort(function(a,b){return a-b;});
-    document.getElementById('skilledMonthTriggerValue').textContent =
-      arr.length===0 ? '—' : (arr.length===skilledState.cohorts.length ? 'All' : (arr.length<=3 ? arr.map(keyLabel).join(', ') : arr.length+' selected'));
+    renderYearGroupedPicker({ el: document.getElementById('skilledMonthPicker'), cohorts: skilledState.cohorts, selected: skilledState.selectedCohorts, holder: skilledState, minOne: true, toast: skilledShowToast, onChange: skilledRenderAll, rerender: skilledRenderYearMonthPickers });
+    document.getElementById('skilledMonthTriggerValue').textContent = describeYearPicked(skilledState.selectedCohorts, skilledState.cohorts);
 
     renderPickerControls('skilledMonthPickerControls', {
       selectedSet: skilledState.selectedCohorts, allValues: skilledState.cohorts, minOne: true, presets: 'cohortKey',
       onChange: skilledRenderAll
     });
+    addLast12Button('skilledMonthPickerControls', skilledState.cohorts, skilledState.selectedCohorts, skilledRenderAll);
   }
 
   /* ---------------------------------------------------------
@@ -5983,6 +6152,7 @@
      colorForPct/registerPopout/MONTH_ABBR from the shared scope.
   ========================================================== */
   var medicareState = {
+    monthsDefaulted: false,
     sources: {},               // salesJournal -> {fileName, rowCount, uploadedAt, records}
     rows: [],                  // flat Medicare-only rows: {facility, cohortKey, year, month, days, gross, coinsurance, net}
     facilities: [],
@@ -6057,7 +6227,7 @@
     medicareState.cohorts = Object.keys(cohortSet).map(Number).sort(function(a,b){return a-b;});
     syncSelection(medicareState.years, medicareState.selectedYears);
     syncSelection(medicareState.monthsPresent, medicareState.selectedMonthsCal);
-    syncSelection(medicareState.cohorts, medicareState.selectedCohorts);
+    applyTrailing12Default(medicareState, medicareState.cohorts);
   }
 
   function medicareFilteredRows(){
@@ -6097,28 +6267,14 @@
   }
 
   function medicareRenderYearMonthPickers(){
-    var el = document.getElementById('medicareMonthPicker');
-    el.innerHTML = medicareState.cohorts.map(function(ck){
-      var on = medicareState.selectedCohorts.has(ck);
-      return '<button class="cohort-chip'+(on?' on':'')+'" data-ck="'+ck+'">'+keyLabel(ck)+'</button>';
-    }).join('');
-    Array.prototype.forEach.call(el.querySelectorAll('.cohort-chip'), function(btn){
-      btn.addEventListener('click', function(){
-        var ck = Number(btn.getAttribute('data-ck'));
-        if(medicareState.selectedCohorts.has(ck) && medicareState.selectedCohorts.size>1) medicareState.selectedCohorts.delete(ck);
-        else if(!medicareState.selectedCohorts.has(ck)) medicareState.selectedCohorts.add(ck);
-        else { medicareShowToast('At least one month must stay selected.'); return; }
-        medicareRenderAll();
-      });
-    });
-    var arr = Array.from(medicareState.selectedCohorts).sort(function(a,b){return a-b;});
-    document.getElementById('medicareMonthTriggerValue').textContent =
-      arr.length===0 ? '—' : (arr.length===medicareState.cohorts.length ? 'All' : (arr.length<=3 ? arr.map(keyLabel).join(', ') : arr.length+' selected'));
+    renderYearGroupedPicker({ el: document.getElementById('medicareMonthPicker'), cohorts: medicareState.cohorts, selected: medicareState.selectedCohorts, holder: medicareState, minOne: true, toast: medicareShowToast, onChange: medicareRenderAll, rerender: medicareRenderYearMonthPickers });
+    document.getElementById('medicareMonthTriggerValue').textContent = describeYearPicked(medicareState.selectedCohorts, medicareState.cohorts);
 
     renderPickerControls('medicareMonthPickerControls', {
       selectedSet: medicareState.selectedCohorts, allValues: medicareState.cohorts, minOne: true, presets: 'cohortKey',
       onChange: medicareRenderAll
     });
+    addLast12Button('medicareMonthPickerControls', medicareState.cohorts, medicareState.selectedCohorts, medicareRenderAll);
   }
 
   function medicareMetrics(rows){
@@ -7010,6 +7166,17 @@
     return MONTH_ABBR[m] + " '" + String(y).slice(2);
   }
 
+  // Period ranges used on the AR and Length of Stay pages: trailing 12 months, then three 3-month blocks counting back
+  // from the last closed month. `months` is the 12-month window, oldest first.
+  var DECK_PERIOD_LABELS = ['T12', '0–3 mo ago', '4–6 mo ago', '7–9 mo ago'];
+  function deckPeriodRanges(months){ return [[months[0], months[11]], [months[9], months[11]], [months[6], months[8]], [months[3], months[5]]]; }
+  function deckPeriodHead(win, firstLabel){
+    var rg = deckPeriodRanges(win.months);
+    return '<tr><th>'+firstLabel+'</th>'+DECK_PERIOD_LABELS.map(function(lb, i){
+      return '<th>'+lb+'<div class="deck-range">'+deckShortMonth(rg[i][0])+' – '+deckShortMonth(rg[i][1])+'</div></th>';
+    }).join('')+'</tr>';
+  }
+
   function deckComputeAR(short, months){
     var facData = byFacCohortAsOf[short];
     if(!facData) return null;
@@ -7039,25 +7206,26 @@
     });
     if(!tot.any) return null;
     tot.pct = tot.rev>0 ? (tot.cash/tot.rev*100) : null;
+    // Four periods, all counting back from the last closed month (the last of the 12 months): the trailing
+    // 12 months, then the most recent 3 months (0-3 months ago), the 3 before (4-6) and the 3 before that (7-9).
+    var sl = [rows, rows.slice(9), rows.slice(6, 9), rows.slice(3, 6)];
+    function sumOver(list, getter){ var sm = 0, anyV = false; list.forEach(function(r){ var v = getter(r); if(v!=null){ sm += v; anyV = true; } }); return anyV ? sm : null; }
     var payers = [], payerPct = [];
     PAYER_OPTIONS.forEach(function(po){
-      var vals = rows.map(function(r){ return r.payerAging[po.key]; });
-      var any = vals.some(function(v){ return v!=null && Math.abs(v)>0.5; });
-      if(any){
-        var total = vals.reduce(function(s,v){ return s + (v||0); }, 0);
-        payers.push({label: deckPayerLabel(po.label), vals: vals, total: total});
-      }
-      // % collected for this payer, month by month and over the 12 months
-      var pRev = 0, pCash = 0;
-      var pcts = rows.map(function(r){
-        var rv = r.payerRev[po.key], ch = r.payerCash[po.key];
-        if(rv!=null) pRev += rv;
-        if(ch!=null) pCash += ch;
+      var bv = sl.map(function(list){ return sumOver(list, function(r){ return r.payerAging[po.key]; }); });
+      if(bv.some(function(v){ return v!=null && Math.abs(v)>0.5; })) payers.push({label: deckPayerLabel(po.label), bv: bv});
+      var bp = sl.map(function(list){
+        var rv = sumOver(list, function(r){ return r.payerRev[po.key]; }), ch = sumOver(list, function(r){ return r.payerCash[po.key]; });
         return (rv!=null && rv>0 && ch!=null) ? (ch/rv*100) : null;
       });
-      if(pRev>0) payerPct.push({label: deckPayerLabel(po.label), vals: pcts, total: pCash/pRev*100, rev: pRev});
+      var pRev = sumOver(rows, function(r){ return r.payerRev[po.key]; });
+      if(pRev!=null && pRev>0) payerPct.push({label: deckPayerLabel(po.label), bp: bp, rev: pRev});
     });
-    return {rows: rows, totals: tot, payers: payers, payerPct: payerPct};
+    var bTot = {
+      pct: sl.map(function(list){ var rv = sumOver(list, function(r){ return r.rev; }), ch = sumOver(list, function(r){ return r.cash; }); return (rv!=null && rv>0 && ch!=null) ? (ch/rv*100) : null; }),
+      aging: sl.map(function(list){ return sumOver(list, function(r){ return r.aging; }); })
+    };
+    return {rows: rows, totals: tot, payers: payers, payerPct: payerPct, bTot: bTot};
   }
 
   var DECK_LOS_PAYER_ORDER = ['MEDICARE','MANAGED MCR','MEDICAID','MANAGED MCD','PRIVATE','COMMERCIAL','HOSPICE','VA','RSPITE','Unmapped'];
@@ -7101,11 +7269,11 @@
     DECK_LOS_PAYER_ORDER.forEach(function(t){
       var e = eps.filter(function(x){ return x.type===t; });
       if(!e.length) return;
-      var win = e.filter(function(x){ return x.ck>=lo && x.ck<=hi; });
-      out.push({label: DECK_LOS_PAYER_LABEL[t] || t, n: e.length, avg: e.reduce(function(s,x){return s+x.days;},0)/e.length,
-        t12n: win.length, t12: win.length ? win.reduce(function(s,x){return s+x.days;},0)/win.length : null,
-        monthly: months.map(function(ck){ var m = win.filter(function(x){ return x.ck===ck; });
-          return {n:m.length, avg: m.length ? m.reduce(function(s,x){return s+x.days;},0)/m.length : null}; })});
+      var bk = deckPeriodRanges(months).map(function(rg){
+        var m = e.filter(function(x){ return x.ck>=rg[0] && x.ck<=rg[1]; });
+        return {n: m.length, avg: m.length ? m.reduce(function(sm,x){return sm+x.days;},0)/m.length : null};
+      });
+      out.push({label: DECK_LOS_PAYER_LABEL[t] || t, n: e.length, bk: bk});
     });
     return out;
   }
@@ -7128,6 +7296,7 @@
       merged: res.merged, allAvg: allAvg, allCount: all.length, median: median,
       t12Avg: win.length ? win.reduce(function(s,x){return s+x.days;},0)/win.length : null,
       t12Count: win.length, monthly: monthly,
+      bk: deckPeriodRanges(months).map(function(rg){ var m = all.filter(function(x){ return x.ck>=rg[0] && x.ck<=rg[1]; }); return {n: m.length, avg: m.length ? m.reduce(function(sm,x){return sm+x.days;},0)/m.length : null}; }),
       winDays: win.reduce(function(s,x){return s+x.days;},0), allDays: all.reduce(function(s,x){return s+x.days;},0),
       byPayer: deckLosByPayer(company, months)
     };
@@ -7152,11 +7321,12 @@
 
   function deckPayerPctTable(ar, win){
     if(!ar.payerPct || !ar.payerPct.length) return '';
-    var head = '<tr><th>Payer</th>'+ar.rows.map(function(r){ return '<th>'+deckShortMonth(r.ck)+'</th>'; }).join('')+'<th class="deck-tot-col">12 mo</th></tr>';
-    var rows = ar.payerPct.map(function(p){
-      return '<tr><th>'+p.label+'</th>'+p.vals.map(function(v){ return '<td>'+deckPctPill(v)+'</td>'; }).join('')+'<td class="deck-tot-col">'+deckPctPill(p.total)+'</td></tr>';
-    }).join('');
-    return '<div class="deck-block-title">% Collected by payer</div><table class="deck-table deck-paypct-table"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table>';
+    var rows = '<tr class="deck-total-row"><th>All payers</th>'+ar.bTot.pct.map(function(v){ return '<td>'+deckPctPill(v)+'</td>'; }).join('')+'</tr>' +
+      ar.payerPct.map(function(p){
+        return '<tr><th>'+p.label+'</th>'+p.bp.map(function(v){ return '<td>'+deckPctPill(v)+'</td>'; }).join('')+'</tr>';
+      }).join('');
+    return '<div class="deck-block-title">% Collected by payer</div><table class="deck-table deck-bk deck-paypct-table"><thead>'+deckPeriodHead(win, 'Payer')+'</thead><tbody>'+rows+'</tbody></table>' +
+      '<div class="deck-fine">Cash collected ÷ revenue for the months of service in each period, as of '+keyLabel(win.latestAsOf)+'. Periods count back from the last closed month, '+keyLabel(win.latestCk)+'.</div>';
   }
 
   function deckArPage(fac, d, win, arAllowed){
@@ -7172,12 +7342,7 @@
       deckKpi('Cash Collected', fmtMoneyFull(ar.totals.cash)) +
       deckKpi('% Collected', ar.totals.pct==null?'—':ar.totals.pct.toFixed(1)+'%') +
       deckKpi('Aging Balance (as of '+keyLabel(win.latestAsOf)+')', fmtMoneyFull(ar.totals.aging)) + '</div>' +
-      '<div class="deck-block-title">Revenue, cash and % collected by month of service</div>' +
-      '<table class="deck-table deck-month-table"><thead>'+head+'</thead><tbody>' +
-        line('Revenue','rev',fmtMoneyFull,ar.totals.rev) +
-        line('Cash collected','cash',fmtMoneyFull,ar.totals.cash) +
-        '<tr><th>% Collected</th>'+ar.rows.map(function(r){ return '<td>'+deckPctPill(r.pct)+'</td>'; }).join('')+'<td class="deck-tot-col">'+deckPctPill(ar.totals.pct)+'</td></tr>' +
-      '</tbody></table>' + deckPayerPctTable(ar, win) + deckAgingBlock(ar, win);
+      deckPayerPctTable(ar, win) + deckAgingBlock(ar, win);
     return deckPageShell(title, 'AR Collections — trailing 12 months', body, win).replace('<section class="deck-page">','<section class="deck-page deck-ar">');
   }
 
@@ -7186,61 +7351,50 @@
     if(!ar || !ar.payers.length){
       agingHtml = '<div class="deck-empty">No aging balances for this facility.</div>';
     } else {
-      var totalAging = ar.payers.reduce(function(s,p){ return s+p.total; },0);
-      var head = '<tr><th>Payer</th>'+ar.rows.map(function(r){ return '<th>'+deckShortMonth(r.ck)+'</th>'; }).join('')+'<th class="deck-tot-col">Total</th><th class="deck-tot-col">% of aging</th></tr>';
-      var rows = ar.payers.map(function(p){
-        return '<tr><th>'+p.label+'</th>'+p.vals.map(function(v){ return '<td>'+(v==null?'—':fmtMoneyFull(v))+'</td>'; }).join('')+'<td class="deck-tot-col">'+fmtMoneyFull(p.total)+'</td><td class="deck-tot-col">'+(totalAging?(p.total/totalAging*100).toFixed(1)+'%':'—')+'</td></tr>';
-      }).join('');
-      var totRow = '<tr class="deck-total-row"><th>All payers</th>'+ar.rows.map(function(r){ return '<td>'+fmtMoneyFull(r.aging)+'</td>'; }).join('')+'<td class="deck-tot-col">'+fmtMoneyFull(ar.totals.aging)+'</td><td class="deck-tot-col">100%</td></tr>';
-      agingHtml = '<table class="deck-table deck-aging-table"><thead>'+head+'</thead><tbody>'+rows+totRow+'</tbody></table>' +
-        '<div class="deck-fine">Balance still outstanding as of '+keyLabel(win.latestAsOf)+', by month of service. Each payer combines Part A, Part A Coinsurance, Part B and Part B Coinsurance.</div>';
+      var rows = '<tr class="deck-total-row"><th>All payers</th>'+ar.bTot.aging.map(function(v){ return '<td>'+(v==null?'—':fmtMoneyFull(v))+'</td>'; }).join('')+'</tr>' +
+        ar.payers.map(function(p){
+          return '<tr><th>'+p.label+'</th>'+p.bv.map(function(v){ return '<td>'+(v==null?'—':fmtMoneyFull(v))+'</td>'; }).join('')+'</tr>';
+        }).join('');
+      agingHtml = '<table class="deck-table deck-bk deck-aging-table"><thead>'+deckPeriodHead(win, 'Payer')+'</thead><tbody>'+rows+'</tbody></table>' +
+        '<div class="deck-fine">Balance still outstanding as of '+keyLabel(win.latestAsOf)+', grouped by month of service: the trailing 12 months, then the most recent 3 months, the 3 before that, and the 3 before that. Each payer combines Part A, Part A Coinsurance, Part B and Part B Coinsurance.</div>';
     }
     return '<div class="deck-block-title">Aging detail by payer</div>'+agingHtml;
   }
 
   function deckAlosAgingPage(fac, d, win, censusAllowed){
     var title = fac.short+' <span class="fc-code">'+(fac.code||'')+'</span>';
-    var alos = d.alos, ar = d.ar;
+    var alos = d.alos;
     var alosHtml;
     if(!censusAllowed){
       alosHtml = '<div class="deck-empty">Length of Stay is not included in your access.</div>';
     } else if(!alos){
       alosHtml = '<div class="deck-empty">No Length of Stay data for this facility.</div>';
     } else {
-      var payRows = (alos.byPayer||[]).map(function(p){
-        return '<tr><th>'+p.label+'</th><td>'+p.n.toLocaleString()+'</td><td>'+p.avg.toFixed(1)+'</td><td>'+(p.t12==null?'—':p.t12.toFixed(1))+'</td></tr>';
+      function cell(b){ return '<td>'+(b.avg==null ? '—' : b.avg.toFixed(1)+' <span class="deck-n">('+b.n+')</span>')+'</td>'; }
+      var rg = deckPeriodRanges(win.months);
+      var rows = '<tr class="deck-total-row"><th>All payers</th>'+alos.bk.map(cell).join('')+'</tr>';
+      (alos.byPayer||[]).forEach(function(p){
+        if(!p.bk[0].n) return;
+        rows += '<tr><th>'+p.label+'</th>'+p.bk.map(cell).join('')+'</tr>';
+      });
+      var sub = [1,2,3].map(function(i){
+        var b = alos.bk[i];
+        return '<div><b>'+(b.avg==null?'—':b.avg.toFixed(1))+'</b> days<br><span>'+DECK_PERIOD_LABELS[i]+' · '+b.n.toLocaleString()+' stays</span></div>';
       }).join('');
       alosHtml = '<div class="deck-alos">' +
         '<div class="deck-alos-main">' +
-          '<div class="deck-kpi-label">Average Length of Stay</div><div class="deck-alos-value">'+alos.allAvg.toFixed(1)+'<span> days</span></div>' +
-          '<div class="deck-kpi-note">all-time · '+alos.allCount.toLocaleString()+' completed stays</div>' +
-          '<div class="deck-alos-sub"><div><b>'+(alos.t12Avg==null?'—':alos.t12Avg.toFixed(1))+'</b> days<br><span>trailing 12 mo · '+alos.t12Count.toLocaleString()+' stays</span></div><div><b>'+Math.round(alos.median)+'</b> days<br><span>median, all-time</span></div></div>' +
+          '<div class="deck-kpi-label">Average Length of Stay</div><div class="deck-alos-value">'+(alos.bk[0].avg==null?'—':alos.bk[0].avg.toFixed(1))+'<span> days</span></div>' +
+          '<div class="deck-kpi-note">trailing 12 months · '+alos.bk[0].n.toLocaleString()+' completed stays</div>' +
+          '<div class="deck-alos-sub">'+sub+'</div>' +
         '</div>' +
         '<div class="deck-alos-chart"><div class="deck-block-title" style="margin-top:0;">Average length of stay by payer (days)</div>' +
-          (payRows ? '<table class="deck-table deck-lospay-table"><thead><tr><th>Payer</th><th>Stays</th><th>Avg days</th><th>Trailing 12 mo</th></tr></thead><tbody>'+payRows+'</tbody></table>' : '<div class="deck-empty">No payer detail.</div>') +
+          '<table class="deck-table deck-bk deck-lospay-table"><thead>'+deckPeriodHead(win, 'Payer')+'</thead><tbody>'+rows+'</tbody></table>' +
         '</div>' +
       '</div>' +
-      '<div class="deck-fine">'+(alos.merged ? 'Overall: a stay continues through payor changes and hospital returns after less than 3 days away. ' : '')+'By payer: days on that payer — a payor change ends the episode. Stays still in progress are excluded.</div>';
+      '<div class="deck-fine">Stays are placed in the period in which they ended; the number of stays is in brackets. Periods count back from the last closed month, '+keyLabel(win.latestCk)+'. '+(alos.merged ? 'All payers: a stay continues through payor changes and hospital returns after less than 3 days away. ' : '')+'By payer: days on that payer — a payor change ends the episode. Stays still in progress are excluded.</div>';
     }
-    var body = '<div class="deck-block-title" style="margin-top:0;">Length of stay</div>'+alosHtml+deckLosMonthBlock(d, win, censusAllowed);
+    var body = '<div class="deck-block-title" style="margin-top:0;">Length of stay</div>'+alosHtml;
     return deckPageShell(title, '', body, win).replace('<section class="deck-page">','<section class="deck-page deck-los">');
-  }
-
-  function deckLosMonthBlock(d, win, censusAllowed){
-    var alos = d.alos;
-    if(!censusAllowed || !alos) return '';
-    var months = win.months;
-    function cell(m){ return '<td>'+(m.avg==null?'—':m.avg.toFixed(1))+'</td>'; }
-    var head = '<tr><th>Payer</th>'+months.map(function(ck){ return '<th>'+deckShortMonth(ck)+'</th>'; }).join('')+'<th class="deck-tot-col">12 mo</th></tr>';
-    var rows = '<tr class="deck-total-row"><th>All payers</th>'+alos.monthly.map(cell).join('')+'<td class="deck-tot-col">'+(alos.t12Avg==null?'—':alos.t12Avg.toFixed(1))+'</td></tr>' +
-      '<tr><th>Stays ended</th>'+alos.monthly.map(function(m){ return '<td>'+(m.n||'—')+'</td>'; }).join('')+'<td class="deck-tot-col">'+alos.t12Count+'</td></tr>';
-    (alos.byPayer||[]).forEach(function(p){
-      if(!p.t12n) return;
-      rows += '<tr><th>'+p.label+'</th>'+p.monthly.map(cell).join('')+'<td class="deck-tot-col">'+p.t12.toFixed(1)+'</td></tr>';
-    });
-    return '<div class="deck-block-title">Average length of stay by month (days)</div>' +
-      '<table class="deck-table deck-aging-table"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table>' +
-      '<div class="deck-fine">Stays are placed in the month they ended. '+(alos.merged ? 'All payers: a stay continues through payor changes and hospital returns after less than 3 days away. ' : '')+'By payer: days on that payer. Stays still in progress are excluded.</div>';
   }
 
   function deckRenderAll(){
@@ -7750,6 +7904,74 @@
         var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t], {type:'application/json'})); a.download = 'vantis-ar-diag.json'; document.body.appendChild(a); a.click(); a.remove();
         box.textContent = 'Downloaded vantis-ar-diag.json (totals only, no names or IDs).';
       }).catch(function(e){ box.textContent = 'Request failed: '+e.message; }).then(function(){ bd.disabled = false; });
+    });
+  })();
+  (function(){
+    var bt = document.getElementById('adminStorageBtn');
+    if(!bt) return;
+    function mb(n){ return n >= 1048576 ? (n/1048576).toFixed(1)+' MB' : Math.max(1,Math.round(n/1024))+' KB'; }
+    function load(){
+      var box = document.getElementById('adminNcsResult');
+      box.textContent = 'Reading the data folder…';
+      return fetch('/api/admin/storage', {headers:{'x-admin-key':adminKey}}).then(function(r){ return r.json(); }).then(function(d){
+        if(d.error){ box.textContent = d.error; return; }
+        var h = '<div style="font-weight:600;margin-bottom:4px;">Data storage — '+mb(d.totalBytes)+' in '+d.files.length+' files'+(d.diskTotalBytes ? ' · volume '+mb(d.diskTotalBytes - d.diskFreeBytes)+' used of '+mb(d.diskTotalBytes) : '')+'</div>';
+        h += '<table style="border-collapse:collapse;font-size:12px;"><tr style="text-align:left;"><th style="padding:2px 10px 2px 0;">File</th><th style="padding:2px 10px;text-align:right;">Size</th><th style="padding:2px 10px;">Last changed</th></tr>';
+        d.files.forEach(function(f){ h += '<tr style="'+(f.backup?'color:var(--ink-soft);':'')+'"><td style="padding:2px 10px 2px 0;">'+ncsEsc(f.name)+(f.backup?' (backup)':'')+'</td><td style="padding:2px 10px;text-align:right;">'+mb(f.bytes)+'</td><td style="padding:2px 10px;">'+ncsEsc(f.modified.slice(0,16).replace('T',' '))+' UTC</td></tr>'; });
+        h += '</table>';
+        h += '<div style="margin-top:10px;">'+(d.backupBytes ? '<button class="btn-load" id="adminDelBackupsBtn" type="button" style="background:#B0455B;">Delete backup files ('+mb(d.backupBytes)+')</button> <span style="font-size:12px;color:var(--ink-soft);">Removes only the .pre-ncs backups made before the NCS syncs replaced data. Your live data is not touched.</span>' : '<span style="font-size:12px;color:var(--ink-soft);">No backup files to delete.</span>')+'</div>';
+        box.innerHTML = h;
+        var bd = document.getElementById('adminDelBackupsBtn');
+        if(bd) bd.addEventListener('click', function(){
+          if(!confirm('Delete the NCS sync backup files? Once deleted, the data from before the syncs cannot be restored.')) return;
+          bd.disabled = true;
+          fetch('/api/admin/storage/delete-backups', {method:'POST', headers:{'x-admin-key':adminKey}}).then(function(r){ return r.json(); }).then(function(r){ if(r.error){ box.textContent = r.error; return; } load().then(function(){ box.insertAdjacentHTML('afterbegin','<div style="color:#1d7a4d;margin-bottom:6px;">Deleted '+r.deleted+' backup file(s), freed '+mb(r.bytes)+'.</div>'); }); });
+        });
+      }).catch(function(e){ box.textContent = 'Request failed: '+e.message; });
+    }
+    bt.addEventListener('click', function(){ bt.disabled = true; load().then(function(){ bt.disabled = false; }); });
+  })();
+  (function(){
+    var bs = document.getElementById('adminNcsSjSyncBtn');
+    if(!bs) return;
+    var IDS = ['943','945','947','948','952','958','949','609','610','611','612','616','678','679','681','942','944','950','953','954','955','957'];
+    function fmt(n){ return n==null ? '—' : Math.round(n).toLocaleString(); }
+    function post(id, apply){
+      return fetch('/api/admin/ncs/sync-sj', {method:'POST', headers:{'Content-Type':'application/json','x-admin-key':adminKey}, body:JSON.stringify({company:id, since:'2025-01', apply:!!apply})}).then(function(r){ return r.json(); });
+    }
+    function run(apply, results){
+      var box = document.getElementById('adminNcsResult'); var failed = [];
+      function step(i){
+        if(i >= IDS.length) return Promise.resolve();
+        box.textContent = (apply ? 'Replacing Sales Journal' : 'Reading Sales Journal lines from NCS')+' — facility '+(i+1)+' of '+IDS.length+'…';
+        return post(IDS[i], apply).then(function(d){ if(d.error) failed.push(IDS[i]+': '+d.error); else results[IDS[i]] = d; }).catch(function(e){ failed.push(IDS[i]+': '+e.message); }).then(function(){ return step(i+1); });
+      }
+      return step(0).then(function(){ return failed; });
+    }
+    function render(results, failed){
+      var box = document.getElementById('adminNcsResult');
+      var h = '<div style="font-weight:600;margin-bottom:4px;">Sales Journal from NCS vs your upload (only the months your upload covers are compared; Medicare, HMO and NE Medicaid lines)</div>';
+      h += '<div style="overflow:auto;max-height:420px;"><table style="border-collapse:collapse;font-size:12px;"><tr style="text-align:right;"><th style="text-align:left;padding:2px 8px;">Facility</th><th style="padding:2px 8px;">Months</th><th style="padding:2px 8px;">Units NCS</th><th style="padding:2px 8px;">upload</th><th style="padding:2px 8px;">Gross NCS</th><th style="padding:2px 8px;">upload</th><th style="padding:2px 8px;">Net NCS</th><th style="padding:2px 8px;">upload</th><th style="padding:2px 8px;">Lines to write</th></tr>';
+      var T = {u1:0,u2:0,g1:0,g2:0,n1:0,n2:0,l:0};
+      Object.keys(results).forEach(function(id){
+        var d = results[id], c = d.compare;
+        function pair(a,b){ var bad = Math.abs(a-b) > Math.max(5, Math.abs(b)*0.01); return '<td style="text-align:right;padding:2px 8px;'+(bad?'color:#B0455B;font-weight:600;':'')+'">'+fmt(a)+'</td><td style="text-align:right;padding:2px 8px;color:var(--ink-soft);">'+fmt(b)+'</td>'; }
+        T.u1+=c.ncs.units; T.u2+=c.upload.units; T.g1+=c.ncs.gross; T.g2+=c.upload.gross; T.n1+=c.ncs.net; T.n2+=c.upload.net; T.l+=c.ncsAll.n;
+        h += '<tr><td style="padding:2px 8px;">'+ncsEsc(d.label)+'</td><td style="padding:2px 8px;text-align:right;">'+(c.months.length ? c.months[0]+' → '+c.months[c.months.length-1] : 'none uploaded')+'</td>'+pair(c.ncs.units,c.upload.units)+pair(c.ncs.gross,c.upload.gross)+pair(c.ncs.net,c.upload.net)+'<td style="text-align:right;padding:2px 8px;">'+fmt(c.ncsAll.n)+'</td></tr>';
+      });
+      h += '<tr style="font-weight:600;"><td style="padding:2px 8px;">Total</td><td></td><td style="text-align:right;padding:2px 8px;">'+fmt(T.u1)+'</td><td style="text-align:right;padding:2px 8px;">'+fmt(T.u2)+'</td><td style="text-align:right;padding:2px 8px;">'+fmt(T.g1)+'</td><td style="text-align:right;padding:2px 8px;">'+fmt(T.g2)+'</td><td style="text-align:right;padding:2px 8px;">'+fmt(T.n1)+'</td><td style="text-align:right;padding:2px 8px;">'+fmt(T.n2)+'</td><td style="text-align:right;padding:2px 8px;">'+fmt(T.l)+'</td></tr></table></div>';
+      if(failed.length) h += '<div style="color:#B0455B;margin-top:6px;">Not read:<br>'+failed.map(ncsEsc).join('<br>')+'</div>';
+      h += '<div style="margin-top:10px;"><button class="btn-load" id="adminNcsSjApplyBtn" type="button" style="background:#B0455B;">Replace Sales Journal for '+Object.keys(results).length+' facilities with NCS data (since Jan 2025)</button> <span style="font-size:12px;color:var(--ink-soft);">Keeps a backup the first time. Months before Jan 2025 are untouched.</span></div>';
+      box.innerHTML = h;
+      document.getElementById('adminNcsSjApplyBtn').addEventListener('click', function(){
+        if(!confirm('Replace the Sales Journal for these facilities (Jan 2025 onward) with NCS data?')) return;
+        this.disabled = true; var r2 = {};
+        run(true, r2).then(function(f2){ box.innerHTML = '<div style="font-weight:600;">Replaced the Sales Journal for '+Object.keys(r2).length+' facilities.</div><div style="font-size:12px;">Reload the page to see it.</div>'+(f2.length?'<div style="color:#B0455B;">Failed:<br>'+f2.map(ncsEsc).join('<br>')+'</div>':''); });
+      });
+    }
+    bs.addEventListener('click', function(){
+      bs.disabled = true; var results = {};
+      run(false, results).then(function(failed){ render(results, failed); }).then(function(){ bs.disabled = false; });
     });
   })();
   (function(){
