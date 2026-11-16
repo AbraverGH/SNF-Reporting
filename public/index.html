@@ -1869,6 +1869,7 @@
           </div>
           <div style="margin-bottom:14px;">
             <label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="accessProfileCanExport"> Allow exporting data to CSV</label>
+            <label style="font-size:13px;display:flex;align-items:center;gap:6px;margin-top:6px;"><input type="checkbox" id="accessProfileFeedOnly"> Data feed only (for another app: it can only call /api/feed/*, not the full datasets)</label>
             <div style="font-size:12px;color:var(--ink-faint);margin-top:4px;margin-left:20px;">Off by default — unlike the Admin tile setting above, this is a real security boundary: once exported, the data can be shared or stored anywhere, outside this app's access controls.</div>
           </div>
           <div style="margin-bottom:16px;">
@@ -2074,6 +2075,7 @@
     {key:'kyMedicaid', header:'Kentucky Medicaid', label:'Kentucky Medicaid'},
     {key:'okMedicaid', header:'OK Medicaid', label:'OK Medicaid'},
     {key:'ksMedicaid', header:'KS Medicaid', label:'KS Medicaid'},
+    {key:'medicaidPending', header:'Medicaid Pending', label:'Medicaid Pending'},
     {key:'privatePay', header:'Private Pay', label:'Private Pay'},
     {key:'hmo', header:'HMO/Private Insurance', label:'HMO / Private Insurance'},
     {key:'hospice', header:'Hospice', label:'Hospice'},
@@ -2090,6 +2092,7 @@
   var PAYER_OPTIONS = [
     {key:'medicare', label:'Medicare'},
     {key:'medicaidCombined', label:'Medicaid (NE + KY + OK + KS)'},
+    {key:'medicaidPending', label:'Medicaid Pending'},
     {key:'privatePay', label:'Private Pay'},
     {key:'hmo', label:'HMO / Private Insurance'},
     {key:'hospice', label:'Hospice'},
@@ -3104,7 +3107,9 @@
 
     var thead = '<thead><tr><th>Facility</th>' +
       cohorts.map(function(ck){ return '<th>'+keyLabel(ck)+'</th>'; }).join('') +
+      (arPriorBefore ? '<th>'+arPriorLabel()+'</th>' : '') +
       '<th class="total-col">Total</th></tr></thead>';
+    var priorAll = arPriorSum(asOf, state.selectedPayers);
 
     // Top row: all selected facilities, summed (dollar figures are additive, so a
     // straight sum — not the revenue-weighted blend used for % Collected elsewhere).
@@ -3114,8 +3119,10 @@
       if(v==null) return '<td class="empty">—</td>';
       return '<td class="dollar-cell">'+fmtMoneyFull(v)+'</td>';
     }).join('');
+    if(arPriorBefore) blendedCells += '<td class="dollar-cell">'+(priorAll==null?'—':fmtMoneyFull(priorAll))+'</td>';
     var blendedTotal = sumMetric ? (function(){
       var sum=0, any=false;
+      if(priorAll!=null){ sum += priorAll; any = true; }
       visibleCohorts.forEach(function(ck){
         var v = sumMetric(ck, asOf, state.selectedPayers, 'Aging Bals');
         if(v!=null){ sum+=v; any=true; }
@@ -3127,6 +3134,8 @@
 
     var rows = facs.map(function(f){
       var rowTotal = 0, rowAny = false;
+      var priorF = arPriorSum(asOf, state.selectedPayers, [f.facility]);
+      if(priorF!=null){ rowTotal += priorF; rowAny = true; }
       var cells = cohorts.map(function(ck){
         if(ck > asOf) return '<td class="empty">·</td>';
         var node = byFacCohortAsOf[f.facility] && byFacCohortAsOf[f.facility][ck] && byFacCohortAsOf[f.facility][ck][asOf];
@@ -3135,9 +3144,12 @@
         if(v==null) return '<td class="empty">—</td>';
         return '<td class="dollar-cell">'+fmtMoneyFull(v)+'</td>';
       }).join('');
+      if(arPriorBefore) cells += '<td class="dollar-cell">'+(priorF==null?'—':fmtMoneyFull(priorF))+'</td>';
       var totalCell = '<td class="dollar-cell total-col">'+(rowAny?fmtMoneyFull(rowTotal):'—')+'</td>';
       var detail = arIsOpen('aging', f.facility) ? arPayerRows(function(keys){
         var any = false, tot = 0;
+        var priorK = arPriorSum(asOf, keys, [f.facility]);
+        if(priorK!=null){ tot += priorK; any = true; }
         var h = cohorts.map(function(ck){
           if(ck > asOf) return '<td class="empty">·</td>';
           var node = byFacCohortAsOf[f.facility] && byFacCohortAsOf[f.facility][ck] && byFacCohortAsOf[f.facility][ck][asOf];
@@ -3146,9 +3158,10 @@
           any = true; tot += v;
           return '<td class="dollar-cell">'+fmtMoneyFull(v)+'</td>';
         }).join('');
+        if(arPriorBefore) h += '<td class="dollar-cell">'+(priorK==null?'—':fmtMoneyFull(priorK))+'</td>';
         h += '<td class="dollar-cell total-col">'+(any?fmtMoneyFull(tot):'—')+'</td>';
         return {html:h, any:any};
-      }, cohorts.length+2) : '';
+      }, cohorts.length+2+(arPriorBefore?1:0)) : '';
       return '<tr><th'+arFacToggleAttrs('aging', f.facility)+'>'+arCaret()+f.facility+'<span class="fc-code">'+(f.code||'')+'</span></th>'+cells+totalCell+'</tr>'+detail;
     }).join('');
 
@@ -3325,11 +3338,13 @@
       if(d.cash!=null){ totCash+=d.cash; }
       if(d.aging!=null){ totAging+=d.aging; }
     });
+    var comboPrior = arPriorSum(asOf, state.selectedPayers);
+    if(comboPrior!=null){ totAging += comboPrior; hasAny = true; }
     var overallPct = totRev>0 ? (totCash/totRev*100) : null;
     kpiEl.innerHTML = [
       {lbl:'Total revenue (as of '+keyLabel(asOf)+')', val: hasAny?fmtMoney(totRev):'—'},
       {lbl:'Total cash collected', val: hasAny?fmtMoney(totCash):'—'},
-      {lbl:'Total aging balance', val: hasAny?fmtMoney(totAging):'—'},
+      {lbl:'Total aging balance'+(arPriorBefore?' (incl. '+arPriorLabel().toLowerCase()+')':''), val: hasAny?fmtMoney(totAging):'—'},
       {lbl:'Blended % collected', val: fmtPct(overallPct)}
     ].map(function(c){
       return '<div class="kpi-card"><div class="lbl">'+c.lbl+'</div><div class="val mono">'+c.val+'</div></div>';
@@ -3422,6 +3437,8 @@
     state.facilities.forEach(function(f){
       if(!state.selectedFacilities.has(f.facility)) return;
       var rev=0, cash=0, aging=0, hasAny=false;
+      var priorS = arPriorSum(asOf, state.selectedPayers, [f.facility]);
+      if(priorS!=null) aging += priorS;
       cohorts.forEach(function(ck){
         var r = sumMetric(ck, asOf, state.selectedPayers, 'Revenue', [f.facility]);
         var c = sumMetric(ck, asOf, state.selectedPayers, 'Cash Receipts', [f.facility]);
@@ -3466,6 +3483,8 @@
     var rows = data.map(function(d){
       var detail = arIsOpen('summary', d.facility) ? arPayerRows(function(keys){
         var rev=0, cash=0, aging=0, any=false;
+        var priorD = arPriorSum(asOf, keys, [d.facility]);
+        if(priorD!=null) aging += priorD;
         cohorts.forEach(function(ck){
           var r = sumMetric(ck, asOf, keys, 'Revenue', [d.facility]);
           var c = sumMetric(ck, asOf, keys, 'Cash Receipts', [d.facility]);
@@ -3932,6 +3951,47 @@
     };
   }
 
+  // Open balances from months of service before the sync start, per facility / month-end / payer column.
+  var arPrior = {}, arPriorNs = {}, arPriorBefore = null;
+  function arPriorBuild(p){
+    arPrior = {}; arPriorNs = {}; arPriorBefore = p && p.before ? p.before : null;
+    if(!p || !p.records) return;
+    p.records.forEach(function(r){
+      if(r.metric !== 'Aging Bals') return;
+      var d = new Date(r.asOfISO); var ai = d.getUTCFullYear()*12 + d.getUTCMonth();
+      var nf = arPriorNs[r.facility] || (arPriorNs[r.facility] = {});
+      var nn = nf[ai] || (nf[ai] = {});
+      Object.keys(r.values||{}).forEach(function(c){ if(r.values[c]!=null) nn[r.source+'::'+c] = (nn[r.source+'::'+c]||0) + r.values[c]; });
+      var f = arPrior[r.facility] || (arPrior[r.facility] = {});
+      var node = f[ai] || (f[ai] = {});
+      Object.keys(r.values||{}).forEach(function(c){ if(r.values[c]!=null) node[c] = (node[c]||0) + r.values[c]; });
+    });
+  }
+  // The newest prior-balance snapshot at or before the given month-end, or null.
+  function arPriorFor(fac, asOfIdx){
+    var f = arPrior[fac]; if(!f) return null;
+    var best = null; Object.keys(f).forEach(function(k){ k = Number(k); if(k<=asOfIdx && (best==null || k>best)) best = k; });
+    return best==null ? null : f[best];
+  }
+  function arPriorNodeFor(fac, asOfIdx){
+    var f = arPriorNs[fac]; if(!f) return null;
+    var best = null; Object.keys(f).forEach(function(k){ k = Number(k); if(k<=asOfIdx && (best==null || k>best)) best = k; });
+    return best==null ? null : f[best];
+  }
+  // Open balances from before the sync start, for the selected payers, summed over facilities (or null if none).
+  function arPriorSum(asOfIdx, payerKey, facList){
+    if(!arPriorBefore) return null;
+    var facs = facList || state.selectedFacilities, keys = payerKeysFor(payerKey), sum = 0, any = false;
+    facs.forEach(function(fac){
+      var node = arPriorNodeFor(fac, asOfIdx); if(!node) return;
+      keys.forEach(function(k){ var v = node[k]; if(v!=null){ sum += v; any = true; } });
+    });
+    return any ? sum : null;
+  }
+  function arPriorLabel(){
+    if(!arPriorBefore) return '';
+    return 'Before '+keyLabel(Number(arPriorBefore.slice(0,4))*12 + Number(arPriorBefore.slice(5,7)) - 1);
+  }
   var pccArStatus = {}; // populated from /api/dataset's _pccArStatus, admin sessions only
 
   function initLiveMode(){
@@ -3949,6 +4009,7 @@
         }
       });
       if(payload && payload._pccArStatus) pccArStatus = payload._pccArStatus;
+      arPriorBuild(payload && payload._prior);
       if(any){
         state.selectedMonths = new Set();
         state.selectedAsOf = null;
@@ -7232,6 +7293,15 @@
       return '<th>'+lb+'<div class="deck-range">'+deckShortMonth(rg[i][0])+' – '+deckShortMonth(rg[i][1])+'</div></th>';
     }).join('')+'</tr>';
   }
+  function deckArAgingHead(win, firstLabel, hasPrior){
+    var m = win.months;
+    var rg = [[m[8], m[11]], [m[4], m[7]], [m[0], m[3]]];
+    var th = '<th>Newer<div class="deck-range">'+deckShortMonth(m[11]+1)+' – '+deckShortMonth(m[11]+2)+'</div></th>' +
+      DECK_AR_LABELS.map(function(lb, i){ return '<th>'+lb+'<div class="deck-range">'+deckShortMonth(rg[i][0])+' – '+deckShortMonth(rg[i][1])+'</div></th>'; }).join('') +
+      '<th>'+(hasPrior && arPriorBefore ? 'Before '+deckShortMonth(Number(arPriorBefore.slice(0,4))*12+Number(arPriorBefore.slice(5,7))-1) : 'Older')+'<div class="deck-range">earlier service</div></th>' +
+      '<th class="deck-tot-col">Total open<div class="deck-range">all months</div></th>';
+    return '<tr><th>'+firstLabel+'</th>'+th+'</tr>';
+  }
   function deckPeriodHead(win, firstLabel){
     var rg = deckPeriodRanges(win.months);
     return '<tr><th>'+firstLabel+'</th>'+DECK_PERIOD_LABELS.map(function(lb, i){
@@ -7239,11 +7309,11 @@
     }).join('')+'</tr>';
   }
 
-  function deckComputeAR(short, months){
+  function deckComputeAR(short, months, extra){
     var facData = byFacCohortAsOf[short];
     if(!facData) return null;
     var allKeys = deckAllPayerKeys();
-    var rows = months.map(function(ck){
+    var rowFor = function(ck){
       var asOfs = Object.keys(facData[ck] || {}).map(Number).filter(function(a){ return deckState.asOfCk==null || a<=deckState.asOfCk; });
       if(!asOfs.length) return {ck:ck, rev:null, cash:null, aging:null, pct:null, payerAging:{}, payerRev:{}, payerCash:{}};
       var ao = Math.max.apply(null, asOfs);
@@ -7259,7 +7329,10 @@
         payerCash[po.key] = c==null ? null : -c;
       });
       return {ck:ck, rev:rev, cash: cashRaw==null?null:-cashRaw, aging:aging, pct:(rev!=null && rev>0 && cashRaw!=null) ? (-cashRaw/rev*100) : null, payerAging:payerAging, payerRev:payerRev, payerCash:payerCash};
-    });
+    };
+    var rows = months.map(rowFor);
+    var newer = ((extra && extra.newer) || []).map(rowFor);   // the months not yet 60 days old, kept so total open A/R is complete
+    var priorNode = (extra && extra.asOfIdx!=null) ? arPriorFor(short, extra.asOfIdx) : null;
     var tot = {rev:0, cash:0, aging:0, any:false};
     rows.forEach(function(r){
       if(r.rev!=null){ tot.rev += r.rev; tot.any = true; }
@@ -7275,7 +7348,13 @@
     var payers = [], payerPct = [];
     PAYER_OPTIONS.forEach(function(po){
       var bv = sl.map(function(list){ return sumOver(list, function(r){ return r.payerAging[po.key]; }); });
-      if(bv.some(function(v){ return v!=null && Math.abs(v)>0.5; })) payers.push({label: deckPayerLabel(po.label), bv: bv});
+      // Aging columns: newer months | the three blocks | before the sync start | total open
+      var nv = sumOver(newer, function(r){ return r.payerAging[po.key]; });
+      var pv = priorNode && priorNode[po.key]!=null ? priorNode[po.key] : null;
+      var av = [nv].concat(bv, [pv]);
+      var avTot = sumOver(av.map(function(v){ return {v:v}; }), function(r){ return r.v; });
+      av.push(avTot);
+      if(av.some(function(v){ return v!=null && Math.abs(v)>0.5; })) payers.push({label: deckPayerLabel(po.label), bv: av});
       var bp = sl.map(function(list){
         var rv = sumOver(list, function(r){ return r.payerRev[po.key]; }), ch = sumOver(list, function(r){ return r.payerCash[po.key]; });
         return (rv!=null && rv>0 && ch!=null) ? (ch/rv*100) : null;
@@ -7287,7 +7366,12 @@
       pct: sl.map(function(list){ var rv = sumOver(list, function(r){ return r.rev; }), ch = sumOver(list, function(r){ return r.cash; }); return (rv!=null && rv>0 && ch!=null) ? (ch/rv*100) : null; }),
       aging: sl.map(function(list){ return sumOver(list, function(r){ return r.aging; }); })
     };
-    return {rows: rows, totals: tot, payers: payers, payerPct: payerPct, bTot: bTot};
+    var nTot = sumOver(newer, function(r){ return r.aging; });
+    var pTot = priorNode && priorNode.allGroups!=null ? priorNode.allGroups : null;
+    var agingCols = [nTot].concat(bTot.aging, [pTot]);
+    agingCols.push(sumOver(agingCols.map(function(v){ return {v:v}; }), function(r){ return r.v; }));
+    bTot.aging = agingCols;
+    return {rows: rows, totals: tot, payers: payers, payerPct: payerPct, bTot: bTot, openTotal: agingCols[agingCols.length-1], hasPrior: !!(arPriorBefore && priorNode)};
   }
 
   // Length of Stay is shown in three groups: Medicare, other skilled payers, and everything else.
@@ -7421,7 +7505,7 @@
       deckKpi('Revenue (12 mo)', fmtMoneyFull(ar.totals.rev)) +
       deckKpi('Cash Collected', fmtMoneyFull(ar.totals.cash)) +
       deckKpi('% Collected', ar.totals.pct==null?'—':ar.totals.pct.toFixed(1)+'%') +
-      deckKpi('Aging Balance (as of '+keyLabel(win.latestAsOf)+', service through '+keyLabel(win.latestCk)+')', fmtMoneyFull(ar.totals.aging)) + '</div>' +
+      deckKpi('Open A/R (as of '+keyLabel(win.latestAsOf)+')', fmtMoneyFull(ar.openTotal!=null ? ar.openTotal : ar.totals.aging)) + '</div>' +
       deckPayerPctTable(ar, win) + deckAgingBlock(ar, win);
     return deckPageShell(title, 'AR Collections — trailing 12 months', body, win).replace('<section class="deck-page">','<section class="deck-page deck-ar">');
   }
@@ -7435,8 +7519,8 @@
         ar.payers.map(function(p){
           return '<tr><th>'+p.label+'</th>'+p.bv.map(function(v){ return '<td>'+(v==null?'—':fmtMoneyFull(v))+'</td>'; }).join('')+'</tr>';
         }).join('');
-      agingHtml = '<table class="deck-table deck-bk deck-aging-table"><thead>'+deckArPeriodHead(win, 'Payer')+'</thead><tbody>'+rows+'</tbody></table>' +
-        '<div class="deck-fine">Balance still outstanding as of '+keyLabel(win.latestAsOf)+', grouped by month of service in three blocks of four months, counting back from '+keyLabel(win.latestCk)+' (60 days behind the as-of date). Each payer combines Part A, Part A Coinsurance, Part B and Part B Coinsurance.</div>';
+      agingHtml = '<table class="deck-table deck-bk deck-aging-table"><thead>'+deckArAgingHead(win, 'Payer', ar.hasPrior)+'</thead><tbody>'+rows+'</tbody></table>' +
+        '<div class="deck-fine">Balance still outstanding as of '+keyLabel(win.latestAsOf)+', grouped by month of service: the two newest months (not yet 60 days old), then three blocks of four months counting back from '+keyLabel(win.latestCk)+(ar.hasPrior ? ', then everything from earlier months of service' : '')+'. Total open adds them all. Each payer combines Part A, Part A Coinsurance, Part B and Part B Coinsurance.</div>';
     }
     return '<div class="deck-block-title">Aging detail by payer</div>'+agingHtml;
   }
@@ -7514,7 +7598,7 @@
     var censusAllowed = vantisTileAllowed('census');
     var data = {};
     selected.forEach(function(f){
-      data[f.short] = {ar: deckComputeAR(f.short, win.arMonths), alos: censusAllowed ? deckComputeALOS(f.company, win.months) : null};
+      data[f.short] = {ar: deckComputeAR(f.short, win.arMonths, {newer: [win.arMonths[11]+1, win.arMonths[11]+2], asOfIdx: win.latestAsOf}), alos: censusAllowed ? deckComputeALOS(f.company, win.months) : null};
     });
     var winAR = Object.assign({}, win, {months: win.arMonths, latestCk: win.arMonths[11]});
     var html = '';
@@ -8038,9 +8122,10 @@
       var box = document.getElementById('adminNcsResult');
       var h = '<div style="font-weight:600;margin-bottom:4px;">AR from NCS vs your uploads (latest as-of date in each upload, cohorts since Jan 2025; All Groups totals, $)</div>';
       h += '<div style="overflow:auto;max-height:420px;"><table style="border-collapse:collapse;font-size:12px;"><tr style="text-align:right;"><th style="text-align:left;padding:2px 8px;">Facility</th><th style="text-align:left;padding:2px 8px;">Source</th><th>As of</th><th style="padding:2px 8px;">Revenue NCS</th><th style="padding:2px 8px;">upload</th><th style="padding:2px 8px;">Cash NCS</th><th style="padding:2px 8px;">upload</th><th style="padding:2px 8px;">Aging NCS</th><th style="padding:2px 8px;">upload</th><th style="padding:2px 8px;">Cells matching</th></tr>';
-      var banks = {}, unm = {}, miss = 0;
+      var banks = {}, unm = {}, pend = {}, miss = 0;
       Object.keys(results).forEach(function(id){
         var d = results[id]; miss += d.diag.missingParents||0;
+        (d.diag.pendingPayors||[]).forEach(function(g){ pend[g]=1; });
         (d.diag.unmappedGroups||[]).forEach(function(g){ unm[g]=1; });
         Object.keys(d.diag.writeOffBanks||{}).forEach(function(b){ banks[b] = (banks[b]||0) + d.diag.writeOffBanks[b]; });
         d.compare.forEach(function(c){
@@ -8053,6 +8138,7 @@
       var bk = Object.keys(banks);
       h += '<details style="margin-top:8px;"><summary>Write-off accounts seen ('+bk.length+')</summary><div style="font-size:12px;padding:4px 0 4px 16px;color:var(--ink-soft);">'+(bk.map(function(b){ return ncsEsc(b)+': '+fmt(banks[b]); }).join('<br>')||'none')+'</div></details>';
       h += '<div style="font-size:12px;color:var(--ink-soft);margin-top:6px;">Payor groups not in the standard columns (counted in All Groups only): '+(Object.keys(unm).map(ncsEsc).join(', ')||'none')+'. Child bills with no parent found: '+miss+'.</div>';
+      h += '<div style="font-size:12px;color:var(--ink-soft);margin-top:6px;">Payors split out as Medicaid Pending ('+Object.keys(pend).length+'): '+(Object.keys(pend).slice(0,25).map(ncsEsc).join('; ')||'none found. NCS flagged no pending Medicaid payors, so this column will stay empty')+'</div>';
       if(failed.length) h += '<div style="color:#B0455B;margin-top:6px;">Not read:<br>'+failed.map(ncsEsc).join('<br>')+'</div>';
       h += '<div style="margin-top:10px;"><button class="btn-load" id="adminNcsArApplyBtn" type="button" style="background:#B0455B;">Replace AR for '+Object.keys(results).length+' facilities with NCS data (since Jan 2025)</button> <span style="font-size:12px;color:var(--ink-soft);">Keeps a backup of each current file the first time. Other facilities and earlier months are untouched.</span></div>';
       box.innerHTML = h;
@@ -8318,6 +8404,7 @@
     document.getElementById('accessProfileFacilities').style.display = 'none';
     document.getElementById('accessProfileShowAdmin').checked = true;
     document.getElementById('accessProfileCanExport').checked = false;
+    document.getElementById('accessProfileFeedOnly').checked = false;
     document.getElementById('accessProfileError').style.display = 'none';
   }
 
@@ -8336,6 +8423,7 @@
     });
     document.getElementById('accessProfileShowAdmin').checked = profile.showAdmin !== false;
     document.getElementById('accessProfileCanExport').checked = profile.canExport === true;
+    document.getElementById('accessProfileFeedOnly').checked = profile.feedOnly === true;
     var allFacilities = profile.facilities === 'ALL';
     document.getElementById('accessProfileAllFacilities').checked = allFacilities;
     document.getElementById('accessProfileFacilities').style.display = allFacilities ? 'none' : 'grid';
@@ -8379,6 +8467,7 @@
       }
       var showAdmin = document.getElementById('accessProfileShowAdmin').checked;
       var canExport = document.getElementById('accessProfileCanExport').checked;
+      var feedOnly = document.getElementById('accessProfileFeedOnly').checked;
       var isEditing = !!editingAccessProfileId;
       var btn = document.getElementById('accessProfileSaveBtn');
       btn.disabled = true; btn.textContent = isEditing ? 'Saving…' : 'Creating…';
@@ -8386,7 +8475,7 @@
       var method = isEditing ? 'PUT' : 'POST';
       fetch(url, {
         method: method, headers: {'x-admin-key': adminKey, 'Content-Type': 'application/json'},
-        body: JSON.stringify({label: label, email: email, tiles: tiles, facilities: facilities, showAdmin: showAdmin, canExport: canExport})
+        body: JSON.stringify({label: label, email: email, tiles: tiles, facilities: facilities, showAdmin: showAdmin, canExport: canExport, feedOnly: feedOnly})
       }).then(function(res){ return res.json().then(function(body){ return {ok:res.ok, body:body}; }); })
         .then(function(r){
           btn.disabled = false; btn.textContent = isEditing ? 'Save changes' : 'Create link';
