@@ -7208,7 +7208,11 @@
     if(latestCk==null) return null;
     var months = [];
     for(var k=latestCk-11; k<=latestCk; k++) months.push(k);
-    return {months: months, latestCk: latestCk, latestAsOf: latestAsOf, asOfLimit: limit};
+    // Collections are measured 60 days behind the as-of month-end (as of 9/30 the last month of service shown is July),
+    // so the newest month has had time to collect. 12 months ending there.
+    var arEnd = latestAsOf - 2, arMonths = [];
+    for(var q=arEnd-11; q<=arEnd; q++) arMonths.push(q);
+    return {months: months, latestCk: latestCk, latestAsOf: latestAsOf, asOfLimit: limit, arMonths: arMonths};
   }
 
   function deckShortMonth(ck){
@@ -7220,6 +7224,14 @@
   // from the last closed month. `months` is the 12-month window, oldest first.
   var DECK_PERIOD_LABELS = ['T12', '0–3 mo ago', '4–6 mo ago', '7–9 mo ago'];
   function deckPeriodRanges(months){ return [[months[0], months[11]], [months[9], months[11]], [months[6], months[8]], [months[3], months[5]]]; }
+  var DECK_AR_LABELS = ['0–4 mo back', '5–8 mo back', '9–12 mo back'];
+  function deckArPeriodHead(win, firstLabel){
+    var m = win.months;   // for AR pages this is the 12 months ending 60 days behind the as-of month
+    var rg = [[m[8], m[11]], [m[4], m[7]], [m[0], m[3]]];
+    return '<tr><th>'+firstLabel+'</th>'+DECK_AR_LABELS.map(function(lb, i){
+      return '<th>'+lb+'<div class="deck-range">'+deckShortMonth(rg[i][0])+' – '+deckShortMonth(rg[i][1])+'</div></th>';
+    }).join('')+'</tr>';
+  }
   function deckPeriodHead(win, firstLabel){
     var rg = deckPeriodRanges(win.months);
     return '<tr><th>'+firstLabel+'</th>'+DECK_PERIOD_LABELS.map(function(lb, i){
@@ -7258,7 +7270,7 @@
     tot.pct = tot.rev>0 ? (tot.cash/tot.rev*100) : null;
     // Four periods, all counting back from the last closed month (the last of the 12 months): the trailing
     // 12 months, then the most recent 3 months (0-3 months ago), the 3 before (4-6) and the 3 before that (7-9).
-    var sl = [rows, rows.slice(9), rows.slice(6, 9), rows.slice(3, 6)];
+    var sl = [rows.slice(8), rows.slice(4, 8), rows.slice(0, 4)];   // 3 columns of 4 months, newest first
     function sumOver(list, getter){ var sm = 0, anyV = false; list.forEach(function(r){ var v = getter(r); if(v!=null){ sm += v; anyV = true; } }); return anyV ? sm : null; }
     var payers = [], payerPct = [];
     PAYER_OPTIONS.forEach(function(po){
@@ -7393,8 +7405,8 @@
       ar.payerPct.map(function(p){
         return '<tr><th>'+p.label+'</th>'+p.bp.map(function(v){ return '<td>'+deckPctPill(v)+'</td>'; }).join('')+'</tr>';
       }).join('');
-    return '<div class="deck-block-title">% Collected by payer</div><table class="deck-table deck-bk deck-paypct-table"><thead>'+deckPeriodHead(win, 'Payer')+'</thead><tbody>'+rows+'</tbody></table>' +
-      '<div class="deck-fine">Cash collected ÷ revenue for the months of service in each period, as of '+keyLabel(win.latestAsOf)+'. Periods count back from the last closed month, '+keyLabel(win.latestCk)+'.</div>';
+    return '<div class="deck-block-title">% Collected by payer</div><table class="deck-table deck-bk deck-paypct-table"><thead>'+deckArPeriodHead(win, 'Payer')+'</thead><tbody>'+rows+'</tbody></table>' +
+      '<div class="deck-fine">Cash collected ÷ revenue for the months of service in each period, as of '+keyLabel(win.latestAsOf)+'. Collections are measured 60 days behind: the newest month shown is '+keyLabel(win.latestCk)+', in three blocks of four months.</div>';
   }
 
   function deckArPage(fac, d, win, arAllowed){
@@ -7409,7 +7421,7 @@
       deckKpi('Revenue (12 mo)', fmtMoneyFull(ar.totals.rev)) +
       deckKpi('Cash Collected', fmtMoneyFull(ar.totals.cash)) +
       deckKpi('% Collected', ar.totals.pct==null?'—':ar.totals.pct.toFixed(1)+'%') +
-      deckKpi('Aging Balance (as of '+keyLabel(win.latestAsOf)+')', fmtMoneyFull(ar.totals.aging)) + '</div>' +
+      deckKpi('Aging Balance (as of '+keyLabel(win.latestAsOf)+', service through '+keyLabel(win.latestCk)+')', fmtMoneyFull(ar.totals.aging)) + '</div>' +
       deckPayerPctTable(ar, win) + deckAgingBlock(ar, win);
     return deckPageShell(title, 'AR Collections — trailing 12 months', body, win).replace('<section class="deck-page">','<section class="deck-page deck-ar">');
   }
@@ -7423,8 +7435,8 @@
         ar.payers.map(function(p){
           return '<tr><th>'+p.label+'</th>'+p.bv.map(function(v){ return '<td>'+(v==null?'—':fmtMoneyFull(v))+'</td>'; }).join('')+'</tr>';
         }).join('');
-      agingHtml = '<table class="deck-table deck-bk deck-aging-table"><thead>'+deckPeriodHead(win, 'Payer')+'</thead><tbody>'+rows+'</tbody></table>' +
-        '<div class="deck-fine">Balance still outstanding as of '+keyLabel(win.latestAsOf)+', grouped by month of service: the trailing 12 months, then the most recent 3 months, the 3 before that, and the 3 before that. Each payer combines Part A, Part A Coinsurance, Part B and Part B Coinsurance.</div>';
+      agingHtml = '<table class="deck-table deck-bk deck-aging-table"><thead>'+deckArPeriodHead(win, 'Payer')+'</thead><tbody>'+rows+'</tbody></table>' +
+        '<div class="deck-fine">Balance still outstanding as of '+keyLabel(win.latestAsOf)+', grouped by month of service in three blocks of four months, counting back from '+keyLabel(win.latestCk)+' (60 days behind the as-of date). Each payer combines Part A, Part A Coinsurance, Part B and Part B Coinsurance.</div>';
     }
     return '<div class="deck-block-title">Aging detail by payer</div>'+agingHtml;
   }
@@ -7502,11 +7514,12 @@
     var censusAllowed = vantisTileAllowed('census');
     var data = {};
     selected.forEach(function(f){
-      data[f.short] = {ar: deckComputeAR(f.short, win.months), alos: censusAllowed ? deckComputeALOS(f.company, win.months) : null};
+      data[f.short] = {ar: deckComputeAR(f.short, win.arMonths), alos: censusAllowed ? deckComputeALOS(f.company, win.months) : null};
     });
+    var winAR = Object.assign({}, win, {months: win.arMonths, latestCk: win.arMonths[11]});
     var html = '';
     selected.forEach(function(f){
-      html += deckArPage(f, data[f.short], win, true) + deckAlosAgingPage(f, data[f.short], win, censusAllowed);
+      html += deckArPage(f, data[f.short], winAR, true) + deckAlosAgingPage(f, data[f.short], win, censusAllowed);
     });
     el.innerHTML = html;
     if(sub) sub.textContent = selected.length+' of '+deckState.facilities.length+' facilities · '+keyLabel(win.months[0])+' – '+keyLabel(win.latestCk)+' · AR as of '+keyLabel(win.latestAsOf);
